@@ -1,0 +1,294 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{2DE05B6E-23BF-440A-921D-79043CF14599}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Spyder.Client</RootNamespace>
+    <AssemblyName>SpyderClientSharedLibrary</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Profile111</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <NuGetPackageImportStamp>0d92e62d</NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\ARM\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>ARM</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
+    <OutputPath>bin\ARM\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>ARM</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="BindableSpyderClientBase.cs" />
+    <Compile Include="Collections\CompositeCollection.cs" />
+    <Compile Include="Collections\Grouping.cs" />
+    <Compile Include="Collections\ListExtensions.cs" />
+    <Compile Include="Common\AutoSyncMode.cs" />
+    <Compile Include="Common\BackgroundImageBus.cs" />
+    <Compile Include="Common\CalcType.cs" />
+    <Compile Include="Common\CloneMode.cs" />
+    <Compile Include="Common\ColorSpace.cs" />
+    <Compile Include="Common\CommandKey.cs" />
+    <Compile Include="Common\CropAnchorTypes.cs" />
+    <Compile Include="Common\DCPulsePosition.cs" />
+    <Compile Include="Common\DCRestoreMode.cs" />
+    <Compile Include="Common\DiagnosticStatus.cs" />
+    <Compile Include="Common\DiagnosticType.cs" />
+    <Compile Include="Common\FieldRate.cs" />
+    <Compile Include="Common\FrontPanelDisplayCommand.cs" />
+    <Compile Include="Common\HdcpMode.cs" />
+    <Compile Include="Common\LayerPositionAnchor.cs" />
+    <Compile Include="Common\RouterSalvo.cs" />
+    <Compile Include="Common\Shape.cs" />
+    <Compile Include="Common\ServerSettings.cs" />
+    <Compile Include="Common\VersionInfo.cs" />
+    <Compile Include="DispatcherPropertyChangedBase.cs" />
+    <Compile Include="Drawing\BitmapHelper.cs" />
+    <Compile Include="Drawing\DrawingHelper.cs" />
+    <Compile Include="FunctionKeys\AssignStillFunctionKey.cs" />
+    <Compile Include="FunctionKeys\FreezeDeviceKey.cs" />
+    <Compile Include="FunctionKeys\FreezeLayerKey.cs" />
+    <Compile Include="FunctionKeys\FunctionKey.cs" />
+    <Compile Include="Common\HardwareType.cs" />
+    <Compile Include="Common\HdcpLinkStatus.cs" />
+    <Compile Include="Common\InputConfig.cs" />
+    <Compile Include="Common\InputConnector.cs" />
+    <Compile Include="Common\InputStereoMode.cs" />
+    <Compile Include="Common\InputSyncType.cs" />
+    <Compile Include="Common\IRegister.cs" />
+    <Compile Include="Common\KeyerMode.cs" />
+    <Compile Include="Common\KeyFrame.cs" />
+    <Compile Include="Common\LayerHelpers.cs" />
+    <Compile Include="Common\MachineStatus.cs" />
+    <Compile Include="Common\MixerBus.cs" />
+    <Compile Include="Common\OutputMode.cs" />
+    <Compile Include="Common\PixelSpace.cs" />
+    <Compile Include="Common\PixelSpaceStereoMode.cs" />
+    <Compile Include="Common\PlayItem.cs" />
+    <Compile Include="Common\Register.cs" />
+    <Compile Include="Common\RegisterPage.cs" />
+    <Compile Include="Common\RegisterType.cs" />
+    <Compile Include="Common\RotationMode.cs" />
+    <Compile Include="Common\Router.cs" />
+    <Compile Include="Common\RouterPatch.cs" />
+    <Compile Include="Common\ShapeType.cs" />
+    <Compile Include="Common\SpyderModels.cs" />
+    <Compile Include="Common\TextureType.cs" />
+    <Compile Include="Common\TitleLocation.cs" />
+    <Compile Include="Common\TitlePosition.cs" />
+    <Compile Include="Common\TitleSize.cs" />
+    <Compile Include="FunctionKeys\AssignSourceFunctionKey.cs" />
+    <Compile Include="FunctionKeys\IRelativeFunctionKey.cs" />
+    <Compile Include="FunctionKeys\LayerPositionOffsetFunctionKey.cs" />
+    <Compile Include="FunctionKeys\MixBackgroundFunctionKey.cs" />
+    <Compile Include="FunctionKeys\NetworkCommandFunctionKey.cs" />
+    <Compile Include="FunctionKeys\RelativeFunctionKey.cs" />
+    <Compile Include="FunctionKeys\RouterSalvoFunctionKey.cs" />
+    <Compile Include="FunctionKeys\ScriptRecallFunctionKey.cs" />
+    <Compile Include="Images\CreateImageRequestEventArgs.cs" />
+    <Compile Include="Images\ImageSize.cs" />
+    <Compile Include="Images\ProcessedImageResult.cs" />
+    <Compile Include="Images\ProcessImageStreamEventArgs.cs" />
+    <Compile Include="Images\QFTThumbnailIdentifier.cs" />
+    <Compile Include="Images\QFTThumbnailManagerBase.cs" />
+    <Compile Include="Images\ThumbnailImageBase.cs" />
+    <Compile Include="Images\ThumbnailManagerBase.cs" />
+    <Compile Include="IO\ByteArrayExtensions.cs" />
+    <Compile Include="IO\IGZipStreamDecompressor.cs" />
+    <Compile Include="IO\Serial\ExternalControlPort.cs" />
+    <Compile Include="IO\Serial\ExternalControlProtocol.cs" />
+    <Compile Include="IO\Serial\Parity.cs" />
+    <Compile Include="IO\Serial\StopBits.cs" />
+    <Compile Include="IO\XmlDeserializer.cs" />
+    <Compile Include="Models\IRenderSceneDataProvider.cs" />
+    <Compile Include="Models\RenderLayer.cs" />
+    <Compile Include="Models\AggregateRenderLayerProvider.cs" />
+    <Compile Include="Models\RenderObject.cs" />
+    <Compile Include="Models\RenderPixelSpace.cs" />
+    <Compile Include="Models\RenderScene.cs" />
+    <Compile Include="Models\SpyderClientRenderSceneDataProvider.cs" />
+    <Compile Include="Models\StackupProviders\IStackupProvider.cs" />
+    <Compile Include="Models\StackupProviders\NativeStackup.cs" />
+    <Compile Include="Models\StackupProviders\PreviewProgramStackup.cs" />
+    <Compile Include="Net\AdjustmentType.cs" />
+    <Compile Include="Net\AspectRatioAdjustmentType.cs" />
+    <Compile Include="Net\DrawingData\Deserializers\DrawingDataDeserializer_Version8.cs" />
+    <Compile Include="Net\DrawingData\Deserializers\DrawingDataDeserializer_Version20.cs" />
+    <Compile Include="Net\DrawingData\DrawingFrame.cs" />
+    <Compile Include="Net\ISpyderClientExtended.cs" />
+    <Compile Include="Net\LayerKeyFrameInfo.cs" />
+    <Compile Include="Net\LayerMoveType.cs" />
+    <Compile Include="Net\LayerResizeDirection.cs" />
+    <Compile Include="Net\LayerResizeType.cs" />
+    <Compile Include="Net\MoveAndResizeType.cs" />
+    <Compile Include="Net\Notifications\DiagnosticMessageTypeInfo.cs" />
+    <Compile Include="Net\Notifications\DrawingDataReceivedEventArgs.cs" />
+    <Compile Include="Net\Notifications\TraceLogMessageEventArgs.cs" />
+    <Compile Include="Net\PixelSpaceMapping.cs" />
+    <Compile Include="Net\Sockets\DataReceivedEventArgs.cs" />
+    <Compile Include="Net\Sockets\IMulticastListener.cs" />
+    <Compile Include="Net\Sockets\ISocket.cs" />
+    <Compile Include="Net\Sockets\IStreamSocket.cs" />
+    <Compile Include="Net\Sockets\IUDPSocket.cs" />
+    <Compile Include="Net\SpyderClient.cs" />
+    <Compile Include="Primitives\Size.cs" />
+    <Compile Include="Primitives\Point.cs" />
+    <Compile Include="Primitives\Thickness.cs" />
+    <Compile Include="Scripting\CueTrigger.cs" />
+    <Compile Include="Scripting\InputArrayElement.cs" />
+    <Compile Include="Scripting\JumpType.cs" />
+    <Compile Include="Scripting\MixerElement.cs" />
+    <Compile Include="Scripting\OffElement.cs" />
+    <Compile Include="Scripting\PlayItemCommand.cs" />
+    <Compile Include="Scripting\Script.cs" />
+    <Compile Include="Scripting\ScriptCue.cs" />
+    <Compile Include="Common\ShapeSource.cs" />
+    <Compile Include="Common\Source.cs" />
+    <Compile Include="Common\Still.cs" />
+    <Compile Include="Common\SystemData.cs" />
+    <Compile Include="Common\TextureFillSource.cs" />
+    <Compile Include="Common\TextureTileMode.cs" />
+    <Compile Include="Common\TimeCode.cs" />
+    <Compile Include="Common\Treatment.cs" />
+    <Compile Include="Diagnostics\TraceMessage.cs" />
+    <Compile Include="Diagnostics\TraceQueue.cs" />
+    <Compile Include="Diagnostics\TracingLevel.cs" />
+    <Compile Include="Net\BindableSpyderClient.cs" />
+    <Compile Include="Net\DrawingData\DataType.cs" />
+    <Compile Include="Net\DrawingData\Deserializers\DrawingDataDeserializer.cs" />
+    <Compile Include="Net\DrawingData\Deserializers\IDrawingDataDeserializer.cs" />
+    <Compile Include="IO\IStreamDecompressor.cs" />
+    <Compile Include="Net\DrawingData\Deserializers\DrawingDataDeserializer_Version19.cs" />
+    <Compile Include="Net\DrawingData\DrawingData.cs" />
+    <Compile Include="Net\DrawingData\DrawingMachine.cs" />
+    <Compile Include="Net\DrawingData\DrawingOutput.cs" />
+    <Compile Include="Net\DrawingData\DrawingPixelSpace.cs" />
+    <Compile Include="Net\DrawingData\DrawingRouter.cs" />
+    <Compile Include="Net\DrawingData\DrawingKeyFrame.cs" />
+    <Compile Include="Net\ISpyderClient.cs" />
+    <Compile Include="Net\Notifications\ServerEventType.cs" />
+    <Compile Include="Net\Notifications\SpyderServerAnnounceInformation.cs" />
+    <Compile Include="Net\QFTClient.cs" />
+    <Compile Include="Net\ServerOperationResult.cs" />
+    <Compile Include="Net\ServerOperationResultCode.cs" />
+    <Compile Include="Net\SpyderUdpClient.cs" />
+    <Compile Include="Net\SpyderDemoClient.cs" />
+    <Compile Include="Net\SpyderDemoServer.cs" />
+    <Compile Include="Net\Notifications\SpyderServerEventListenerBase.cs" />
+    <Compile Include="Primitives\Color.cs" />
+    <Compile Include="Primitives\Rectangle.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyChangedBase.cs" />
+    <Compile Include="Scripting\ScriptElement.cs" />
+    <Compile Include="Scripting\SlideTransitionType.cs" />
+    <Compile Include="Scripting\SourceElement.cs" />
+    <Compile Include="Scripting\StillElement.cs" />
+    <Compile Include="SpyderClientManagerBase.cs" />
+    <Compile Include="Text\HexUtil.cs" />
+    <Compile Include="Threading\Dispatcher.cs" />
+    <Compile Include="Threading\Tasks\AsyncAutoResetEvent.cs" />
+    <Compile Include="Threading\Tasks\AsyncListProcessor.cs" />
+    <Compile Include="Threading\Tasks\AsyncListProcessorItemEventArgs.cs" />
+    <Compile Include="Threading\Tasks\AsyncLock.cs" />
+    <Compile Include="Threading\Tasks\AsyncSemaphore.cs" />
+    <Compile Include="Threading\Tasks\AutoResetWorker.cs" />
+    <Compile Include="Threading\Tasks\RequestDeferral.cs" />
+    <Compile Include="Threading\Tasks\TaskExtensions.cs" />
+    <Compile Include="Threading\Timer.cs" />
+    <Compile Include="TimedCacheWeakReference.cs" />
+    <Compile Include="ViewModels\Drawing\ViewStackProvider.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="PCLStorage">
+      <HintPath>..\packages\PCLStorage.1.0.0\lib\portable-net45+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.dll</HintPath>
+    </Reference>
+    <Reference Include="PCLStorage.Abstractions">
+      <HintPath>..\packages\PCLStorage.1.0.0\lib\portable-net45+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.Abstractions.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
