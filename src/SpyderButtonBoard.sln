@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderButtonBoardLibrary", "SpyderButtonBoardLibrary\SpyderButtonBoardLibrary.csproj", "{E75D14CF-3ADF-4BAD-81D8-D87FC554488C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderButtonBoard", "SpyderButtonBoard\SpyderButtonBoard.csproj", "{3E62620F-EA68-4E3F-AC30-AFA1A2F7464A}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://knightware.visualstudio.com/defaultcollection
+		SccProjectUniqueName0 = SpyderButtonBoardLibrary\\SpyderButtonBoardLibrary.csproj
+		SccProjectName0 = SpyderButtonBoardLibrary
+		SccAuxPath0 = https://knightware.visualstudio.com/defaultcollection
+		SccLocalPath0 = SpyderButtonBoardLibrary
+		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccProjectUniqueName1 = SpyderButtonBoard\\SpyderButtonBoard.csproj
+		SccProjectName1 = SpyderButtonBoard
+		SccAuxPath1 = https://knightware.visualstudio.com/defaultcollection
+		SccLocalPath1 = SpyderButtonBoard
+		SccProvider1 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E75D14CF-3ADF-4BAD-81D8-D87FC554488C}.Debug|x86.ActiveCfg = Debug|x86
+		{E75D14CF-3ADF-4BAD-81D8-D87FC554488C}.Debug|x86.Build.0 = Debug|x86
+		{E75D14CF-3ADF-4BAD-81D8-D87FC554488C}.Release|x86.ActiveCfg = Release|x86
+		{E75D14CF-3ADF-4BAD-81D8-D87FC554488C}.Release|x86.Build.0 = Release|x86
+		{3E62620F-EA68-4E3F-AC30-AFA1A2F7464A}.Debug|x86.ActiveCfg = Debug|x86
+		{3E62620F-EA68-4E3F-AC30-AFA1A2F7464A}.Debug|x86.Build.0 = Debug|x86
+		{3E62620F-EA68-4E3F-AC30-AFA1A2F7464A}.Release|x86.ActiveCfg = Release|x86
+		{3E62620F-EA68-4E3F-AC30-AFA1A2F7464A}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

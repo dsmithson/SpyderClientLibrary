@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>SpyderClientLibrary</id>
+        <version>1.0.0</version>
+        <title>Spyder Client Library</title>
+        <authors>Derek Smithson</authors>
+        <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+        <projectUrl>https://github.com/dsmithson/SpyderClientLibrary</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>This package contains a client library for controlling the Spyder 200/300/X20 video processor families.  Provides UDP control, server auto-discovery, drawing data (live display info), file transfer services, and image cache management.</description>
+        <copyright>Knightware 2015</copyright>
+        <language>en-US</language>
+        <tags>spyder, x20</tags>
+        <dependencies>
+            <dependency id="PCLStorage" version="1.0.0" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\SpyderClientLibraryWPF\bin\Release\SpyderClientLibraryWPF.dll" target="lib\net45\SpyderClientLibraryWPF.dll" />
+        <file src="..\SpyderClientLibraryWPF\bin\Release\SpyderClientLibraryWPF.XML" target="lib\net45\SpyderClientLibraryWPF.XML" />
+        <file src="..\SpyderClientLibraryWPF\bin\Release\SpyderClientSharedLibrary.dll" target="lib\net45\SpyderClientSharedLibrary.dll" />
+        <file src="..\SpyderClientLibraryWPF\bin\Release\SpyderClientSharedLibrary.xml" target="lib\net45\SpyderClientSharedLibrary.xml" />
+        <file src="..\SpyderClientLibraryRT\bin\Release\SpyderClientLibraryRT.dll" target="lib\netcore451\SpyderClientLibraryRT.dll" />
+        <file src="..\SpyderClientLibraryRT\bin\Release\SpyderClientLibraryRT.XML" target="lib\netcore451\SpyderClientLibraryRT.XML" />
+        <file src="..\SpyderClientLibraryRT\bin\Release\SpyderClientSharedLibrary.dll" target="lib\netcore451\SpyderClientSharedLibrary.dll" />
+        <file src="..\SpyderClientLibraryRT\bin\Release\SpyderClientSharedLibrary.xml" target="lib\netcore451\SpyderClientSharedLibrary.xml" />
+        <file src="..\SpyderClientLibraryRT\bin\Release\SpyderClientLibraryRT.dll" target="lib\wpa81\SpyderClientLibraryRT.dll" />
+        <file src="..\SpyderClientLibraryRT\bin\Release\SpyderClientLibraryRT.XML" target="lib\wpa81\SpyderClientLibraryRT.XML" />
+        <file src="..\SpyderClientLibraryRT\bin\Release\SpyderClientSharedLibrary.dll" target="lib\wpa81\SpyderClientSharedLibrary.dll" />
+        <file src="..\SpyderClientLibraryRT\bin\Release\SpyderClientSharedLibrary.xml" target="lib\wpa81\SpyderClientSharedLibrary.xml" />
+    </files>
+</package>
