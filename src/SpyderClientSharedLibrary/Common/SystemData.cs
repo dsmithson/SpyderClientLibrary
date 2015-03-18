@@ -24,6 +24,9 @@ namespace Spyder.Client.Common
         public List<Treatment> Treatments { get; protected set; }
 
         public List<PixelSpace> PixelSpaces { get; protected set; }
+
+        public Dictionary<int, int> PreviewPixelSpaces { get; protected set; }
+
         public List<PlayItem> PlayItems { get; protected set; }
 
         public List<Source> Sources { get; protected set; }
@@ -86,6 +89,7 @@ namespace Spyder.Client.Common
 
                 //Deserialize our data lists
                 var pixelSpaces = ParsePixelSpaces(configDocument);
+                var previewPixelSpaces = ParsePreviewPixelSpaces(configDocument);
                 var sources = ParseSources(configDocument);
                 var treatments = ParseTreatments(configDocument);
                 var routers = ParseRouters(configDocument);
@@ -102,6 +106,7 @@ namespace Spyder.Client.Common
                 //Set our main data objects
                 this.Sources = sources;
                 this.PixelSpaces = pixelSpaces;
+                this.PreviewPixelSpaces = previewPixelSpaces;
                 this.Treatments = treatments;
                 this.Routers = routers;
                 this.Scripts = scripts;
@@ -167,6 +172,23 @@ namespace Spyder.Client.Common
                                          };
                                      });
                 });
+        }
+
+        protected Dictionary<int, int> ParsePreviewPixelSpaces(XDocument document)
+        {
+            var results = ParseList(() =>
+            {
+                return document.Descendants("PreviewPixelSpaces")
+                                 .SelectMany((item) => item.Descendants("Item"))
+                                 .Select((item) =>
+                                 {
+                                     return new Tuple<int, int>(
+                                         deserializer.Read(item, "Key", -1),
+                                         deserializer.Read(item, "Value", -1));
+                                 });
+            });
+
+            return results.ToDictionary(tuple => tuple.Item1, tuple => tuple.Item2);
         }
 
         protected List<Source> ParseSources(XDocument document)

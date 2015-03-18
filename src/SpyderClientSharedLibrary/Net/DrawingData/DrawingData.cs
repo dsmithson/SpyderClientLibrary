@@ -307,6 +307,20 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
+        private bool liveUpdatesTemporarilyDisabled;
+        public bool LiveUpdatesTemporarilyDisabled
+        {
+            get { return liveUpdatesTemporarilyDisabled; }
+            set
+            {
+                if(liveUpdatesTemporarilyDisabled != value)
+                {
+                    liveUpdatesTemporarilyDisabled = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private bool isPreviewOnlyScriptingEnabled;
         public bool IsPreviewOnlyScriptingEnabled
         {

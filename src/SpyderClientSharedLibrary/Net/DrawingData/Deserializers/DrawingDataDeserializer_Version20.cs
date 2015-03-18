@@ -14,6 +14,13 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// </summary>
     public class DrawingDataDeserializer_Version20 : IDrawingDataDeserializer
     {
+        private string serverVersion;
+
+        public DrawingDataDeserializer_Version20(string serverVersion)
+        {
+            this.serverVersion = serverVersion;
+        }
+
         public DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
@@ -62,6 +69,13 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             response.IsPreviewOnlyScriptingEnabled = (flags & 0x20) > 0;
             response.IsStillServerConnected = (flags & 0x40) > 0;
             response.IsLiveUpdateEnabled = (flags & 0x80) > 0;
+
+            //HACK:  version 4.0.5 (and presumably later) added another flags byte, but the DrawingData revison # wasn't updated...
+            if (serverVersion != "4.0.3" && serverVersion != "4.0.4")
+            {
+                flags = stream[index++];
+                response.LiveUpdatesTemporarilyDisabled = (flags & 0x01) > 0;
+            }
 
             //System Frame Rate
             response.SystemFrameRate = (FieldRate)stream[index++];

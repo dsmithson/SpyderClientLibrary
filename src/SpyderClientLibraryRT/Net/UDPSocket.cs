@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Windows.Networking;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
+using System.Diagnostics;
 
 namespace Spyder.Client.Net
 {
@@ -44,7 +45,7 @@ namespace Spyder.Client.Net
 
             messageReceiptAwaiters = new Stack<TaskCompletionSource<byte[]>>();
 
-            socket = new DatagramSocket();
+            socket = new DatagramSocket();            
             socket.MessageReceived += socket_MessageReceived;
             await socket.ConnectAsync(new HostName(serverIP), serverPort.ToString());
             
@@ -61,15 +62,22 @@ namespace Spyder.Client.Net
             {
                 Task.Delay(100).Wait();
             }
-
+            messageReceiptAwaiters = null;
+            
             if (socket != null)
             {
-                socket.MessageReceived -= socket_MessageReceived;
+                try
+                {
+                    socket.MessageReceived -= socket_MessageReceived;
+                }
+                catch(Exception ex)
+                {
+                    //HACK:  In testing I see the MessageReceived unsubscription throwing an InvalidOperationException saying 'A method was called at an unexpected time.'
+                    Debug.WriteLine(string.Format("{0} occurred while shutting down socket: {1}", ex.GetType().Name, ex.Message));
+                }
                 socket.Dispose();
                 socket = null;
             }
-
-            messageReceiptAwaiters = null;
         }
 
         void socket_MessageReceived(DatagramSocket sender, DatagramSocketMessageReceivedEventArgs args)

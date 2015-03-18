@@ -26,9 +26,10 @@ namespace Spyder.Client.Net.Notifications
         private IMulticastListener listener;
         private Func<IGZipStreamDecompressor> getDrawingDataDecompressor;
         private Dictionary<string, DrawingDataDeserializer> drawingDataDeserializers;
+        private Dictionary<string, SpyderServerAnnounceInformation> cachedServerInfo;
 
         public bool IsRunning { get; private set; }
-        
+
         public SpyderServerEventListenerBase(IMulticastListener listener, Func<IGZipStreamDecompressor> getDrawingDataDecompressor)
         {
             this.listener = listener;
@@ -41,6 +42,7 @@ namespace Spyder.Client.Net.Notifications
             IsRunning = true;
 
             drawingDataDeserializers = new Dictionary<string, DrawingDataDeserializer>();
+            cachedServerInfo = new Dictionary<string, SpyderServerAnnounceInformation>();
 
             listener.DataReceived += listener_DataReceived;
             await listener.Startup(multicastIP, multicastPort);
@@ -108,42 +110,53 @@ namespace Spyder.Client.Net.Notifications
                     TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while trying to parse hostname: {1}", ex.GetType().Name, ex.Message);
                 }
 
+                //Write to local cache
+                if (cachedServerInfo.ContainsKey(server.Address))
+                    cachedServerInfo[server.Address] = server;
+                else
+                    cachedServerInfo.Add(server.Address, server);
+
                 OnServerAnnounceMessageReceived(server);
             }
             else if (eventType.Value == ServerEventType.DrawingDataChanged)
             {
-                DrawingDataDeserializer deserializer;
-                if (!drawingDataDeserializers.ContainsKey(e.SenderAddress))
+                //Ensure we have the server's version info in cache before we start trying to deserialize it's data
+                var serverInfo = (cachedServerInfo.ContainsKey(e.SenderAddress) ? cachedServerInfo[e.SenderAddress] : null);
+                if (serverInfo != null)
                 {
-                    deserializer = new DrawingDataDeserializer(e.SenderAddress, getDrawingDataDecompressor());
-                    deserializer.DrawingDataDeserialized += deserializer_DrawingDataDeserialized;
-                    drawingDataDeserializers.Add(e.SenderAddress, deserializer);
-                }
-                else
-                {
-                    deserializer = drawingDataDeserializers[e.SenderAddress];
-                }
+                    DrawingDataDeserializer deserializer;
+                    if (!drawingDataDeserializers.ContainsKey(e.SenderAddress))
+                    {
+                        deserializer = new DrawingDataDeserializer(e.SenderAddress, serverInfo.Version.ToShortString(), getDrawingDataDecompressor());
+                        deserializer.DrawingDataDeserialized += deserializer_DrawingDataDeserialized;
+                        drawingDataDeserializers.Add(e.SenderAddress, deserializer);
+                    }
+                    else
+                    {
+                        deserializer = drawingDataDeserializers[e.SenderAddress];
+                    }
 
-                //Feed the data to the deserializer
-                try
-                {
-                    deserializer.Read(data, 12);
+                    //Feed the data to the deserializer
+                    try
+                    {
+                        deserializer.Read(data, 12);
+                    }
+                    catch (Exception ex)
+                    {
+                        TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while deserializing drawing data: {1}",
+                            ex.GetType().Name, ex.Message);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while deserializing drawing data: {1}", 
-                        ex.GetType().Name, ex.Message);
-                }
-            }            
-            else if(DiagnosticMessageTypeInfo.IsDiagnosticMessage(eventType.Value))
+            }
+            else if (DiagnosticMessageTypeInfo.IsDiagnosticMessage(eventType.Value))
             {
                 TraceMessage msg = new TraceMessage();
                 msg.Level = DiagnosticMessageTypeInfo.GetTracingLevel(eventType.Value);
-                
+
                 //Parse out Message
                 int index = 12;
                 StringBuilder builder = new StringBuilder();
-                while(e.Data[index] != 0x00 && index < e.Data.Length)
+                while (e.Data[index] != 0x00 && index < e.Data.Length)
                 {
                     builder.Append((char)e.Data[index++]);
                 }

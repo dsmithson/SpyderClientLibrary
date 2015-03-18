@@ -21,10 +21,12 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         private IStreamDecompressor zipDecompressor;
 
         public string ServerIP { get; private set; }
+        public string ServerVersion { get; private set; }
 
-        public DrawingDataDeserializer(string serverIP, IStreamDecompressor zipDecompressor)
+        public DrawingDataDeserializer(string serverIP, string serverVersion, IStreamDecompressor zipDecompressor)
         {
             this.ServerIP = serverIP;
+            this.ServerVersion = serverVersion;
             this.zipDecompressor = zipDecompressor;
         }
         
@@ -56,7 +58,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             streamLength |= (int)((int)Stream[readIndex++] << 8);
             bool compressed = (compression == (byte)'C');
 
-            var deserializer = GetDeserializer(version);
+            var deserializer = GetDeserializer(version, ServerVersion);
             if(deserializer == null)
             {
                 //Ignore drawing data that we don't have a deserializer for
@@ -140,13 +142,13 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             }
         }
 
-        private IDrawingDataDeserializer GetDeserializer(int drawingDataVersion)
+        private IDrawingDataDeserializer GetDeserializer(int drawingDataVersion, string serverVersion)
         {
             switch (drawingDataVersion)
             {
                 case 8: return new DrawingDataDeserializer_Version8();
                 case 19: return new DrawingDataDeserializer_Version19();
-                case 20: return new DrawingDataDeserializer_Version20();
+                case 20: return new DrawingDataDeserializer_Version20(serverVersion);
                 default: return null;
             }
         }

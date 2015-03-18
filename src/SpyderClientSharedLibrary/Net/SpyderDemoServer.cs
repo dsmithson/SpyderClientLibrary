@@ -698,6 +698,12 @@ namespace Spyder.Client.Net
                 response.PixelSpaces.Add(pixelSpace.ID, new DrawingPixelSpace(pixelSpace));
             }
 
+            //Add preview pixelspaces
+            foreach(var previewPixelSpace in data.PreviewPixelSpaces)
+            {
+                response.PreviewPixelSpaceIDs.Add(previewPixelSpace.Key, previewPixelSpace.Value);
+            }
+
             //Add layers
             for (int i = 0; i < layerCount + 2; i++)
             {

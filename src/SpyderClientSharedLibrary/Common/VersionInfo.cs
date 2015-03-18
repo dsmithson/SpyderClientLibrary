@@ -78,6 +78,11 @@ namespace Spyder.Client.Common
             return this.ToString().GetHashCode();
         }
 
+        public string ToShortString()
+        {
+            return string.Format("{0}.{1}.{2}", major, minor, build);
+        }
+
         public override string ToString()
         {
             return string.Format("Version {0}.{1}.{2}", major, minor, build);
