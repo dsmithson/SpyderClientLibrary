@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Spyder.Client.IO;
 using Spyder.Client.IO.Serial;
-using Spyder.Client.Primitives;
+using Knightware.Primitives;
 
 namespace Spyder.Client.Common
 {

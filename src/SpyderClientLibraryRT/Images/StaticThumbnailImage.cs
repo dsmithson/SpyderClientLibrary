@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Spyder.Client.Primitives;
-using Spyder.Client.Diagnostics;
+using Knightware.Primitives;
+using Knightware.Diagnostics;
 
 #if DESKTOP
 using System.Windows.Media.Imaging;

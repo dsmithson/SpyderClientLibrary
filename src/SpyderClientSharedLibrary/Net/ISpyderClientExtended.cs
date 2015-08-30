@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Spyder.Client.Common;
 using Spyder.Client.Net.Notifications;
 using Spyder.Client.Scripting;
-using Spyder.Client.Primitives;
+using Knightware.Primitives;
 
 namespace Spyder.Client.Net
 {

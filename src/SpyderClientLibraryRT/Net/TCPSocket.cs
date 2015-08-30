@@ -1,5 +1,5 @@
-﻿using Spyder.Client.Net.Sockets;
-using Spyder.Client.Diagnostics;
+﻿using Knightware.Net.Sockets;
+using Knightware.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;

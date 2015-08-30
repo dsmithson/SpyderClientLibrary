@@ -1,8 +1,8 @@
-﻿using Spyder.Client.Diagnostics;
-using Spyder.Client.Net;
-using Spyder.Client.Primitives;
+﻿using Knightware.Diagnostics;
+using Knightware.Net;
+using Knightware.Primitives;
 using Spyder.Client.Scripting;
-using Spyder.Client.Threading;
+using Knightware.Threading;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

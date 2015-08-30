@@ -1,4 +1,4 @@
-﻿using Spyder.Client.Diagnostics;
+﻿using Knightware.Diagnostics;
 using Spyder.Client.IO;
 using System;
 using System.Collections.Generic;

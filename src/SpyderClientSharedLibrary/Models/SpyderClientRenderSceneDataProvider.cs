@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Spyder.Client.Common;
-using Spyder.Client.Net;
+using Knightware.Net;
 using Spyder.Client.Net.DrawingData;
-using Spyder.Client.Primitives;
+using Knightware.Primitives;
+using Spyder.Client.Net;
 
 namespace Spyder.Client.Models
 {

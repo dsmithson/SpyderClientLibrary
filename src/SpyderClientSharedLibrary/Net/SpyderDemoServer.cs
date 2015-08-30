@@ -8,8 +8,8 @@ using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
 using Spyder.Client.Net.DrawingData;
 using Spyder.Client.Net.Notifications;
-using Spyder.Client.Threading.Tasks;
-using Spyder.Client.Primitives;
+using Knightware.Threading.Tasks;
+using Knightware.Primitives;
 
 namespace Spyder.Client.Net
 {
@@ -721,8 +721,8 @@ namespace Spyder.Client.Net
             response.Frames.Add(0, new DrawingFrame()
             {
                 FrameID = 0,
-                FrameAOR = new Primitives.Rectangle(0, 0, 2560, 1024),
-                ProgramAOR = new Primitives.Rectangle(0, 0, 2560, 1024),
+                FrameAOR = new Knightware.Primitives.Rectangle(0, 0, 2560, 1024),
+                ProgramAOR = new Knightware.Primitives.Rectangle(0, 0, 2560, 1024),
                 Model = SpyderModels.Spyder_365,
             });
 
@@ -814,7 +814,7 @@ namespace Spyder.Client.Net
                 dkf.PixelSpaceID = pixelSpaceID;
                 dkf.LayerRect = LayerHelpers.GetAbsoluteRectangle(dkf.KeyFrame, ic.AspectRatio, pixelSpace);
                 dkf.CloneRect = LayerHelpers.GetCloneRectangle(dkf.KeyFrame, pixelSpace.Rect, dkf.LayerRect);
-                dkf.AOIRect = new Primitives.Rectangle(0, 0, ic.HActive, ic.VActive);
+                dkf.AOIRect = new Knightware.Primitives.Rectangle(0, 0, ic.HActive, ic.VActive);
                 dkf.HActive = ic.HActive;
                 dkf.VActive = ic.VActive;
             }

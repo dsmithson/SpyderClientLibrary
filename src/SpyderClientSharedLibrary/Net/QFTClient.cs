@@ -1,6 +1,6 @@
-﻿using Spyder.Client.Net.Sockets;
-using Spyder.Client.Diagnostics;
-using Spyder.Client.Threading.Tasks;
+﻿using Knightware.Net.Sockets;
+using Knightware.Diagnostics;
+using Knightware.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.IO;

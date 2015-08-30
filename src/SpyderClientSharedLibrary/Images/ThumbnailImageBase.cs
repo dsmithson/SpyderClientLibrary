@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Spyder.Client.Diagnostics;
-using Spyder.Client.Primitives;
-using Spyder.Client.Threading;
+using Knightware.Diagnostics;
+using Knightware.Primitives;
+using Knightware.Threading;
+using Knightware;
 
 namespace Spyder.Client.Images
 {

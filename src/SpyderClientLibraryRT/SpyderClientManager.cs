@@ -1,4 +1,4 @@
-﻿using Spyder.Client.Net;
+﻿using Knightware.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Spyder.Client.IO;
 using Spyder.Client.Net.Notifications;
 using PCLStorage;
+using Spyder.Client.Net;
 
 namespace Spyder.Client
 {

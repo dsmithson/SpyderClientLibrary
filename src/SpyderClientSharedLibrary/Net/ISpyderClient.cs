@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Spyder.Client.Net.Notifications;
 using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
-using Spyder.Client.Primitives;
+using Knightware.Primitives;
 
 namespace Spyder.Client.Net
 {

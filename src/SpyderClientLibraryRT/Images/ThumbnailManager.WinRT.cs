@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Spyder.Client.Diagnostics;
-using Spyder.Client.Primitives;
+using Knightware.Diagnostics;
+using Knightware.Primitives;
 using Windows.Graphics.Imaging;
 using Windows.UI.Xaml.Media.Imaging;
 

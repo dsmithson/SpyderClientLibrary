@@ -5,10 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PCLStorage;
-using Spyder.Client.Diagnostics;
+using Knightware.Diagnostics;
+using Knightware.Net;
+using Knightware.Primitives;
+using Knightware.Threading;
 using Spyder.Client.Net;
-using Spyder.Client.Primitives;
-using Spyder.Client.Threading;
 
 #if DESKTOP
 using System.Windows.Media.Imaging;

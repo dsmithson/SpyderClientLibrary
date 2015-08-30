@@ -1,4 +1,5 @@
-﻿using Spyder.Client.Net;
+﻿using Knightware.Net;
+using Spyder.Client.Net;
 using System;
 using System.Collections.Generic;
 using System.IO;

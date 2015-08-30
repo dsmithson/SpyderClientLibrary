@@ -1,5 +1,5 @@
 ﻿using Spyder.Client.Common;
-using Spyder.Client.Diagnostics;
+using Knightware.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,8 +10,8 @@ using Spyder.Client.Net.Notifications;
 using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
 using PCLStorage;
-using Spyder.Client.Primitives;
-using Spyder.Client.Net.Sockets;
+using Knightware.Primitives;
+using Knightware.Net.Sockets;
 
 namespace Spyder.Client.Net
 {

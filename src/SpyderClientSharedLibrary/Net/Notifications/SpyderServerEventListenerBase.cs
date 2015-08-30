@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Spyder.Client.Common;
-using Spyder.Client.Diagnostics;
+using Knightware.Diagnostics;
 using Spyder.Client.IO;
 using Spyder.Client.Net.DrawingData.Deserializers;
-using Spyder.Client.Net.Sockets;
+using Knightware.Net.Sockets;
 
 namespace Spyder.Client.Net.Notifications
 {

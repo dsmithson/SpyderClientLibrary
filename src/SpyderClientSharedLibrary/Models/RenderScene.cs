@@ -6,11 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Spyder.Client.Net.DrawingData;
 using Spyder.Client.Scripting;
-using Spyder.Client.Collections;
+using Knightware.Collections;
 using Spyder.Client.Common;
-using Spyder.Client.Primitives;
+using Knightware.Primitives;
 using Spyder.Client.Models.StackupProviders;
-using Spyder.Client.Net;
+using Knightware.Net;
 
 namespace Spyder.Client.Models
 {

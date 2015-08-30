@@ -1,6 +1,6 @@
 ﻿using Spyder.Client.Common;
-using Spyder.Client.Diagnostics;
-using Spyder.Client.Threading;
+using Knightware.Diagnostics;
+using Knightware.Threading;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,7 +13,7 @@ using Spyder.Client.Net.Notifications;
 using System.Diagnostics;
 using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
-using Spyder.Client.Primitives;
+using Knightware.Primitives;
 
 namespace Spyder.Client.Net
 {

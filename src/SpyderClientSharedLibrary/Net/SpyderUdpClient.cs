@@ -4,18 +4,18 @@ using System.Linq;
 using System.Text;
 using Spyder.Client.Common;
 using System.Threading.Tasks;
-using Spyder.Client.Net;
+using Knightware.Net;
 using System.Diagnostics;
-using Spyder.Client.Threading.Tasks;
-using Spyder.Client.Diagnostics;
+using Knightware.Threading.Tasks;
+using Knightware.Diagnostics;
 using System.IO;
-using Spyder.Client.Text;
+using Knightware.Text;
 using Spyder.Client.Net.Notifications;
 using Spyder.Client.IO;
 using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
-using Spyder.Client.Primitives;
-using Spyder.Client.Net.Sockets;
+using Knightware.Primitives;
+using Knightware.Net.Sockets;
 
 namespace Spyder.Client.Net
 {

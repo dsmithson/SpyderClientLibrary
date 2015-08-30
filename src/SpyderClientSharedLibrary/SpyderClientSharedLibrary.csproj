@@ -94,9 +94,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BindableSpyderClientBase.cs" />
-    <Compile Include="Collections\CompositeCollection.cs" />
-    <Compile Include="Collections\Grouping.cs" />
-    <Compile Include="Collections\ListExtensions.cs" />
     <Compile Include="Common\AutoSyncMode.cs" />
     <Compile Include="Common\BackgroundImageBus.cs" />
     <Compile Include="Common\CalcType.cs" />
@@ -117,8 +114,6 @@
     <Compile Include="Common\ServerSettings.cs" />
     <Compile Include="Common\VersionInfo.cs" />
     <Compile Include="DispatcherPropertyChangedBase.cs" />
-    <Compile Include="Drawing\BitmapHelper.cs" />
-    <Compile Include="Drawing\DrawingHelper.cs" />
     <Compile Include="FunctionKeys\AssignStillFunctionKey.cs" />
     <Compile Include="FunctionKeys\FreezeDeviceKey.cs" />
     <Compile Include="FunctionKeys\FreezeLayerKey.cs" />
@@ -199,15 +194,8 @@
     <Compile Include="Net\Notifications\DrawingDataReceivedEventArgs.cs" />
     <Compile Include="Net\Notifications\TraceLogMessageEventArgs.cs" />
     <Compile Include="Net\PixelSpaceMapping.cs" />
-    <Compile Include="Net\Sockets\DataReceivedEventArgs.cs" />
-    <Compile Include="Net\Sockets\IMulticastListener.cs" />
-    <Compile Include="Net\Sockets\ISocket.cs" />
-    <Compile Include="Net\Sockets\IStreamSocket.cs" />
-    <Compile Include="Net\Sockets\IUDPSocket.cs" />
     <Compile Include="Net\SpyderClient.cs" />
-    <Compile Include="Primitives\Size.cs" />
-    <Compile Include="Primitives\Point.cs" />
-    <Compile Include="Primitives\Thickness.cs" />
+    <Compile Include="PropertyChangedBase.cs" />
     <Compile Include="Scripting\CueTrigger.cs" />
     <Compile Include="Scripting\InputArrayElement.cs" />
     <Compile Include="Scripting\JumpType.cs" />
@@ -224,9 +212,6 @@
     <Compile Include="Common\TextureTileMode.cs" />
     <Compile Include="Common\TimeCode.cs" />
     <Compile Include="Common\Treatment.cs" />
-    <Compile Include="Diagnostics\TraceMessage.cs" />
-    <Compile Include="Diagnostics\TraceQueue.cs" />
-    <Compile Include="Diagnostics\TracingLevel.cs" />
     <Compile Include="Net\BindableSpyderClient.cs" />
     <Compile Include="Net\DrawingData\DataType.cs" />
     <Compile Include="Net\DrawingData\Deserializers\DrawingDataDeserializer.cs" />
@@ -249,27 +234,12 @@
     <Compile Include="Net\SpyderDemoClient.cs" />
     <Compile Include="Net\SpyderDemoServer.cs" />
     <Compile Include="Net\Notifications\SpyderServerEventListenerBase.cs" />
-    <Compile Include="Primitives\Color.cs" />
-    <Compile Include="Primitives\Rectangle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PropertyChangedBase.cs" />
     <Compile Include="Scripting\ScriptElement.cs" />
     <Compile Include="Scripting\SlideTransitionType.cs" />
     <Compile Include="Scripting\SourceElement.cs" />
     <Compile Include="Scripting\StillElement.cs" />
     <Compile Include="SpyderClientManagerBase.cs" />
-    <Compile Include="Text\HexUtil.cs" />
-    <Compile Include="Threading\Dispatcher.cs" />
-    <Compile Include="Threading\Tasks\AsyncAutoResetEvent.cs" />
-    <Compile Include="Threading\Tasks\AsyncListProcessor.cs" />
-    <Compile Include="Threading\Tasks\AsyncListProcessorItemEventArgs.cs" />
-    <Compile Include="Threading\Tasks\AsyncLock.cs" />
-    <Compile Include="Threading\Tasks\AsyncSemaphore.cs" />
-    <Compile Include="Threading\Tasks\AutoResetWorker.cs" />
-    <Compile Include="Threading\Tasks\RequestDeferral.cs" />
-    <Compile Include="Threading\Tasks\TaskExtensions.cs" />
-    <Compile Include="Threading\Timer.cs" />
-    <Compile Include="TimedCacheWeakReference.cs" />
     <Compile Include="ViewModels\Drawing\ViewStackProvider.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -283,6 +253,12 @@
     <Reference Include="PCLStorage.Abstractions">
       <HintPath>..\packages\PCLStorage.1.0.2\lib\portable-net45+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.Abstractions.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KnightwareCore\KnightwareCore.csproj">
+      <Project>{bb51a3e4-136e-409e-ad6a-b7c38c9c7c37}</Project>
+      <Name>KnightwareCore</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

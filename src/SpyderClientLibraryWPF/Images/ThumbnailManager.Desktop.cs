@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
-using Spyder.Client.Diagnostics;
+using Knightware.Diagnostics;
 
 namespace Spyder.Client.Images
 {
@@ -29,8 +29,8 @@ namespace Spyder.Client.Images
 
                             return Task.FromResult(new ProcessedImageResult()
                                 {
-                                    NativeSize = new Primitives.Size(native.Width, native.Height),
-                                    ScaledSize = new Primitives.Size(scaled.Width, scaled.Height),
+                                    NativeSize = new Knightware.Primitives.Size(native.Width, native.Height),
+                                    ScaledSize = new Knightware.Primitives.Size(scaled.Width, scaled.Height),
                                     ScaledStream = scaledStream
                                 });
                     }

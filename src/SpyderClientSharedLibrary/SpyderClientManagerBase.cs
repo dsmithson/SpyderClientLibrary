@@ -1,5 +1,5 @@
-﻿using Spyder.Client.Diagnostics;
-using Spyder.Client.Net;
+﻿using Knightware.Diagnostics;
+using Knightware.Net;
 using Spyder.Client.Net.Notifications;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Spyder.Client.IO;
 using Spyder.Client.Common;
+using Spyder.Client.Net;
 
 namespace Spyder.Client
 {
@@ -31,6 +32,33 @@ namespace Spyder.Client
             if (ServerListChanged != null)
                 ServerListChanged(this, e);
         }
+
+        public event DrawingDataReceivedHandler DrawingDataReceived;
+        protected void OnDrawingDataReceived(DrawingDataReceivedEventArgs e)
+        {
+            if(DrawingDataReceived != null)
+                DrawingDataReceived(this, e);
+        }
+
+        /// <summary>
+        /// Determines if the DrawingDataChanged event should be fired from this class.  Setting to true will cause this
+        /// </summary>
+        public bool RaiseDrawingDataChanged
+        {
+            get { return raiseDrawingDataChanged; }
+            set
+            {
+                if (raiseDrawingDataChanged != value)
+                {
+                    if (IsRunning)
+                    {
+                        throw new InvalidOperationException("Cannot change RaiseDrawingDataChanged while SpyderClientManager is running");
+                    }
+                    raiseDrawingDataChanged = value;
+                }
+            }
+        }
+        private bool raiseDrawingDataChanged;
 
         public bool IsRunning { get; private set; }
         
@@ -57,6 +85,18 @@ namespace Spyder.Client
             IsRunning = false;
 
             serverEventListener.ServerAnnounceMessageReceived -= serverEventListener_ServerAnnounceMessageReceived;
+
+            lock(spyderServers)
+            {
+                foreach (var bindableClient in spyderServers)
+                {
+                    bindableClient.DrawingDataReceived -= BindableClient_DrawingDataReceived;
+                    bindableClient.Shutdown();
+                }
+
+                spyderServers.Clear();
+                spyderServersInitializing.Clear();
+            }
         }
 
         public async Task<bool> AddDemoServer(SystemData serverData)
@@ -136,6 +176,10 @@ namespace Spyder.Client
                             spyderServersInitializing.Remove(serverInfo.Address);
                         }
 
+                        if (raiseDrawingDataChanged)
+                        {
+                            bindableClient.DrawingDataReceived += BindableClient_DrawingDataReceived;
+                        }
                         OnServerListChanged(EventArgs.Empty);
                     }
                     else
@@ -145,7 +189,13 @@ namespace Spyder.Client
                 }
             }
         }
-        
+
+        private void BindableClient_DrawingDataReceived(object sender, DrawingDataReceivedEventArgs e)
+        {
+            //Bubble up DrawingData received event
+            OnDrawingDataReceived(e);
+        }
+
         private Task<T> InvokeAsync<T>(Func<T> func)
         {
             if (context == null)

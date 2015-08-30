@@ -1,16 +1,17 @@
 ﻿using PCLStorage;
-using Spyder.Client.Net;
+using Knightware.Net;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Spyder.Client.Diagnostics;
-using Spyder.Client.Primitives;
+using Knightware.Diagnostics;
+using Knightware.Primitives;
 using System.Xml.Linq;
 using System.Xml;
-using Spyder.Client.Net.Sockets;
+using Knightware.Net.Sockets;
+using Spyder.Client.Net;
 
 namespace Spyder.Client.Images
 {

@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 using Spyder.Client.Net.Notifications;
 using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
-using Spyder.Client.Primitives;
-using Spyder.Client.Diagnostics;
+using Knightware.Primitives;
+using Knightware.Diagnostics;
 
 namespace Spyder.Client.Net
 {

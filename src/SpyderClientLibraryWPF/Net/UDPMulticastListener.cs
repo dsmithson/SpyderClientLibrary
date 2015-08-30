@@ -5,8 +5,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-using Spyder.Client.Diagnostics;
-using Spyder.Client.Net.Sockets;
+using Knightware.Diagnostics;
+using Knightware.Net.Sockets;
 
 namespace Spyder.Client.Net
 {

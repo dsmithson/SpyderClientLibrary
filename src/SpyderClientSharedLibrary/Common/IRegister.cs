@@ -7,7 +7,7 @@ namespace Spyder.Client.Common
         int LookupID { get; set; }
         string Name { get; set; }
         int PageIndex { get; }
-        Spyder.Client.Primitives.Color RegisterColor { get; set; }
+        Knightware.Primitives.Color RegisterColor { get; set; }
         bool RegisterColorDefined { get; set; }
         int RegisterID { get; set; }
         RegisterType Type { get; set; }

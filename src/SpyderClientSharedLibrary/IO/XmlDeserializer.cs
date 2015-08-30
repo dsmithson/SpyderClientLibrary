@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Spyder.Client.Diagnostics;
-using Spyder.Client.Primitives;
+using Knightware.Diagnostics;
+using Knightware.Primitives;
 using Spyder.Client.Common;
 
 namespace Spyder.Client.IO

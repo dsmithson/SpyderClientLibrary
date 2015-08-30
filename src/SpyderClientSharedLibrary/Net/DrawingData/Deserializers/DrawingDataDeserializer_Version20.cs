@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Spyder.Client.IO;
-using Spyder.Client.Primitives;
+using Knightware.Primitives;
 
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
