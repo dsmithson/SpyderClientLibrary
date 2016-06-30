@@ -1,5 +1,8 @@
 # SpyderClientLibrary
 
+![Build Status]
+(https://ci.appveyor.com/api/projects/status/5xhce5xxfpphcsv8/branch/master?svg=true)
+
 Provides a modern, fully async compatible .Net Portable Class Library for creating applications and utilities targeting the 
 [Spyder video processor](http://www.vistasystems.net/video-processors-and-matrix-switchers/video-processors/pages/default.aspx) 
 from Desktop (.Net 4.5 or later), Windows RT Store applications (Windows 8.1 or later), and Windows Phone 8.1.
