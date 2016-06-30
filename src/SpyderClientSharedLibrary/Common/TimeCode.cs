@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Spyder.Client.Common
 {
-    public class TimeCode : PropertyChangedBase
+    public class TimeCode : PropertyChangedBase, IEquatable<TimeCode>
     {
         private int hours;
         public int Hours
@@ -140,6 +140,57 @@ namespace Spyder.Client.Common
         {
             this.FieldRate = rate;
             Set(frames);
+        }
+        
+        public bool Equals(TimeCode other)
+        {
+            if(other == null)
+                return false;
+            else if(this.hours != other.hours)
+                return false;
+            else if(this.minutes != other.minutes)
+                return false;
+            else if(this.seconds != other.seconds)
+                return false;
+            else if(frames != other.frames)
+                return false;
+            else if(this.fieldRate != other.fieldRate)
+                return false;
+            else
+                return true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj != null)
+                return false;
+
+            var timeCode = obj as TimeCode;
+            if (timeCode == null)
+                return false;
+            else
+                return this.Equals(timeCode);
+        }
+
+        public override int GetHashCode()
+        {
+            return (((((int)fieldRate * 251) + hours) * 251 + minutes) * 251 + seconds) * 251 + frames;
+        }
+
+        public static bool operator ==(TimeCode tc1, TimeCode tc2)
+        {
+            if (((object)tc1 == null) || ((object)tc2) == null)
+                return Object.Equals(tc1, tc2);
+
+            return tc1.Equals(tc2);
+        }
+
+        public static bool operator !=(TimeCode tc1, TimeCode tc2)
+        {
+            if (((object)tc1 == null) || ((object)tc2) == null)
+                return !Object.Equals(tc1, tc2);
+
+            return !tc1.Equals(tc2);
         }
     }
 }

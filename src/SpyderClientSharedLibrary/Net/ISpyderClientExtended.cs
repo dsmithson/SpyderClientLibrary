@@ -7,6 +7,7 @@ using Spyder.Client.Common;
 using Spyder.Client.Net.Notifications;
 using Spyder.Client.Scripting;
 using Knightware.Primitives;
+using System.IO;
 
 namespace Spyder.Client.Net
 {
@@ -19,22 +20,29 @@ namespace Spyder.Client.Net
 
         event TraceLogMessageHandler TraceLogMessageReceived;
 
+        event DataObjectChangedHandler DataObjectChanged;
+
+        /// <summary>
+        /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
+        /// </summary>
+        TimeSpan DrawingDataThrottleInterval { get; set; }
+
         Task<VersionInfo> GetVersionInfo();
+
+        Task<bool> SetImageFileStream(string fileName, Stream fileStream);
 
         Task<List<Shape>> GetShapes();
         Task<Shape> GetShape(string shapeFileName);
+        Task<bool> SetShape(Shape shape);
 
         Task<List<string>> GetShapeFileNames();
 
         Task<ServerSettings> GetServerSettings();
 
-        Task<IEnumerable<Script>> GetScripts();
+        Task<List<Script>> GetScripts();
         Task<Script> GetScript(int scriptID);
-
-        Task<IEnumerable<PixelSpace>> GetPixelSpaces();
-        Task<PixelSpace> GetPixelSpace(int PixelSpaceID);
-
-        Task<IEnumerable<InputConfig>> GetInputConfigs();
+        
+        Task<List<InputConfig>> GetInputConfigs();
         Task<InputConfig> GetInputConfig(int InputConfigID);
         Task<InputConfig> GetInputConfig(string sourceName);
 

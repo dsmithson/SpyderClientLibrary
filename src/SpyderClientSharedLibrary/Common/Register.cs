@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Spyder.Client.Common
 {
-    public class Register : PropertyChangedBase, Spyder.Client.Common.IRegister
+    public class Register : PropertyChangedBase, Spyder.Client.Common.IRegister, IEquatable<Register>
     {
         /// <summary>
         /// Type of Register instance
@@ -125,6 +125,55 @@ namespace Spyder.Client.Common
             destination.RegisterColorDefined = source.RegisterColorDefined;
             destination.LookupID = source.LookupID;
             destination.Type = source.Type;
+        }
+
+        public bool Equals(Register other)
+        {
+            if(other == null)
+                return false;
+            else if(this.type != other.type)
+                return false;
+            else if(this.name != other.name)
+                return false;
+            else if(this.registerID != other.registerID)
+                return false;
+            else if(this.lookupID != other.lookupID)
+                return false;
+            else
+                return true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj != null)
+                return false;
+
+            var register = obj as Register;
+            if (register == null)
+                return false;
+            else
+                return this.Equals(register);
+        }
+
+        public override int GetHashCode()
+        {
+            return (((int)Type * 251) + RegisterID) * 251 + LookupID;
+        }
+
+        public static bool operator ==(Register register1, Register register2)
+        {
+            if (((object)register1 == null) || ((object)register2) == null)
+                return object.Equals(register1, register2);
+
+            return register1.Equals(register2);
+        }
+
+        public static bool operator !=(Register register1, Register register2)
+        {
+            if (((object)register1 == null) || ((object)register2) == null)
+                return !object.Equals(register1, register2);
+
+            return !register1.Equals(register2);
         }
     }
 }

@@ -8,25 +8,38 @@ using Knightware.Diagnostics;
 using Spyder.Client.IO;
 using Spyder.Client.Net.DrawingData.Deserializers;
 using Knightware.Net.Sockets;
+using Spyder.Client.Net.DrawingData;
+using Knightware.IO;
 
 namespace Spyder.Client.Net.Notifications
 {
     public delegate void ServerUpdateMessageHandler(object sender, SpyderServerAnnounceInformation serverInfo);
     public delegate void DrawingDataReceivedHandler(object sender, DrawingDataReceivedEventArgs e);
     public delegate void TraceLogMessageHandler(object sender, TraceLogMessageEventArgs e);
+    public delegate void DataObjectChangedHandler(object sender, DataObjectChangedEventArgs e);
 
     /// <summary>
     /// Listens for UDP multicast / broadcast messages from Spyder servers
     /// </summary>
     public class SpyderServerEventListenerBase
     {
+        private class SpyderServerListenerState
+        {
+            public DrawingDataDeserializer Deserializer { get; set; }
+            public SpyderServerAnnounceInformation ServerAnnounceInfo { get; set; }
+            public DateTime? LastDrawingDataEventRaisedTime { get; set; }
+        }
+
         public const string multicastIP = "239.192.25.25";
         public const int multicastPort = 11118;
-
         private IMulticastListener listener;
         private Func<IGZipStreamDecompressor> getDrawingDataDecompressor;
-        private Dictionary<string, DrawingDataDeserializer> drawingDataDeserializers;
-        private Dictionary<string, SpyderServerAnnounceInformation> cachedServerInfo;
+        private Dictionary<string, SpyderServerListenerState> serverInfoCache;
+
+        /// <summary>
+        /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
+        /// </summary>
+        public TimeSpan DrawingDataThrottleInterval { get; set; } = TimeSpan.Zero;
 
         public bool IsRunning { get; private set; }
 
@@ -36,33 +49,33 @@ namespace Spyder.Client.Net.Notifications
             this.getDrawingDataDecompressor = getDrawingDataDecompressor;
         }
 
-        public async Task<bool> Startup()
+        public async Task<bool> StartupAsync()
         {
-            Shutdown();
+            await ShutdownAsync();
             IsRunning = true;
 
-            drawingDataDeserializers = new Dictionary<string, DrawingDataDeserializer>();
-            cachedServerInfo = new Dictionary<string, SpyderServerAnnounceInformation>();
+            serverInfoCache = new Dictionary<string, SpyderServerListenerState>();
 
             listener.DataReceived += listener_DataReceived;
-            await listener.Startup(multicastIP, multicastPort);
+            await listener.StartupAsync(multicastIP, multicastPort);
 
             return true;
         }
 
-        public void Shutdown()
+        public async Task ShutdownAsync()
         {
             listener.DataReceived -= listener_DataReceived;
-            listener.Shutdown();
+            await listener.ShutdownAsync();
 
-            if (drawingDataDeserializers != null)
+            if (serverInfoCache != null)
             {
-                foreach (var deserializer in drawingDataDeserializers.Values)
+                foreach (var serverInfo in serverInfoCache.Values)
                 {
-                    deserializer.DrawingDataDeserialized -= deserializer_DrawingDataDeserialized;
+                    if(serverInfo.Deserializer != null)
+                        serverInfo.Deserializer.DrawingDataDeserialized -= deserializer_DrawingDataDeserialized;
                 }
-                drawingDataDeserializers = null;
             }
+            serverInfoCache = null;
         }
 
         private void listener_DataReceived(object sender, DataReceivedEventArgs e)
@@ -105,46 +118,76 @@ namespace Spyder.Client.Net.Notifications
                         }
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while trying to parse hostname: {1}", ex.GetType().Name, ex.Message);
                 }
 
                 //Write to local cache
-                if (cachedServerInfo.ContainsKey(server.Address))
-                    cachedServerInfo[server.Address] = server;
+                if(serverInfoCache.ContainsKey(server.Address))
+                    serverInfoCache[server.Address].ServerAnnounceInfo = server;
                 else
-                    cachedServerInfo.Add(server.Address, server);
+                    serverInfoCache.Add(server.Address, new SpyderServerListenerState() { ServerAnnounceInfo = server });
 
                 OnServerAnnounceMessageReceived(server);
+            }
+            else if (eventType.Value == ServerEventType.DataObjectChanged)
+            {
+                DataType changeTypes = 0;
+                changeTypes |= (DataType)(data[12]);
+                changeTypes |= (DataType)(data[13] << 8);
+                changeTypes |= (DataType)(data[14] << 16);
+                changeTypes |= (DataType)(data[15] << 24);
+
+                int dataObjectVersion = 0;
+                dataObjectVersion |= (data[16]);
+                dataObjectVersion |= (data[17] << 8);
+                dataObjectVersion |= (data[18] << 16);
+                dataObjectVersion |= (data[19] << 24);
+
+                var dataObjectChangedArgs = new DataObjectChangedEventArgs(e.SenderAddress, dataObjectVersion, changeTypes);
+                OnDataObjectChanged(dataObjectChangedArgs);
             }
             else if (eventType.Value == ServerEventType.DrawingDataChanged)
             {
                 //Ensure we have the server's version info in cache before we start trying to deserialize it's data
-                var serverInfo = (cachedServerInfo.ContainsKey(e.SenderAddress) ? cachedServerInfo[e.SenderAddress] : null);
+                var serverInfo = (serverInfoCache.ContainsKey(e.SenderAddress) ? serverInfoCache[e.SenderAddress] : null);
                 if (serverInfo != null)
                 {
-                    DrawingDataDeserializer deserializer;
-                    if (!drawingDataDeserializers.ContainsKey(e.SenderAddress))
+                    bool skipProcesing = false;
+                    if (this.DrawingDataThrottleInterval != TimeSpan.Zero && serverInfo.LastDrawingDataEventRaisedTime != null)
                     {
-                        deserializer = new DrawingDataDeserializer(e.SenderAddress, serverInfo.Version.ToShortString(), getDrawingDataDecompressor());
-                        deserializer.DrawingDataDeserialized += deserializer_DrawingDataDeserialized;
-                        drawingDataDeserializers.Add(e.SenderAddress, deserializer);
-                    }
-                    else
-                    {
-                        deserializer = drawingDataDeserializers[e.SenderAddress];
+                        //There is a throttle specified for our max presentation interval - check to see if enough time has passed since the last event raised
+                        DateTime lastRaiseDate = serverInfo.LastDrawingDataEventRaisedTime.Value;
+                        DateTime nextRaiseDate = lastRaiseDate.Add(this.DrawingDataThrottleInterval);
+                        if (nextRaiseDate > DateTime.UtcNow)
+                            skipProcesing = true;
                     }
 
-                    //Feed the data to the deserializer
-                    try
+                    if (!skipProcesing)
                     {
-                        deserializer.Read(data, 12);
-                    }
-                    catch (Exception ex)
-                    {
-                        TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while deserializing drawing data: {1}",
-                            ex.GetType().Name, ex.Message);
+                        DrawingDataDeserializer deserializer;
+                        if (serverInfo.Deserializer == null)
+                        {
+                            deserializer = new DrawingDataDeserializer(e.SenderAddress, serverInfo.ServerAnnounceInfo.Version.ToShortString(), getDrawingDataDecompressor());
+                            deserializer.DrawingDataDeserialized += deserializer_DrawingDataDeserialized;
+                            serverInfo.Deserializer = deserializer;
+                        }
+                        else
+                        {
+                            deserializer = serverInfo.Deserializer;
+                        }
+
+                        //Feed the data to the deserializer
+                        try
+                        {
+                            deserializer.Read(data, 12);
+                        }
+                        catch (Exception ex)
+                        {
+                            TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while deserializing drawing data: {1}",
+                                ex.GetType().Name, ex.Message);
+                        }
                     }
                 }
             }
@@ -180,6 +223,16 @@ namespace Spyder.Client.Net.Notifications
         void deserializer_DrawingDataDeserialized(object sender, DrawingData.DrawingData drawingData)
         {
             var deserializer = (DrawingDataDeserializer)sender;
+
+            //Record the last date of DrawingDataRaised
+            if (serverInfoCache.ContainsKey(deserializer.ServerIP))
+            {
+                var serverInfo = serverInfoCache[deserializer.ServerIP];
+                if (serverInfo != null)
+                    serverInfo.LastDrawingDataEventRaisedTime = DateTime.UtcNow;
+            }
+
+            //Raise the DrawingDataReceived event
             OnDrawingDataReceived(new DrawingDataReceivedEventArgs(deserializer.ServerIP, drawingData));
         }
 
@@ -214,6 +267,13 @@ namespace Spyder.Client.Net.Notifications
         {
             if (DrawingDataReceived != null)
                 DrawingDataReceived(this, e);
+        }
+
+        public event DataObjectChangedHandler DataObjectChanged;
+        protected void OnDataObjectChanged(DataObjectChangedEventArgs e)
+        {
+            if(DataObjectChanged != null)
+                DataObjectChanged(this, e);
         }
 
         public event TraceLogMessageHandler TraceLogMessageReceived;

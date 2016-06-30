@@ -185,7 +185,6 @@ namespace Spyder.Client.Images
         /// </summary>
         /// <param name="size">Size of the target image</param>
         /// <param name="image">Resulting image to store</param>
-        /// <param name="nativeResolution">Native resolution of the image being set</param>
         public void SetImage(ImageSize size, T image)
         {
             try

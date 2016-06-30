@@ -10,6 +10,7 @@ using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
 using Knightware.Primitives;
 using Knightware.Diagnostics;
+using Spyder.Client.Net.DrawingData;
 
 namespace Spyder.Client.Net
 {
@@ -32,6 +33,11 @@ namespace Spyder.Client.Net
             set { hostName = value; }
         }
 
+        /// <summary>
+        /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
+        /// </summary>
+        public TimeSpan DrawingDataThrottleInterval { get; set; } = TimeSpan.Zero;
+
         public event DrawingDataReceivedHandler DrawingDataReceived;
         protected void OnDrawingDataReceived(DrawingDataReceivedEventArgs e)
         {
@@ -40,6 +46,13 @@ namespace Spyder.Client.Net
         }
 
         public event TraceLogMessageHandler TraceLogMessageReceived;
+        public event DataObjectChangedHandler DataObjectChanged;
+        protected void OnDataObjectChanged(DataObjectChangedEventArgs e)
+        {
+            if(DataObjectChanged != null)
+                DataObjectChanged(this, e);
+        }
+
         protected void OnTraceLogMessageReceived(TraceLogMessageEventArgs e)
         {
             if (TraceLogMessageReceived != null)
@@ -51,9 +64,9 @@ namespace Spyder.Client.Net
             this.data = data;
         }
 
-        public Task<bool> Startup()
+        public async Task<bool> StartupAsync()
         {
-            Shutdown();
+            await ShutdownAsync();
             IsRunning = true;
 
             OnTraceLogMessageReceived(new TraceLogMessageEventArgs(ServerIP, new TraceMessage() { Sender = this, Message = "Starting Demo Server/Client", LogTime = DateTime.Now, Level = TracingLevel.Information }));
@@ -61,10 +74,10 @@ namespace Spyder.Client.Net
             server = new SpyderDemoServer(data);
             server.DrawingDataReceived += server_DrawingDataReceived;
 
-            return Task.FromResult(true);
+            return true;
         }
 
-        public void Shutdown()
+        public Task ShutdownAsync()
         {
             IsRunning = false;
 
@@ -75,6 +88,8 @@ namespace Spyder.Client.Net
                 server.DrawingDataReceived -= server_DrawingDataReceived;
                 server = null;
             }
+
+            return Task.FromResult(true);
         }
 
         void server_DrawingDataReceived(object sender, DrawingDataReceivedEventArgs e)
@@ -103,23 +118,28 @@ namespace Spyder.Client.Net
             return Task.FromResult<Stream>(null);
         }
 
-        public Task<IEnumerable<RegisterPage>> GetRegisterPages(RegisterType type)
+        public Task<bool> SetImageFileStream(string fileName, Stream fileStream)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<List<RegisterPage>> GetRegisterPages(RegisterType type)
         {
             return Task.FromResult(server.GetRegisterPages(type));
         }
 
-        public Task<IEnumerable<IRegister>> GetRegisters(RegisterType type)
+        public Task<List<IRegister>> GetRegisters(RegisterType type)
         {
-            return Task.FromResult<IEnumerable<IRegister>>(server.GetRegisters(type).ToList());
+            return Task.FromResult<List<IRegister>>(server.GetRegisters(type).ToList());
         }
         public Task<IRegister> GetRegister(RegisterType type, int registerID)
         {
             return Task.FromResult(server.GetRegister(type, registerID));
         }
 
-        public Task<IEnumerable<Source>> GetSources()
+        public Task<List<Source>> GetSources()
         {
-            return Task.FromResult<IEnumerable<Source>>(server.GetRegisters(RegisterType.Source).Cast<Source>());
+            return Task.FromResult<List<Source>>(server.GetRegisters(RegisterType.Source).Cast<Source>().ToList());
         }
         public Task<Source> GetSource(int sourceRegisterID)
         {
@@ -135,9 +155,9 @@ namespace Spyder.Client.Net
             return Task.FromResult(server.GetSource(sourceName));
         }
 
-        public Task<IEnumerable<CommandKey>> GetCommandKeys()
+        public Task<List<CommandKey>> GetCommandKeys()
         {
-            return Task.FromResult<IEnumerable<CommandKey>>(server.GetRegisters(RegisterType.CommandKey).Cast<CommandKey>());
+            return Task.FromResult<List<CommandKey>>(server.GetRegisters(RegisterType.CommandKey).Cast<CommandKey>().ToList());
         }
         public Task<CommandKey> GetCommandKey(int commandKeyRegisterID)
         {
@@ -163,14 +183,14 @@ namespace Spyder.Client.Net
             return Task.FromResult(-1);
         }
 
-        public Task<IEnumerable<Script>> GetScripts()
+        public Task<List<Script>> GetScripts()
         {
-            return Task.FromResult<IEnumerable<Script>>(server.GetScripts());
+            return Task.FromResult<List<Script>>(server.GetScripts());
         }
 
-        public Task<IEnumerable<Treatment>> GetTreatments()
+        public Task<List<Treatment>> GetTreatments()
         {
-            return Task.FromResult<IEnumerable<Treatment>>(server.GetRegisters(RegisterType.Treatment).Cast<Treatment>());
+            return Task.FromResult<List<Treatment>>(server.GetRegisters(RegisterType.Treatment).Cast<Treatment>().ToList());
         }
         public Task<Treatment> GetTreatment(int treatmentRegisterID)
         {
@@ -181,9 +201,9 @@ namespace Spyder.Client.Net
             return Task.FromResult<Treatment>(server.GetListItem<Treatment>(treatmentRegister));
         }
 
-        public Task<IEnumerable<FunctionKey>> GetFunctionKeys()
+        public Task<List<FunctionKey>> GetFunctionKeys()
         {
-            return Task.FromResult<IEnumerable<FunctionKey>>(server.GetRegisters(RegisterType.FunctionKey).Cast<FunctionKey>());
+            return Task.FromResult<List<FunctionKey>>(server.GetRegisters(RegisterType.FunctionKey).Cast<FunctionKey>().ToList());
         }
         public Task<FunctionKey> GetFunctionKey(int functionKeyRegisterID)
         {
@@ -194,9 +214,9 @@ namespace Spyder.Client.Net
             return Task.FromResult(server.GetListItem<FunctionKey>(functionKeyRegister));
         }
 
-        public Task<IEnumerable<Still>> GetStills()
+        public Task<List<Still>> GetStills()
         {
-            return Task.FromResult<IEnumerable<Still>>(server.GetRegisters(RegisterType.Still).Cast<Still>());
+            return Task.FromResult<List<Still>>(server.GetRegisters(RegisterType.Still).Cast<Still>().ToList());
         }
         public Task<Still> GetStill(int stillRegisterID)
         {
@@ -207,9 +227,9 @@ namespace Spyder.Client.Net
             return Task.FromResult(server.GetListItem<Still>(stillRegister));
         }
 
-        public Task<IEnumerable<PlayItem>> GetPlayItems()
+        public Task<List<PlayItem>> GetPlayItems()
         {
-            return Task.FromResult<IEnumerable<PlayItem>>(server.GetRegisters(RegisterType.PlayItem).Cast<PlayItem>());
+            return Task.FromResult<List<PlayItem>>(server.GetRegisters(RegisterType.PlayItem).Cast<PlayItem>().ToList());
         }
         public Task<PlayItem> GetPlayItem(int playItemRegisterID)
         {
@@ -220,7 +240,7 @@ namespace Spyder.Client.Net
             return Task.FromResult(server.GetListItem<PlayItem>(playItemRegister));
         }
 
-        public Task<IEnumerable<PixelSpace>> GetPixelSpaces()
+        public Task<List<PixelSpace>> GetPixelSpaces()
         {
             return Task.FromResult(server.GetPixelSpaces());
         }
@@ -230,7 +250,7 @@ namespace Spyder.Client.Net
             return Task.FromResult(server.GetPixelSpace(pixelSpaceID));
         }
 
-        public Task<IEnumerable<InputConfig>> GetInputConfigs()
+        public Task<List<InputConfig>> GetInputConfigs()
         {
             return Task.FromResult(server.GetInputConfigs());
         }
@@ -277,6 +297,11 @@ namespace Spyder.Client.Net
             return Task.FromResult(server.GetShape(shapeFileName));
         }
 
+        public Task<bool> SetShape(Shape shape)
+        {
+            return Task.FromResult(server.SetShape(shape));
+        }
+
         public Task<List<string>> GetShapeFileNames()
         {
             return Task.FromResult(server.GetShapeFileNames());
@@ -289,7 +314,7 @@ namespace Spyder.Client.Net
         
         #region Layer Interaction
 
-        public Task<int> RequestLayerCount()
+        public Task<int> GetLayerCount()
         {
             return Task.FromResult(server.RequestLayerCount());
         }
@@ -490,6 +515,76 @@ namespace Spyder.Client.Net
 
         #endregion
 
+
+        #region Output Configuration
+
+        public Task<bool> FreezeOutput(params int[] outputIDs)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> UnFreezeOutput(params int[] outputIDs)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SaveOutputConfiguration(int outputID)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetOutputBlend(int outputID, BlendEdge edge, bool enabled, int blendSize, BlendMode blendMode, float curve1, float curve2)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ClearOutputBlend(int outputID, BlendEdge edge)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> RotateOutput(int outputID, RotationMode mode)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetOutputModeToOpMon(int outputID, int pixelSpaceID)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetOutputModeToScaled(int outputID, int pixelSpaceID)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetOutputModeToSourceMon(int outputID)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetOutputFormat(int outputID, int hActive, int vActive, float refreshRate, bool interlaced, bool useReducedBlanking)
+        {
+            return Task.FromResult(true);
+        }
+
+        #endregion
+
         #region PixelSpace Interaction
 
         public Task<bool> MixBackground(int duration)
@@ -505,16 +600,6 @@ namespace Spyder.Client.Net
         public Task<bool> LoadBackgroundImage(int pixelSpaceID, BackgroundImageBus bus, string fileName)
         {
             return server.LoadBackgroundImage(pixelSpaceID, bus, fileName);
-        }
-
-        public Task<PixelSpace> RequestPixelSpace(int pixelSpaceID)
-        {
-            return Task.FromResult(server.RequestPixelSpace(pixelSpaceID));
-        }
-
-        public Task<List<PixelSpace>> RequestPixelSpaces()
-        {
-            return Task.FromResult(server.RequestPixelSpaces());
         }
 
         #endregion

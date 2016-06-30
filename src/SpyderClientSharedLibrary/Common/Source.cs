@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Spyder.Client.Common
 {
-    public class Source : Register
+    public class Source : Register, IEquatable<Source>
     {
         private int routerID;
         public int RouterID
@@ -129,6 +129,61 @@ namespace Spyder.Client.Common
                 this.Thumbnail = myCopyFrom.Thumbnail;
                 this.LinearKeySource = myCopyFrom.LinearKeySource;
             }
+        }
+
+        public bool Equals(Source other)
+        {
+            if(other == null)
+                return false;
+            else if(this.routerID != other.routerID)
+                return false;
+            else if(this.routerInput != other.routerInput)
+                return false;
+            else if(this.inputConfigID != other.inputConfigID)
+                return false;
+            else if(this.preferredTreatmentID != other.preferredTreatmentID)
+                return false;
+            else if(this.preferredLayerID != other.preferredLayerID)
+                return false;
+            else if(this.thumbnail != other.thumbnail)
+                return false;
+            else if(this.linearKeySource != other.linearKeySource)
+                return false;
+            else
+                return base.Equals(other);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(obj == null)
+                return false;
+
+            Source source = obj as Source;
+            if(source == null)
+                return false;
+            else
+                return this.Equals(source);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public static bool operator ==(Source source1, Source source2)
+        {
+            if(((object)source1 == null) || ((object)source2) == null)
+                return Object.Equals(source1, source2);
+
+            return source1.Equals(source2);
+        }
+
+        public static bool operator !=(Source source1, Source source2)
+        {
+            if (((object)source1 == null) || ((object)source2) == null)
+                return !Object.Equals(source1, source2);
+
+            return !source1.Equals(source2);
         }
     }
 }

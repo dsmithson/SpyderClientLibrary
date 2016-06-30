@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Spyder.Client.Common
 {
-    public class KeyFrame : PropertyChangedBase
+    public class KeyFrame : PropertyChangedBase, IEquatable<KeyFrame>
     {
         private float tension;
         public float Tension
@@ -736,66 +736,94 @@ namespace Spyder.Client.Common
             BorderShapeFile = copyFrom.BorderShapeFile;
         }
 
-        public override bool Equals(object obj)
+        public override int GetHashCode()
         {
-            var copyFrom = obj as KeyFrame;
-            if (copyFrom == null)
+            //TODO:  Better hash code needed (maybe more object properties included)?
+            return (((int)(hPosition * 10000) * 251) + ((int)vPosition * 1000) * 251) + width;
+        }
+
+        public bool Equals(KeyFrame compare)
+        {
+            if (compare == null)
                 return false;
 
-            if (this.Tension != copyFrom.Tension) return false;
-            if (this.Bias != copyFrom.Bias) return false;
-            if (this.Continuity != copyFrom.Continuity) return false;
-            if (this.EaseIn != copyFrom.EaseIn) return false;
-            if (this.EaseOut != copyFrom.EaseOut) return false;
-            if (this.Duration != copyFrom.Duration) return false;
-            if (this.HPosition != copyFrom.HPosition) return false;
-            if (this.VPosition != copyFrom.VPosition) return false;
-            if (this.Width != copyFrom.Width) return false;
-            if (this.BorderColor != copyFrom.BorderColor) return false;
-            if (this.ShadowColor != copyFrom.ShadowColor) return false;
-            if (this.BorderInsideSoftness != copyFrom.BorderInsideSoftness) return false;
-            if (this.BorderOutsideSoftness != copyFrom.BorderOutsideSoftness) return false;
-            if (this.BorderLumaOffsetTop != copyFrom.BorderLumaOffsetTop) return false;
-            if (this.BorderLumaOffsetLeft != copyFrom.BorderLumaOffsetLeft) return false;
-            if (this.BorderLumaOffsetRight != copyFrom.BorderLumaOffsetRight) return false;
-            if (this.BorderLumaOffsetBottom != copyFrom.BorderLumaOffsetBottom) return false;
-            if (this.BorderThickness != copyFrom.BorderThickness) return false;
-            if (this.BorderOutsideSoftTop != copyFrom.BorderOutsideSoftTop) return false;
-            if (this.BorderOutsideSoftLeft != copyFrom.BorderOutsideSoftLeft) return false;
-            if (this.BorderOutsideSoftRight != copyFrom.BorderOutsideSoftRight) return false;
-            if (this.BorderOutsideSoftBottom != copyFrom.BorderOutsideSoftBottom) return false;
-            if (this.ShadowHOffset != copyFrom.ShadowHOffset) return false;
-            if (this.ShadowVOffset != copyFrom.ShadowVOffset) return false;
-            if (this.ShadowTransparency != copyFrom.ShadowTransparency) return false;
-            if (this.ShadowSoftness != copyFrom.ShadowSoftness) return false;
-            if (this.ShadowHSize != copyFrom.ShadowHSize) return false;
-            if (this.ShadowVSize != copyFrom.ShadowVSize) return false;
-            if (this.CloneMode != copyFrom.CloneMode) return false;
-            if (this.CloneOffset != copyFrom.CloneOffset) return false;
-            if (this.TopCrop != copyFrom.TopCrop) return false;
-            if (this.LeftCrop != copyFrom.LeftCrop) return false;
-            if (this.RightCrop != copyFrom.RightCrop) return false;
-            if (this.BottomCrop != copyFrom.BottomCrop) return false;
-            if (this.CropAnchor != copyFrom.CropAnchor) return false;
-            if (this.PanH != copyFrom.PanH) return false;
-            if (this.PanV != copyFrom.PanV) return false;
-            if (this.Zoom != copyFrom.Zoom) return false;
-            if (this.UseDefaultMotionValues != copyFrom.UseDefaultMotionValues) return false;
-            if (this.BorderFillSource != copyFrom.BorderFillSource) return false;
-            if (this.BorderTileMode != copyFrom.BorderTileMode) return false;
-            if (this.BorderTextureType != copyFrom.BorderTextureType) return false;
-            if (this.BorderTextureFile != copyFrom.BorderTextureFile) return false;
-            if (this.BorderShapeSource != copyFrom.BorderShapeSource) return false;
-            if (this.BorderShape != copyFrom.BorderShape) return false;
-            if (this.BorderShapeFile != copyFrom.BorderShapeFile) return false;
-            if (this.AspectRatioOffset != copyFrom.AspectRatioOffset) return false;
+            if (this.Tension != compare.Tension) return false;
+            if (this.Bias != compare.Bias) return false;
+            if (this.Continuity != compare.Continuity) return false;
+            if (this.EaseIn != compare.EaseIn) return false;
+            if (this.EaseOut != compare.EaseOut) return false;
+            if (this.Duration != compare.Duration) return false;
+            if (this.HPosition != compare.HPosition) return false;
+            if (this.VPosition != compare.VPosition) return false;
+            if (this.Width != compare.Width) return false;
+            if (this.BorderColor != compare.BorderColor) return false;
+            if (this.ShadowColor != compare.ShadowColor) return false;
+            if (this.BorderInsideSoftness != compare.BorderInsideSoftness) return false;
+            if (this.BorderOutsideSoftness != compare.BorderOutsideSoftness) return false;
+            if (this.BorderLumaOffsetTop != compare.BorderLumaOffsetTop) return false;
+            if (this.BorderLumaOffsetLeft != compare.BorderLumaOffsetLeft) return false;
+            if (this.BorderLumaOffsetRight != compare.BorderLumaOffsetRight) return false;
+            if (this.BorderLumaOffsetBottom != compare.BorderLumaOffsetBottom) return false;
+            if (this.BorderThickness != compare.BorderThickness) return false;
+            if (this.BorderOutsideSoftTop != compare.BorderOutsideSoftTop) return false;
+            if (this.BorderOutsideSoftLeft != compare.BorderOutsideSoftLeft) return false;
+            if (this.BorderOutsideSoftRight != compare.BorderOutsideSoftRight) return false;
+            if (this.BorderOutsideSoftBottom != compare.BorderOutsideSoftBottom) return false;
+            if (this.ShadowHOffset != compare.ShadowHOffset) return false;
+            if (this.ShadowVOffset != compare.ShadowVOffset) return false;
+            if (this.ShadowTransparency != compare.ShadowTransparency) return false;
+            if (this.ShadowSoftness != compare.ShadowSoftness) return false;
+            if (this.ShadowHSize != compare.ShadowHSize) return false;
+            if (this.ShadowVSize != compare.ShadowVSize) return false;
+            if (this.CloneMode != compare.CloneMode) return false;
+            if (this.CloneOffset != compare.CloneOffset) return false;
+            if (this.TopCrop != compare.TopCrop) return false;
+            if (this.LeftCrop != compare.LeftCrop) return false;
+            if (this.RightCrop != compare.RightCrop) return false;
+            if (this.BottomCrop != compare.BottomCrop) return false;
+            if (this.CropAnchor != compare.CropAnchor) return false;
+            if (this.PanH != compare.PanH) return false;
+            if (this.PanV != compare.PanV) return false;
+            if (this.Zoom != compare.Zoom) return false;
+            if (this.UseDefaultMotionValues != compare.UseDefaultMotionValues) return false;
+            if (this.BorderFillSource != compare.BorderFillSource) return false;
+            if (this.BorderTileMode != compare.BorderTileMode) return false;
+            if (this.BorderTextureType != compare.BorderTextureType) return false;
+            if (this.BorderTextureFile != compare.BorderTextureFile) return false;
+            if (this.BorderShapeSource != compare.BorderShapeSource) return false;
+            if (this.BorderShape != compare.BorderShape) return false;
+            if (this.BorderShapeFile != compare.BorderShapeFile) return false;
+            if (this.AspectRatioOffset != compare.AspectRatioOffset) return false;
 
             return true;
         }
 
-        public override int GetHashCode()
+        public override bool Equals(object obj)
         {
-            return base.GetHashCode();
+            if (obj == null)
+                return false;
+
+            KeyFrame compare = obj as KeyFrame;
+            if (compare == null)
+                return false;
+            else
+                return this.Equals(compare);
+        }
+        
+        public static bool operator ==(KeyFrame kf1, KeyFrame kf2)
+        {
+            if (((object)kf1 == null) || ((object)kf2) == null)
+                return Object.Equals(kf1, kf2);
+
+            return kf1.Equals(kf2);
+        }
+
+        public static bool operator !=(KeyFrame kf1, KeyFrame kf2)
+        {
+            if (((object)kf1 == null) || ((object)kf2) == null)
+                return !Object.Equals(kf1, kf2);
+
+            return !kf1.Equals(kf2);
         }
     }
 }

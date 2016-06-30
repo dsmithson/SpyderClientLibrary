@@ -84,10 +84,10 @@ namespace Spyder.Client.Common
 
         public virtual bool Load(Stream systemSettingsStream)
         {
-            return Load(systemSettingsStream, new XmlDeserializer());
+            return Load(systemSettingsStream, new SpyderXmlDeserializer());
         }
 
-        protected virtual bool Load(Stream systemSettingsStream, XmlDeserializer deserializer)
+        protected virtual bool Load(Stream systemSettingsStream, SpyderXmlDeserializer deserializer)
         {
             if (systemSettingsStream == null || deserializer == null)
                 return false;

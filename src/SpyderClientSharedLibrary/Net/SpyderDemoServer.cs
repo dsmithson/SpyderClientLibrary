@@ -20,12 +20,23 @@ namespace Spyder.Client.Net
     {
         private SystemData data;
         private DrawingData.DrawingData drawingData;
-        private AutoResetWorker drawingDataUpdateWorker;
+        private readonly AutoResetWorker drawingDataUpdateWorker;
 
         private int lastCommandKeyRegisterIDRecalled = -1;
         private int lastCommandKeyCueRecalled = -1;
         private int lastCommandKeyRegisterIDProcessed = -1;
         private int lastCommandKeyCueProcessed = -1;
+
+        private TimeSpan drawingDataThrottleInterval = TimeSpan.Zero;
+        public TimeSpan DrawingDataThrottleInterval
+        {
+            get { return drawingDataThrottleInterval; }
+            set
+            {
+                drawingDataThrottleInterval = value;
+                drawingDataUpdateWorker.PeriodicSignallingTime = (value == TimeSpan.Zero ? TimeSpan.FromSeconds(1) : value);
+            }
+        }
 
         public event DrawingDataReceivedHandler DrawingDataReceived;
         protected void OnDrawingDataReceived(DrawingDataReceivedEventArgs e)
@@ -49,7 +60,7 @@ namespace Spyder.Client.Net
             //Every second, refresh and re-announce drawing data
             drawingDataUpdateWorker = new AutoResetWorker();
             drawingDataUpdateWorker.PeriodicSignallingTime = TimeSpan.FromSeconds(1);
-            drawingDataUpdateWorker.Startup(drawingDataUpdateWorker_DoWork, (Func<bool>)(() => (DrawingDataReceived != null)));
+            Task t = drawingDataUpdateWorker.StartupAsync(drawingDataUpdateWorker_DoWork, (Func<bool>)(() => (DrawingDataReceived != null)));
         }
 
         private Task drawingDataUpdateWorker_DoWork(object state)
@@ -77,7 +88,7 @@ namespace Spyder.Client.Net
 
         #region Register / Data List Access
 
-        public IEnumerable<RegisterPage> GetRegisterPages(RegisterType type)
+        public List<RegisterPage> GetRegisterPages(RegisterType type)
         {
             if (type == RegisterType.FunctionKey)
                 return data.FunctionKeyPages;
@@ -152,13 +163,13 @@ namespace Spyder.Client.Net
             }
         }
 
-        public IEnumerable<T> GetList<T>(RegisterType type) where T : IRegister
+        public List<T> GetList<T>(RegisterType type) where T : IRegister
         {
             RegisterType? regType = GetRegisterType<T>();
             if (regType == null)
                 return null;
 
-            return GetRegisters(regType.Value).Cast<T>();
+            return GetRegisters(regType.Value).Cast<T>().ToList();
         }
 
         public T GetListItem<T>(IRegister register) where T : IRegister
@@ -175,7 +186,7 @@ namespace Spyder.Client.Net
             return itemlist.FirstOrDefault(item => item.RegisterID == registerID);
         }
 
-        public IEnumerable<Source> GetSources()
+        public List<Source> GetSources()
         {
             return data.Sources;
         }
@@ -196,7 +207,7 @@ namespace Spyder.Client.Net
             return true;
         }
 
-        public IEnumerable<Script> GetScripts()
+        public List<Script> GetScripts()
         {
             return data.Scripts;
         }
@@ -206,7 +217,7 @@ namespace Spyder.Client.Net
             return data.Scripts.FirstOrDefault(s => s.ID == scriptID);
         }
 
-        public IEnumerable<PixelSpace> GetPixelSpaces()
+        public List<PixelSpace> GetPixelSpaces()
         {
             return data.PixelSpaces;
         }
@@ -216,7 +227,7 @@ namespace Spyder.Client.Net
             return data.PixelSpaces.FirstOrDefault(ps => ps.ID == pixelSpaceID);
         }
 
-        public IEnumerable<InputConfig> GetInputConfigs()
+        public List<InputConfig> GetInputConfigs()
         {
             return data.InputConfigs;
         }
@@ -258,6 +269,11 @@ namespace Spyder.Client.Net
                 Name = shapeFileName,
                 Definition = Shape.GetFactoryShape(ShapeType.Callout_Fine).Definition
             };
+        }
+
+        public bool SetShape(Shape shape)
+        {
+            return true;
         }
 
         public List<string> GetShapeFileNames()

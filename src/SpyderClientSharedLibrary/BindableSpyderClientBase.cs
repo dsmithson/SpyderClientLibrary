@@ -12,8 +12,8 @@ namespace Spyder.Client
 {
     public abstract class BindableSpyderClientBase : SpyderClientManagerBase
     {
-        protected BindableSpyderClientBase(SpyderServerEventListenerBase serverEventListener, Func<string, Task<ISpyderClientExtended>> getSpyderClient) 
-            :base(serverEventListener, getSpyderClient)
+        protected BindableSpyderClientBase(Func<Task<SpyderServerEventListenerBase>> getServerEventListener, Func<string, Task<ISpyderClientExtended>> getSpyderClient) 
+            :base(getServerEventListener, getSpyderClient)
         {
         }
     }

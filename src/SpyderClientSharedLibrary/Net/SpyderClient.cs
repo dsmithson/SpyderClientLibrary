@@ -12,6 +12,7 @@ using Spyder.Client.FunctionKeys;
 using PCLStorage;
 using Knightware.Primitives;
 using Knightware.Net.Sockets;
+using Spyder.Client.Net.DrawingData;
 
 namespace Spyder.Client.Net
 {
@@ -21,12 +22,35 @@ namespace Spyder.Client.Net
     public class SpyderClient : SpyderUdpClient, ISpyderClientExtended
     {
         private readonly Func<IStreamSocket> getStreamSocket;
-        private readonly SpyderServerEventListenerBase serverEventListener;
+        private readonly Func<Task<SpyderServerEventListenerBase>> getServerEventListener;
 
+        private SpyderServerEventListenerBase serverEventListener;
         private IFolder localCacheFolder;
         private QFTClient qftClient;
         private SystemData systemData;
         private DrawingData.DrawingData drawingData;
+        private int lastDataObjectVersion = -1;
+
+        /// <summary>
+        /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
+        /// </summary>
+        public TimeSpan DrawingDataThrottleInterval
+        {
+            get { return drawingDataThrottleInterval; }
+            set
+            {
+                drawingDataThrottleInterval = value;
+                serverEventListener.DrawingDataThrottleInterval = value;
+            }
+        }
+        private TimeSpan drawingDataThrottleInterval = TimeSpan.Zero;
+
+        public event DataObjectChangedHandler DataObjectChanged;
+        protected void OnDataObjectChanged(DataObjectChangedEventArgs e)
+        {
+            if (DataObjectChanged != null)
+                DataObjectChanged(this, e);
+        }
 
         public event DrawingDataReceivedHandler DrawingDataReceived;
         protected void OnDrawingDataReceived(DrawingDataReceivedEventArgs e)
@@ -45,37 +69,38 @@ namespace Spyder.Client.Net
         public VersionInfo Version { get; set; }
 
         public string ServerName { get; set; }
-
-        public SpyderClient(SpyderServerEventListenerBase serverEventListener, Func<IStreamSocket> getStreamSocket, Func<IUDPSocket> getUdpSocket, string serverIP, IFolder localCacheFolder)
+        
+        public SpyderClient(Func<Task<SpyderServerEventListenerBase>> getServerEventListener, Func<IStreamSocket> getStreamSocket, Func<IUDPSocket> getUdpSocket, string serverIP, IFolder localCacheFolder)
             : base(getUdpSocket, serverIP)
         {
-            this.serverEventListener = serverEventListener;
+            this.getServerEventListener = getServerEventListener;
             this.getStreamSocket = getStreamSocket;
             this.localCacheFolder = localCacheFolder;
         }
 
-        public override async Task<bool> Startup()
+        public override async Task<bool> StartupAsync()
         {
-            if (!await base.Startup())
+            if (!await base.StartupAsync())
                 return false;
-
+            
             //Init our QFT Client
             qftClient = new QFTClient(getStreamSocket, ServerIP);
-            if (!await qftClient.Startup())
+            if (!await qftClient.StartupAsync())
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "Failed to startup QFT Client.  Shutting down...");
-                Shutdown();
+                await ShutdownAsync();
                 return false;
             }
 
             if (!await LoadDataAsync())
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "Failed to load system data.  Shutting down...");
-                Shutdown();
+                await ShutdownAsync();
                 return false;
             }
 
             //Startup event listener
+            serverEventListener = await getServerEventListener();
             if (serverEventListener != null)
             {
                 serverEventListener.DrawingDataReceived += serverEventListener_DrawingDataReceived;
@@ -86,7 +111,7 @@ namespace Spyder.Client.Net
             return true;
         }
 
-        public override void Shutdown()
+        public override async Task ShutdownAsync()
         {
             //Stop event listener
             if (serverEventListener != null)
@@ -94,18 +119,41 @@ namespace Spyder.Client.Net
                 serverEventListener.DrawingDataReceived -= serverEventListener_DrawingDataReceived;
                 serverEventListener.ServerAnnounceMessageReceived -= serverEventListener_ServerAnnounceMessageReceived;
                 serverEventListener.TraceLogMessageReceived -= serverEventListener_TraceLogMessageReceived;
+                serverEventListener = null;
             }
+
+            //Stop QFT client
+            if (qftClient != null)
+            {
+                await qftClient.ShutdownAsync();
+                qftClient = null;
+            }
+
             drawingData = null;
+            lastDataObjectVersion = -1;
 
-            base.Shutdown();
+            await base.ShutdownAsync();
         }
-
+        
         private void serverEventListener_DrawingDataReceived(object sender, DrawingDataReceivedEventArgs e)
         {
             if (IsRunning && e.ServerIP == this.ServerIP)
             {
                 drawingData = e.DrawingData;
                 OnDrawingDataReceived(e);
+
+                //Check dataobject changed.  It's a good check here even though we get an explicit dataObjectChanged message
+                //from the server, because it's possible that we'll miss the UDP message
+                if (e.DrawingData != null && lastDataObjectVersion != e.DrawingData.DataObjectVersion)
+                {
+                    int dataObjectVersion = e.DrawingData.DataObjectVersion;
+                    DataType changeType = e.DrawingData.DataObjectLastChangeType;
+                    if (dataObjectVersion - lastDataObjectVersion != 1 && lastDataObjectVersion != -1)
+                        changeType = DataType.All;
+
+                    lastDataObjectVersion = dataObjectVersion;
+                    OnDataObjectChanged(new DataObjectChangedEventArgs(ServerIP, dataObjectVersion, changeType));
+                }
             }
         }
 
@@ -203,33 +251,33 @@ namespace Spyder.Client.Net
             }
         }
 
-        public override Task<IEnumerable<RegisterPage>> GetRegisterPages(RegisterType type)
+        public override Task<List<RegisterPage>> GetRegisterPages(RegisterType type)
         {
             switch (type)
             {
                 case RegisterType.CommandKey:
-                    return Task.FromResult<IEnumerable<RegisterPage>>(new List<RegisterPage>(systemData.CommandKeyPages));
+                    return Task.FromResult<List<RegisterPage>>(new List<RegisterPage>(systemData.CommandKeyPages));
                 case RegisterType.FunctionKey:
-                    return Task.FromResult<IEnumerable<RegisterPage>>(new List<RegisterPage>(systemData.FunctionKeyPages));
+                    return Task.FromResult<List<RegisterPage>>(new List<RegisterPage>(systemData.FunctionKeyPages));
                 default:
                     return base.GetRegisterPages(type);
             }
         }
 
-        public override Task<IEnumerable<IRegister>> GetRegisters(RegisterType type)
+        public override Task<List<IRegister>> GetRegisters(RegisterType type)
         {
             switch (type)
             {
                 case RegisterType.PlayItem:
-                    return Task.FromResult<IEnumerable<IRegister>>(new List<IRegister>(systemData.PlayItems));
+                    return Task.FromResult<List<IRegister>>(new List<IRegister>(systemData.PlayItems));
                 case RegisterType.CommandKey:
-                    return Task.FromResult<IEnumerable<IRegister>>(new List<IRegister>(systemData.CommandKeys));
+                    return Task.FromResult<List<IRegister>>(new List<IRegister>(systemData.CommandKeys));
                 case RegisterType.Treatment:
-                    return Task.FromResult<IEnumerable<IRegister>>(new List<IRegister>(systemData.Treatments));
+                    return Task.FromResult<List<IRegister>>(new List<IRegister>(systemData.Treatments));
                 case RegisterType.Source:
-                    return Task.FromResult<IEnumerable<IRegister>>(new List<IRegister>(systemData.Sources));
+                    return Task.FromResult<List<IRegister>>(new List<IRegister>(systemData.Sources));
                 case RegisterType.FunctionKey:
-                    return Task.FromResult<IEnumerable<IRegister>>(new List<IRegister>(systemData.FunctionKeys));
+                    return Task.FromResult<List<IRegister>>(new List<IRegister>(systemData.FunctionKeys));
                 //case RegisterType.Still:
                 //    //TODO:  Wire this up
                 //    break;
@@ -248,17 +296,17 @@ namespace Spyder.Client.Net
             return GetItemFromListByRegister(systemData.CommandKeys, commandKeyRegister);
         }
 
-        public override Task<IEnumerable<CommandKey>> GetCommandKeys()
+        public override Task<List<CommandKey>> GetCommandKeys()
         {
             return GetItemListFromSystemData(systemData.CommandKeys);
         }
 
-        public virtual Task<IEnumerable<Script>> GetScripts()
+        public virtual Task<List<Script>> GetScripts()
         {
             if (systemData == null || systemData.Scripts == null)
-                return Task.FromResult<IEnumerable<Script>>(null);
+                return Task.FromResult<List<Script>>(null);
 
-            return Task.FromResult((IEnumerable<Script>)systemData.Scripts);
+            return Task.FromResult((List<Script>)systemData.Scripts);
         }
         public virtual Task<Script> GetScript(int scriptID)
         {
@@ -268,12 +316,12 @@ namespace Spyder.Client.Net
             return Task.FromResult(systemData.Scripts.FirstOrDefault(s => s.ID == scriptID));
         }
 
-        public virtual Task<IEnumerable<InputConfig>> GetInputConfigs()
+        public virtual Task<List<InputConfig>> GetInputConfigs()
         {
             if (systemData == null || systemData.InputConfigs == null)
-                return Task.FromResult<IEnumerable<InputConfig>>(null);
+                return Task.FromResult<List<InputConfig>>(null);
 
-            return Task.FromResult((IEnumerable<InputConfig>)systemData.InputConfigs);
+            return Task.FromResult((List<InputConfig>)systemData.InputConfigs);
         }
         public virtual Task<InputConfig> GetInputConfig(int InputConfigID)
         {
@@ -289,14 +337,14 @@ namespace Spyder.Client.Net
             return (source == null ? null : await GetInputConfig(source.InputConfigID));
         }
 
-        public virtual Task<IEnumerable<PixelSpace>> GetPixelSpaces()
+        public override Task<List<PixelSpace>> GetPixelSpaces()
         {
             if (systemData == null || systemData.PixelSpaces == null)
-                return Task.FromResult<IEnumerable<PixelSpace>>(null);
+                return Task.FromResult<List<PixelSpace>>(null);
 
-            return Task.FromResult((IEnumerable<PixelSpace>)systemData.PixelSpaces);
+            return Task.FromResult((List<PixelSpace>)systemData.PixelSpaces);
         }
-        public virtual Task<PixelSpace> GetPixelSpace(int PixelSpaceID)
+        public override Task<PixelSpace> GetPixelSpace(int PixelSpaceID)
         {
             if (systemData == null || systemData.PixelSpaces == null)
                 return Task.FromResult<PixelSpace>(null);
@@ -314,7 +362,7 @@ namespace Spyder.Client.Net
             return GetItemFromListByRegister(systemData.FunctionKeys, functionKeyRegister);
         }
 
-        public override Task<IEnumerable<FunctionKey>> GetFunctionKeys()
+        public override Task<List<FunctionKey>> GetFunctionKeys()
         {
             return GetItemListFromSystemData(systemData.FunctionKeys);
         }
@@ -329,7 +377,7 @@ namespace Spyder.Client.Net
             return GetItemFromListByRegister(systemData.PlayItems, playItemRegister);
         }
 
-        public override Task<IEnumerable<PlayItem>> GetPlayItems()
+        public override Task<List<PlayItem>> GetPlayItems()
         {
             return GetItemListFromSystemData(systemData.PlayItems);
         }
@@ -353,7 +401,7 @@ namespace Spyder.Client.Net
             return Task.FromResult<Source>(null);
         }
 
-        public override Task<IEnumerable<Source>> GetSources()
+        public override Task<List<Source>> GetSources()
         {
             return GetItemListFromSystemData(systemData.Sources);
         }
@@ -368,7 +416,7 @@ namespace Spyder.Client.Net
             return GetItemFromListByRegister(systemData.Stills, stillRegister);
         }
 
-        public override Task<IEnumerable<Still>> GetStills()
+        public override Task<List<Still>> GetStills()
         {
             return GetItemListFromSystemData(systemData.Stills);
         }
@@ -383,7 +431,7 @@ namespace Spyder.Client.Net
             return GetItemFromListByRegister(systemData.Treatments, treatmentRegister);
         }
 
-        public override Task<IEnumerable<Treatment>> GetTreatments()
+        public override Task<List<Treatment>> GetTreatments()
         {
             return GetItemListFromSystemData(systemData.Treatments);
         }
@@ -431,7 +479,7 @@ namespace Spyder.Client.Net
             return Task.FromResult(systemDataList.FirstOrDefault(listItem => listItem.RegisterID == registerID));
         }
 
-        private Task<T> GetItemFromListByRegister<T>(IEnumerable<T> systemDataList, IRegister register) where T : IRegister
+        private Task<T> GetItemFromListByRegister<T>(List<T> systemDataList, IRegister register) where T : IRegister
         {
             if (register == null || systemDataList == null)
                 return Task.FromResult<T>(default(T));
@@ -439,7 +487,7 @@ namespace Spyder.Client.Net
             return Task.FromResult(systemDataList.FirstOrDefault(listItem => listItem.RegisterID == register.RegisterID));
         }
 
-        private Task<IEnumerable<T>> GetItemListFromSystemData<T>(IEnumerable<T> systemDataList)
+        private Task<List<T>> GetItemListFromSystemData<T>(List<T> systemDataList)
         {
             return Task.FromResult(systemDataList);
         }
@@ -451,45 +499,98 @@ namespace Spyder.Client.Net
             if (!IsRunning || qftClient == null || !qftClient.IsRunning || string.IsNullOrEmpty(fileName))
                 return null;
 
-            //First lets look in our cache for the file
-            if (localCacheFolder != null)
+            try
             {
-                IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
-                IFile file = (await imageCacheFolder.GetFilesAsync()).FirstOrDefault(f => string.Compare(f.Name, fileName, StringComparison.CurrentCultureIgnoreCase) == 0);
-                if (file != null)
-                {
-                    return await file.OpenAsync(FileAccess.Read);
-                }
-            }
-
-            //Not found in cache; try to get file from server
-            MemoryStream response = new MemoryStream();
-            string absolutePath = Path.Combine(@"c:\spyder\images", Path.GetFileName(fileName));
-            string relativePath = qftClient.ConvertAbsolutePathToRelative(absolutePath);
-            if (await qftClient.ReceiveFile(relativePath, response, null))
-            {
-                //Success.  Save file to local cache
+                //First lets look in our cache for the file
                 if (localCacheFolder != null)
                 {
                     IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
-                    IFile file = await imageCacheFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-                    using (Stream fileStream = await file.OpenAsync(FileAccess.ReadAndWrite))
+                    IFile file = (await imageCacheFolder.GetFilesAsync()).FirstOrDefault(f => string.Compare(f.Name, fileName, StringComparison.CurrentCultureIgnoreCase) == 0);
+                    if (file != null)
                     {
-                        response.Seek(0, SeekOrigin.Begin);
-                        await response.CopyToAsync(fileStream);
+                        return await file.OpenAsync(FileAccess.Read);
                     }
                 }
 
-                //Rewind our memory stream and return it now
-                response.Seek(0, SeekOrigin.Begin);
-                return response;
+                //Not found in cache; try to get file from server
+                MemoryStream response = new MemoryStream();
+                string absolutePath = Path.Combine(@"c:\spyder\images", Path.GetFileName(fileName));
+                string relativePath = qftClient.ConvertAbsolutePathToRelative(absolutePath);
+                if (await qftClient.ReceiveFile(relativePath, response, null))
+                {
+                    //Success.  Save file to local cache
+                    if (localCacheFolder != null)
+                    {
+                        IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
+                        IFile file = await imageCacheFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+                        using (Stream fileStream = await file.OpenAsync(FileAccess.ReadAndWrite))
+                        {
+                            response.Seek(0, SeekOrigin.Begin);
+                            await response.CopyToAsync(fileStream);
+                        }
+                    }
+
+                    //Rewind our memory stream and return it now
+                    response.Seek(0, SeekOrigin.Begin);
+                    return response;
+                }
+                else
+                {
+                    //Failed to acquire image.  Cleanup and let the base class try
+                    response.Dispose();
+                    response = null;
+                    return await base.GetImageFileStream(fileName);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                //Failed to acquire image.  Cleanup and let the base class try
-                response.Dispose();
-                response = null;
-                return await base.GetImageFileStream(fileName);
+                TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while getting image file {1} from server: {2}", ex.GetType().Name, fileName, ex.Message);
+                return null;
+            }
+        }
+
+        public Task<bool> SetImageFileStream(string fileName, Stream fileStream)
+        {
+            return  SetImageFileStream(fileName, fileStream, true);
+        }
+
+        public async Task<bool> SetImageFileStream(string fileName, Stream fileStream, bool writeFileToLocalCache)
+        {
+            if (!IsRunning || qftClient == null || !qftClient.IsRunning || string.IsNullOrEmpty(fileName) || fileStream == null)
+                return false;
+
+            try
+            {
+                if(fileStream.Position != 0)
+                    fileStream.Seek(0, SeekOrigin.Begin);
+
+                //Write file to the server
+                string absolutePath = Path.Combine(@"c:\spyder\images", Path.GetFileName(fileName));
+                string relativePath = qftClient.ConvertAbsolutePathToRelative(absolutePath);
+                if (!await qftClient.SendFile(fileStream, relativePath, null))
+                {
+                    TraceQueue.Trace(this, TracingLevel.Warning, "Failed to send image file {0} to Spyder server", fileName);
+                    return false;
+                }
+
+                //Write file to our local cache
+                if (writeFileToLocalCache && localCacheFolder != null)
+                {
+                    IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
+                    IFile file = await imageCacheFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+                    using (Stream stream = await file.OpenAsync(FileAccess.ReadAndWrite))
+                    {
+                        fileStream.Seek(0, SeekOrigin.Begin);
+                        await fileStream.CopyToAsync(stream);
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while sending file {1} to server: {2}", ex.GetType().Name, fileName, ex.Message);
+                return false;
             }
         }
 
@@ -571,6 +672,22 @@ namespace Spyder.Client.Net
             }
         }
 
+        public async Task<bool> SetShape(Shape shape)
+        {
+            if (shape != null)
+            {
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    if (await shape.ToShapeFileStream(stream))
+                    {
+                        stream.Seek(0, SeekOrigin.Begin);
+                        return await SetImageFileStream(shape.Name, stream);
+                    }
+                }
+            }
+            return false;
+        }
+
         public async Task<ServerSettings> GetServerSettings()
         {
             if (!IsRunning || qftClient == null || !qftClient.IsRunning)
@@ -583,35 +700,47 @@ namespace Spyder.Client.Net
             //For debug purposes, we connect to local remoting servers.  We'll check here if the first check fails
             List<string> settingsFileLocations = new List<string>()
             {
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Applications\SpyderServer\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build)),
+                //Versions prior to (4.0.6) keep the SystemSettings.xml file with the server executable
+                @"c:\Applications\SpyderServer\Version {0}.{1}.{2}\SystemSettings.xml",
 
+                //Newer versions (4.0.6 and later) keep the SystemSettings.xml in a global path
+                @"c:\Spyder\SystemSettings.xml",
+                
 #if DEBUG
                 //64-bit machines
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2012 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build)),
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2009 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build)),
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2005 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build)),
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Program Files (x86)\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build)),
+                @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2012 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
+                @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2009 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
+                @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2005 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
+                @"c:\Program Files (x86)\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml",
 
                 //32-bit Machines
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2012 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build)),
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2009 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build)),
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2005 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build)),
-                QFTClient.ConvertToRelativePath(string.Format(@"c:\Program Files\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml", version.Major, version.Minor, version.Build))
+                @"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2012 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
+                @"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2009 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
+                @"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2005 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
+                @"c:\Program Files\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml"
 #endif
             };
 
             foreach (string settingsFile in settingsFileLocations)
             {
-                MemoryStream stream = new MemoryStream();
                 try
                 {
-                    if (await qftClient.ReceiveFile(settingsFile, stream, null))
+                    //Format our file name
+                    string qftFileName = QFTClient.ConvertToRelativePath(string.Format(settingsFile, version.Major, version.Minor, version.Build));
+
+                    if (await qftClient.FileExists(qftFileName))
                     {
-                        stream.Seek(0, SeekOrigin.Begin);
-                        ServerSettings response = new ServerSettings();
-                        if (response.Load(stream))
+                        using (var stream = new MemoryStream())
                         {
-                            return response;
+                            if (await qftClient.ReceiveFile(qftFileName, stream, null))
+                            {
+                                stream.Seek(0, SeekOrigin.Begin);
+                                ServerSettings response = new ServerSettings();
+                                if (response.Load(stream))
+                                {
+                                    return response;
+                                }
+                            }
                         }
                     }
                 }
@@ -619,20 +748,12 @@ namespace Spyder.Client.Net
                 {
                     TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while trying to get system settings file: {1}", ex.GetType().Name, ex.Message);
                 }
-                finally
-                {
-                    if (stream != null)
-                    {
-                        stream.Dispose();
-                        stream = null;
-                    }
-                }
             }
 
             //Not found
             return null;
         }
-
+        
         #region PixelSpace Interactions
 
         public async Task<bool> MixBackground(TimeSpan duration)
@@ -740,35 +861,6 @@ namespace Spyder.Client.Net
                     }
                 }
                 return Task.FromResult(response);
-            }
-        }
-
-        public override Task<List<PixelSpace>> RequestPixelSpaces()
-        {
-            var data = this.drawingData;
-            if(data == null)
-            {
-                return base.RequestPixelSpaces();
-            }
-            else
-            {
-                return Task.FromResult(drawingData.PixelSpaces.Values
-                    .Select(p => new PixelSpace(p))
-                    .ToList());
-            }
-        }
-
-        public override Task<PixelSpace> RequestPixelSpace(int pixelSpaceID)
-        {
-            var data = this.drawingData;
-            if (data == null)
-            {
-                return base.RequestPixelSpace(pixelSpaceID);
-            }
-            else
-            {
-                var ps = data.GetPixelSpace(pixelSpaceID);
-                return Task.FromResult((ps == null ? null : new PixelSpace(ps)));
             }
         }
     }

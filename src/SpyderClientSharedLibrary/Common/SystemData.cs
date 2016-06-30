@@ -19,7 +19,7 @@ namespace Spyder.Client.Common
 {
     public class SystemData
     {
-        private XmlDeserializer deserializer = new XmlDeserializer();
+        private SpyderXmlDeserializer deserializer = new SpyderXmlDeserializer();
 
         public List<Treatment> Treatments { get; protected set; }
 
@@ -340,7 +340,7 @@ namespace Spyder.Client.Common
                     .SelectMany((item) => item.Descendants("Value"))
                     .Select((item) => new CommandKey()
                     {
-                        //ID = int.Parse(item.Element("ID").Value),
+                        LookupID = int.Parse(item.Element("ID").Value),
                         ScriptID = int.Parse(item.Element("ScriptID").Value),
                         //IsRelative = !bool.Parse(item.Element("Absolute").Value),
                         Name = item.Element("DisplayText").Value,
@@ -348,7 +348,7 @@ namespace Spyder.Client.Common
                     }),
 
                 //Register Item Lookup
-                (itemList, register) => itemList.FirstOrDefault(c => c.RegisterID == register.RegisterID));
+                (itemList, register) => itemList.FirstOrDefault(c => c.LookupID == register.LookupID && c.RegisterID == register.RegisterID));
 
             //Flush out our command key properties with their associated scripts
             if (scripts != null)

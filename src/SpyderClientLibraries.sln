@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientSharedLibrary", "SpyderClientSharedLibrary\SpyderClientSharedLibrary.csproj", "{2DE05B6E-23BF-440A-921D-79043CF14599}"
 EndProject
@@ -9,23 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibraryRT", "Sp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibraryWPF", "SpyderClientLibraryWPF\SpyderClientLibraryWPF.csproj", "{FB0FC802-4FC5-4446-B2DD-48201C738DD1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientSharedLibraryDesktopTests", "SpyderClientSharedLibraryDesktopTests\SpyderClientSharedLibraryDesktopTests.csproj", "{86E8F979-1B27-433D-B443-8B881EC87E1F}"
+EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://knightware.visualstudio.com/defaultcollection
-		SccProjectUniqueName0 = SpyderClientSharedLibrary\\SpyderClientSharedLibrary.csproj
-		SccProjectName0 = SpyderClientSharedLibrary
-		SccLocalPath0 = SpyderClientSharedLibrary
-		SccProjectUniqueName1 = SpyderClientLibraryRT\\SpyderClientLibraryRT.csproj
-		SccProjectName1 = SpyderClientLibraryRT
-		SccLocalPath1 = SpyderClientLibraryRT
-		SccProjectUniqueName2 = SpyderClientLibraryWPF\\SpyderClientLibraryWPF.csproj
-		SccProjectName2 = SpyderClientLibraryWPF
-		SccLocalPath2 = SpyderClientLibraryWPF
-		SccLocalPath3 = SpyderClientLibraries
-		SccProjectFilePathRelativizedFromConnection3 = ..\\
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM
@@ -83,6 +69,22 @@ Global
 		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|x64.Build.0 = Release|x64
 		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|x86.ActiveCfg = Release|x86
 		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|x86.Build.0 = Release|x86
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|ARM.Build.0 = Debug|Any CPU
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|x64.ActiveCfg = Debug|x64
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|x64.Build.0 = Debug|x64
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|x86.ActiveCfg = Debug|x86
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|x86.Build.0 = Debug|x86
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|ARM.ActiveCfg = Release|Any CPU
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|ARM.Build.0 = Release|Any CPU
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|x64.ActiveCfg = Release|x64
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|x64.Build.0 = Release|x64
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|x86.ActiveCfg = Release|x86
+		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -24,6 +24,7 @@ namespace Spyder.Client.Net
     public class SpyderUdpClient : ISpyderClient
     {
         public const int ServerPort = 11116;
+        public const int DefaultTimeoutSeconds = 5;
 
         private readonly Func<IUDPSocket> getUdpSocket;
         
@@ -36,21 +37,20 @@ namespace Spyder.Client.Net
             this.ServerIP = serverIP;
         }
 
-        public virtual Task<bool> Startup()
+        public virtual async Task<bool> StartupAsync()
         {
-            Shutdown();
+            await ShutdownAsync();
             this.IsRunning = true;
 
             //Startup command processor
             retrieveEvent = new AsyncAutoResetEvent();
-            immediateCommandQueue = new Queue<Tuple<string, TaskCompletionSource<ServerOperationResult>>>();
-            backgroundCommandQueue = new Queue<Tuple<string, TaskCompletionSource<ServerOperationResult>>>();
+            immediateCommandQueue = new Queue<CommandQueueItem>();
+            backgroundCommandQueue = new Queue<CommandQueueItem>();
             RunCommandQueueWorkerAsync();
-
-            return Task.FromResult(true);
+            return true;
         }
 
-        public virtual void Shutdown()
+        public virtual Task ShutdownAsync()
         {
             IsRunning = false;
 
@@ -61,8 +61,10 @@ namespace Spyder.Client.Net
                     retrieveEvent.Set();
             }
             retrieveEvent = null;
-            immediateCommandQueue = new Queue<Tuple<string, TaskCompletionSource<ServerOperationResult>>>();
-            backgroundCommandQueue = new Queue<Tuple<string, TaskCompletionSource<ServerOperationResult>>>();
+            immediateCommandQueue = new Queue<CommandQueueItem>();
+            backgroundCommandQueue = new Queue<CommandQueueItem>();
+
+            return Task.FromResult(true);
         }
 
         public virtual Task<Stream> GetImageFileStream(string fileName)
@@ -84,7 +86,7 @@ namespace Spyder.Client.Net
             return new MemoryStream(HexUtil.GetBytes(result.ResponseData[0]));
         }
 
-        public virtual async Task<IEnumerable<RegisterPage>> GetRegisterPages(RegisterType type)
+        public virtual async Task<List<RegisterPage>> GetRegisterPages(RegisterType type)
         {
             ServerOperationResult result = await RetrieveAsync("RPN {0}", (int)type);
             if (result.Result != ServerOperationResultCode.Success)
@@ -111,14 +113,14 @@ namespace Spyder.Client.Net
             return response;
         }
 
-        public virtual Task<IEnumerable<IRegister>> GetRegisters(RegisterType type)
+        public virtual Task<List<IRegister>> GetRegisters(RegisterType type)
         {
-            return ProcessRRL("RRL {0}", (int)type);
+            return ProcessRRL(type, "RRL {0}", (int)type);
         }
 
-        protected Task<IEnumerable<IRegister>> GetRegisters(RegisterType type, int? pageIndex, int? startIndex, int? maxCountToReturn, int? maxNameLength)
+        protected Task<List<IRegister>> GetRegisters(RegisterType type, int? pageIndex, int? startIndex, int? maxCountToReturn, int? maxNameLength)
         {
-            return ProcessRRL("RRL {0} {1} {2} {3} {4}",
+            return ProcessRRL(type, "RRL {0} {1} {2} {3} {4}",
                 (int)type,
                 (pageIndex.HasValue ? pageIndex.Value : -1),
                 (startIndex.HasValue ? startIndex.Value : 0),
@@ -126,7 +128,7 @@ namespace Spyder.Client.Net
                 (maxNameLength.HasValue ? maxNameLength.Value : 1000));
         }
 
-        private async Task<IEnumerable<IRegister>> ProcessRRL(string rrlCommand, params object[] rrlCommandArgs)
+        private async Task<List<IRegister>> ProcessRRL(RegisterType registerType, string rrlCommand, params object[] rrlCommandArgs)
         {
             ServerOperationResult result = await RetrieveAsync(rrlCommand, rrlCommandArgs);
             if (result.Result != ServerOperationResultCode.Success)
@@ -146,6 +148,7 @@ namespace Spyder.Client.Net
 
                 response.Add(new Register()
                 {
+                    Type = registerType,
                     RegisterID = registerID,
                     Name = result.ResponseData[index++]
                 });
@@ -155,18 +158,26 @@ namespace Spyder.Client.Net
         public virtual async Task<IRegister> GetRegister(RegisterType type, int registerID)
         {
             //Request a single register
-            ServerOperationResult result = await RetrieveAsync("RRL {0} -1 {1} 1", type, registerID);
-            if (result.Result != ServerOperationResultCode.Success)
+            ServerOperationResult result = await RetrieveAsync("RRL {0} -1 {1} 1", (int)type, registerID);
+            if (result.Result != ServerOperationResultCode.Success || result.ResponseData.Count < 3)
                 return null;
 
-            return new Register()
+            var response = new Register()
             {
-                RegisterID = int.Parse(result.ResponseData[0]),
-                Name = result.ResponseData[1]
+                //ResponseData[0] is the return count, which should always be 0
+                RegisterID = int.Parse(result.ResponseData[1]),
+                Name = result.ResponseData[2]
             };
+
+            //Sanity check on the register ID we received back. If the ID did not exist at the server, then we'll
+            //get back the first register ID available, which is not the one we requested...
+            if(response.RegisterID != registerID)
+                return null;
+            else
+                return response;
         }
 
-        public virtual Task<IEnumerable<Source>> GetSources()
+        public virtual Task<List<Source>> GetSources()
         {
             return RequestRegisterDetails(RegisterType.Source, GetSource);
         }
@@ -204,7 +215,7 @@ namespace Spyder.Client.Net
                 return sources.FirstOrDefault(s => string.Compare(sourceName, s.Name, StringComparison.CurrentCultureIgnoreCase) == 0);
         }
 
-        public virtual Task<IEnumerable<CommandKey>> GetCommandKeys()
+        public virtual Task<List<CommandKey>> GetCommandKeys()
         {
             return RequestRegisterDetails(RegisterType.CommandKey, GetCommandKey);
         }
@@ -227,7 +238,7 @@ namespace Spyder.Client.Net
                 });
         }
 
-        public virtual Task<IEnumerable<Treatment>> GetTreatments()
+        public virtual Task<List<Treatment>> GetTreatments()
         {
             return RequestRegisterDetails(RegisterType.Treatment, GetTreatment);
         }
@@ -257,7 +268,7 @@ namespace Spyder.Client.Net
                 });
         }
 
-        public virtual Task<IEnumerable<FunctionKey>> GetFunctionKeys()
+        public virtual Task<List<FunctionKey>> GetFunctionKeys()
         {
             return RequestRegisterDetails(RegisterType.FunctionKey, GetFunctionKey);
         }
@@ -307,7 +318,7 @@ namespace Spyder.Client.Net
             }
         }
 
-        public virtual Task<IEnumerable<Still>> GetStills()
+        public virtual Task<List<Still>> GetStills()
         {
             return RequestRegisterDetails(RegisterType.Still, GetStill);
         }
@@ -332,7 +343,7 @@ namespace Spyder.Client.Net
                 });
         }
 
-        public virtual Task<IEnumerable<PlayItem>> GetPlayItems()
+        public virtual Task<List<PlayItem>> GetPlayItems()
         {
             return RequestRegisterDetails(RegisterType.PlayItem, GetPlayItem);
         }
@@ -381,13 +392,19 @@ namespace Spyder.Client.Net
             return cue;
         }
 
-        public virtual async Task<bool> Save()
+        public virtual Task<bool> Save()
         {
-            var result = await RetrieveAsync("SAV");
+            return Save(TimeSpan.FromSeconds(60));
+        }
+
+        public virtual async Task<bool> Save(TimeSpan timeout)
+        {
+            //Allow a long time for disk saving to occur on the remote frame
+            var result = await RetrieveAsync(timeout, "SAV");
             return (result != null && result.Result == ServerOperationResultCode.Success);
         }
 
-        private async Task<IEnumerable<T>> RequestRegisterDetails<T>(RegisterType type, Func<IRegister, Task<T>> getDetails) where T : class
+        private async Task<List<T>> RequestRegisterDetails<T>(RegisterType type, Func<IRegister, Task<T>> getDetails) where T : class
         {
             List<T> response = new List<T>();
             foreach (IRegister register in await GetRegisters(type))
@@ -401,7 +418,7 @@ namespace Spyder.Client.Net
             if (register == null)
                 return null;
 
-            ServerOperationResult serverResponse = await RetrieveAsync("RRD {0} {1}", register.Type, register.RegisterID);
+            ServerOperationResult serverResponse = await RetrieveAsync("RRD {0} {1}", (int)register.Type, register.RegisterID);
             if (serverResponse == null || serverResponse.Result != ServerOperationResultCode.Success || serverResponse.ResponseData == null)
                 return null;
 
@@ -418,7 +435,7 @@ namespace Spyder.Client.Net
 
         #region Layer Interaction
         
-        public async Task<int> RequestLayerCount()
+        public async Task<int> GetLayerCount()
         {
             var result = await RetrieveAsync("RLC");
             int layerCount;
@@ -430,7 +447,7 @@ namespace Spyder.Client.Net
 
         public async Task<int> GetFirstAvailableLayerID()
         {
-            int layerCount = await RequestLayerCount();
+            int layerCount = await GetLayerCount();
             if (layerCount <= 0)
                 return -1;
 
@@ -484,7 +501,7 @@ namespace Spyder.Client.Net
 
         public async Task<bool> MixOffAllLayers(int duration)
         {
-            int layerCount = await RequestLayerCount();
+            int layerCount = await GetLayerCount();
             if(layerCount <= 0)
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "Unable to mix off all layers because call to retrieve layer count failed");
@@ -669,7 +686,7 @@ namespace Spyder.Client.Net
             bool success = true;
             if (moveType == LayerMoveType.AbsolutePixel || moveType == LayerMoveType.RelativePixel)
             {
-                var pixelSpaces = await RequestPixelSpaces();
+                var pixelSpaces = await GetPixelSpaces();
                 var layersInPreview = new List<Tuple<LayerKeyFrameInfo, PixelSpace>>();
                 foreach (int layerID in layerIDs)
                 {
@@ -747,7 +764,7 @@ namespace Spyder.Client.Net
 
         private async Task<Tuple<double, double>> ConvertFromAbsoluteToRelativeCoordinates(int pixelSpaceID, int x, int y)
         {
-            var pixelSpace = await RequestPixelSpace(pixelSpaceID);
+            var pixelSpace = await GetPixelSpace(pixelSpaceID);
             if (pixelSpace == null)
                 return null;
 
@@ -1198,6 +1215,146 @@ namespace Spyder.Client.Net
 
         #endregion
 
+        #region Output Configuration
+
+        public Task<bool> FreezeOutput(params int[] outputIDs)
+        {
+            return SetOutputFreeze(true, outputIDs);
+        }
+
+        public Task<bool> UnFreezeOutput(params int[] outputIDs)
+        {
+            return SetOutputFreeze(false, outputIDs);
+        }
+
+        private async Task<bool> SetOutputFreeze(bool freeze, params int[] outputIDs)
+        {
+            if (outputIDs == null || outputIDs.Length == 0)
+                return true;
+
+            var result = await RetrieveAsync("OFZ {0} {1}",
+                (freeze ? "1" : "0"),
+                BuildLayerIDString(outputIDs));
+
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex)
+        {
+            var result = await RetrieveAsync("LSO {0} {1}{2}",
+                EncodeSpyderParameter(fileName),
+                outputID,
+                (dx4ChannelIndex == null ? null : " " + dx4ChannelIndex.Value));
+
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex)
+        {
+            var result = await RetrieveAsync("CSO {0}{1}",
+                outputID,
+                (dx4ChannelIndex == null ? null : " " + dx4ChannelIndex.Value));
+
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> SaveOutputConfiguration(int outputID)
+        {
+            var result = await RetrieveAsync("OCS {0}", outputID);
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> SetOutputBlend(int outputID, BlendEdge edge, bool enabled, int blendSize, BlendMode blendMode, float curve1, float curve2)
+        {
+            var result = await RetrieveAsync("OCB {0} {1} {2} {3} {4} {5} {6} {7}",
+                outputID,
+                (edge == BlendEdge.Left ? "L" : "R"),
+                (enabled ? "1" : "0"),
+                blendSize,
+                blendMode.ToString(),
+                curve1,
+                curve2);
+
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> ClearOutputBlend(int outputID, BlendEdge edge)
+        {
+            var result = await RetrieveAsync("OCB {0} {1} 0",
+                outputID,
+                (edge == BlendEdge.Left ? "L" : "R"));
+
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> RotateOutput(int outputID, RotationMode mode)
+        {
+
+            int rotation;
+            switch (mode)
+            {
+                case RotationMode.Rotate90:
+                    rotation = 90;
+                    break;
+                case RotationMode.Rotate180:
+                    rotation = 180;
+                    break;
+                case RotationMode.Rotate270:
+                    rotation = 270;
+                    break;
+                default:
+                    rotation = 0;
+                    break;
+            }
+
+            var result = await RetrieveAsync("OCR {0} {1}", outputID, rotation);
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex)
+        {
+            var result = await RetrieveAsync("OCM {0} Normal {1} {2}{3}",
+                outputID,
+                hStart,
+                vStart,
+                (dx4ChannelIndex == null ? null : " " + dx4ChannelIndex.Value));
+
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> SetOutputModeToOpMon(int outputID, int pixelSpaceID)
+        {
+            var result = await RetrieveAsync("OCM {0} OpMon {1}", outputID, pixelSpaceID);
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> SetOutputModeToScaled(int outputID, int pixelSpaceID)
+        {
+            var result = await RetrieveAsync("OCM {0} Scaled {1}", outputID, pixelSpaceID);
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> SetOutputModeToSourceMon(int outputID)
+        {
+            var result = await RetrieveAsync("OCM {0} SourceMon", outputID);
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        public async Task<bool> SetOutputFormat(int outputID, int hActive, int vActive, float refreshRate, bool interlaced, bool useReducedBlanking)
+        {
+            var result = await RetrieveAsync("OCF {0} {1} {2} {3} {4} {5} {6}",
+                outputID,
+                hActive,
+                vActive,
+                refreshRate,
+                (interlaced ? "1" : "0"),
+                (useReducedBlanking ? "1" : "0"));
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
+        #endregion
+
+
         #region PixelSpace Interaction
 
         public async Task<bool> MixBackground(int duration)
@@ -1212,13 +1369,13 @@ namespace Spyder.Client.Net
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
 
-        public virtual async Task<PixelSpace> RequestPixelSpace(int pixelSpaceID)
+        public virtual async Task<PixelSpace> GetPixelSpace(int pixelSpaceID)
         {
-            var pixelSpaces = await RequestPixelSpaces();
+            var pixelSpaces = await GetPixelSpaces();
             return pixelSpaces == null ? null : pixelSpaces.FirstOrDefault(p => p.ID == pixelSpaceID);
         }
 
-        public virtual async Task<List<PixelSpace>> RequestPixelSpaces()
+        public virtual async Task<List<PixelSpace>> GetPixelSpaces()
         {
             var result = await RetrieveAsync("RPD");
             if (result == null || result.Result != ServerOperationResultCode.Success)
@@ -1236,7 +1393,7 @@ namespace Spyder.Client.Net
             var response = new List<PixelSpace>();
             for(int i=0; i<count; i++)
             {
-                int id, xPosition, yPosition, width, height;
+                int id, xPosition, yPosition, width, height, renewalGroupID;
                 if (!int.TryParse(parts[index++], out id))
                     return null;
 
@@ -1246,14 +1403,17 @@ namespace Spyder.Client.Net
                 pixelSpace.LastBackgroundStill = parts[index++];
                 pixelSpace.NextBackgroundStill = parts[index++];
 
-                if (!int.TryParse(parts[index++], out xPosition) || !int.TryParse(parts[index++], out yPosition) || !int.TryParse(parts[index++], out width) || !int.TryParse(parts[index++], out height))
+                if (!int.TryParse(parts[index++], out xPosition) || !int.TryParse(parts[index++], out yPosition) || !int.TryParse(parts[index++], out width) || !int.TryParse(parts[index++], out height) || !int.TryParse(parts[index++], out renewalGroupID))
                     return null;
 
                 pixelSpace.Rect = new Rectangle(xPosition, yPosition, width, height);
+                pixelSpace.RenewMasterFrameID = renewalGroupID;
 
                 //Assign scale if this is a preview pixelspace
                 var mapping = (mappings == null ? null : mappings.FirstOrDefault(m => m.PreviewID == id));
-                if (mapping != null)
+                if (mapping == null)
+                    pixelSpace.Scale = 1f;
+                else
                     pixelSpace.Scale = (float)mapping.Scale;
 
                 response.Add(pixelSpace);
@@ -1329,22 +1489,52 @@ namespace Spyder.Client.Net
 
         #region Retrieve Logic
 
+        private class CommandQueueItem
+        {
+            private readonly TaskCompletionSource<ServerOperationResult> tcs = new TaskCompletionSource<ServerOperationResult>();
+            public string Command { get; set; }
+            public TimeSpan Timeout { get; set; }
+            public Task<ServerOperationResult> Task { get { return tcs.Task; } }
+            public TaskCompletionSource<ServerOperationResult> TaskCompletionSource { get { return tcs; } }
+
+            public CommandQueueItem(string command)
+                : this(command, TimeSpan.FromSeconds(DefaultTimeoutSeconds))
+            {
+            }
+
+            public CommandQueueItem(string command, TimeSpan timeout)
+            {
+                this.Command = command;
+                this.Timeout = timeout;
+            }
+        }
+
         private bool isCommandProcessorRunning;
         private AsyncAutoResetEvent retrieveEvent;
-        private Queue<Tuple<string, TaskCompletionSource<ServerOperationResult>>> immediateCommandQueue;
-        private Queue<Tuple<string, TaskCompletionSource<ServerOperationResult>>> backgroundCommandQueue;
+        private Queue<CommandQueueItem> immediateCommandQueue;
+        private Queue<CommandQueueItem> backgroundCommandQueue;
 
         protected Task<ServerOperationResult> RetrieveAsync(string command, params object[] args)
         {
-            return RetrieveAsync(false, command, args);
+            return RetrieveAsync(false, TimeSpan.FromSeconds(DefaultTimeoutSeconds), command, args);
+        }
+
+        protected Task<ServerOperationResult> RetrieveAsync(TimeSpan timeout, string command, params object[] args)
+        {
+            return RetrieveAsync(false, timeout, command, args);
         }
 
         protected Task<ServerOperationResult> RetrieveInBackgroundAsync(string command, params object[] args)
         {
-            return RetrieveAsync(true, command, args);
+            return RetrieveAsync(true, TimeSpan.FromSeconds(DefaultTimeoutSeconds), command, args);
         }
 
-        private Task<ServerOperationResult> RetrieveAsync(bool isBackgroundTask, string command, params object[] args)
+        protected Task<ServerOperationResult> RetrieveInBackgroundAsync(TimeSpan timeout, string command, params object[] args)
+        {
+            return RetrieveAsync(true, timeout, command, args);
+        }
+
+        private Task<ServerOperationResult> RetrieveAsync(bool isBackgroundTask, TimeSpan timeout, string command, params object[] args)
         {
             if (command == null || command.Length == 0)
                 return Task.FromResult(new ServerOperationResult(ServerOperationResultCode.MissingCommandData));
@@ -1359,26 +1549,25 @@ namespace Spyder.Client.Net
             }
 
             //Enqueue command to be processed
-            TaskCompletionSource<ServerOperationResult> tcs = null;
             var targetQueue = (isBackgroundTask ? backgroundCommandQueue : immediateCommandQueue);
             lock (targetQueue)
             {
                 //Quick check to first see if this command already exists in the queue
-                var existing = targetQueue.FirstOrDefault(item => item.Item1 == command);
+                var existing = targetQueue.FirstOrDefault(item => item.Command == command);
                 if (existing != null)
                 {
                     //Since this message is already enqueued, lets return a handle to it's task and save the extra call
-                    return existing.Item2.Task;
+                    return existing.Task;
                 }
 
                 //Enqueue a new command to be processed
-                tcs = new TaskCompletionSource<ServerOperationResult>();
-                targetQueue.Enqueue(new Tuple<string, TaskCompletionSource<ServerOperationResult>>(command, tcs));
-            }
+                CommandQueueItem queueItem = new CommandQueueItem(command, timeout);
+                targetQueue.Enqueue(queueItem);
 
-            //Fire our autoreset event and then return the associated task for our new completion source
-            retrieveEvent.Set();
-            return tcs.Task;
+                //Fire our autoreset event and then return the associated task for our new completion source
+                retrieveEvent.Set();
+                return queueItem.Task;
+            }
         }
 
         /// <summary>
@@ -1401,17 +1590,15 @@ namespace Spyder.Client.Net
                 }
 
                 //Process this current command
-                string command = currentOperation.Item1;
-                TaskCompletionSource<ServerOperationResult> tcs = currentOperation.Item2;
-                ServerOperationResult result = await CommandQueueWorkerProcessSingleCommandAsync(command);
+                ServerOperationResult result = await CommandQueueWorkerProcessSingleCommandAsync(currentOperation.Command, currentOperation.Timeout);
                 result.ExecutionPriorityLevel = commandQueue;
-                tcs.TrySetResult(result);
+                currentOperation.TaskCompletionSource.TrySetResult(result);
             }
 
             isCommandProcessorRunning = false;
         }
 
-        private Tuple<string, TaskCompletionSource<ServerOperationResult>> DequeueNextCommand(out CommandExecutionPriority commandQueue)
+        private CommandQueueItem DequeueNextCommand(out CommandExecutionPriority commandQueue)
         {
             //Look in the immediate queue for an item
             lock (immediateCommandQueue)
@@ -1438,15 +1625,15 @@ namespace Spyder.Client.Net
             return null;
         }
 
-        private async Task<ServerOperationResult> CommandQueueWorkerProcessSingleCommandAsync(string command)
+        private async Task<ServerOperationResult> CommandQueueWorkerProcessSingleCommandAsync(string command, TimeSpan timeout)
         {
             IUDPSocket socket = null;
             try
             {
                 socket = getUdpSocket();
-                if (!await socket.Startup(ServerIP, ServerPort))
+                if (!await socket.StartupAsync(ServerIP, ServerPort))
                 {
-                    Debug.WriteLine("Failed to startup socket for Spyder Client");
+                    TraceQueue.Trace(this, TracingLevel.Warning, "Failed to startup socket for Spyder Client");
                     return new ServerOperationResult(ServerOperationResultCode.ExecutionError);
                 }
 
@@ -1465,7 +1652,7 @@ namespace Spyder.Client.Net
                     fullMessage[headerLength + i] = (byte)command[i];
 
                 //Send message to server and get response
-                byte[] responseData = await socket.RetrieveDataAsync(fullMessage, 0, fullMessage.Length, TimeSpan.FromSeconds(1));
+                byte[] responseData = await socket.RetrieveDataAsync(fullMessage, 0, fullMessage.Length, timeout);
                 if (responseData == null || responseData.Length == 0)
                     return new ServerOperationResult(ServerOperationResultCode.NoResponseFromServer);
 
@@ -1489,7 +1676,7 @@ namespace Spyder.Client.Net
             {
                 if(socket != null)
                 {
-                    socket.Shutdown();
+                    await socket.ShutdownAsync();
                     socket = null;
                 }
             }
@@ -1505,11 +1692,9 @@ namespace Spyder.Client.Net
                 if (c == ' ')
                 {
                     //Separator encountered.  Add current StringBuilder contents to response list and reset state
-                    if (builder.Length > 0)
-                    {
-                        response.Add(builder.ToString());
-                        builder.Clear();
-                    }
+                    //Note: it's likely normal for us to encounter an empty value, for cases where a string value like a background is passed back from the server but the value is null
+                    response.Add(builder.ToString());
+                    builder.Clear();
                 }
                 else
                 {

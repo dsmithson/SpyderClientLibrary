@@ -46,10 +46,10 @@ namespace Spyder.Client.Images
             this.qftClients = new Dictionary<string, QFTClient>();
         }
 
-        public override async Task Shutdown()
+        public override async Task ShutdownAsync()
         {
             //Let the base handle it's cleanup
-            await base.Shutdown();
+            await base.ShutdownAsync();
 
             //Clear out any existing QFT Clients
             if (qftClients.Count > 0)
@@ -57,7 +57,7 @@ namespace Spyder.Client.Images
                 List<Task> tasks = new List<Task>();
                 foreach (var qftClient in qftClients.Values)
                 {
-                    tasks.Add(qftClient.Shutdown());
+                    tasks.Add(qftClient.ShutdownAsync());
                 }
                 await Task.WhenAll(tasks);
                 this.qftClients.Clear();
@@ -115,6 +115,11 @@ namespace Spyder.Client.Images
                                 fileStream = await file.OpenAsync(FileAccess.Read);
                                 fileStreamIsScaled = true;
                             }
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            //No such file exists
+                            fileStream = null;
                         }
                         catch (Exception ex)
                         {
@@ -320,7 +325,7 @@ namespace Spyder.Client.Images
 
             if (!response.IsRunning)
             {
-                if (!await response.Startup())
+                if (!await response.StartupAsync())
                     return null;
             }
 

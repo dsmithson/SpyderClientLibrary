@@ -14,6 +14,7 @@ using System.Diagnostics;
 using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
 using Knightware.Primitives;
+using Spyder.Client.Net.DrawingData;
 
 namespace Spyder.Client.Net
 {
@@ -24,8 +25,28 @@ namespace Spyder.Client.Net
     {
         private const int maxTraceMessages = 100;
         private readonly ISpyderClientExtended client;
+        private int lastDataObjectVersion = -1;
 
         #region Properties
+
+        /// <summary>
+        /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
+        /// </summary>
+        public TimeSpan DrawingDataThrottleInterval
+        {
+            get { return drawingDataThrottleInterval; }
+            set
+            {
+                if (drawingDataThrottleInterval != value)
+                {
+                    drawingDataThrottleInterval = value;
+                    OnPropertyChanged();
+                }
+
+                client.DrawingDataThrottleInterval = value;
+            }
+        }
+        private TimeSpan drawingDataThrottleInterval = TimeSpan.Zero;
 
         private DrawingData.DrawingData drawingData;
         public DrawingData.DrawingData DrawingData
@@ -108,7 +129,7 @@ namespace Spyder.Client.Net
         private ObservableCollection<Script> scripts;
         public ObservableCollection<Script> Scripts
         {
-            get 
+            get
             {
                 if (scripts == null)
                 {
@@ -130,14 +151,14 @@ namespace Spyder.Client.Net
         private ObservableCollection<FunctionKey> functionKeys;
         public ObservableCollection<FunctionKey> FunctionKeys
         {
-            get 
+            get
             {
                 if (functionKeys == null)
                 {
                     //Start a pull for function keys.  This will update this collection when it completes
                     GetFunctionKeys();
                 }
-                return functionKeys; 
+                return functionKeys;
             }
             protected set
             {
@@ -152,14 +173,14 @@ namespace Spyder.Client.Net
         private ObservableCollection<Source> sources;
         public ObservableCollection<Source> Sources
         {
-            get 
+            get
             {
                 if (sources == null)
                 {
                     //Start a pull for sources.  This will update this collection when it completes
                     GetSources();
                 }
-                return sources; 
+                return sources;
             }
             protected set
             {
@@ -174,14 +195,14 @@ namespace Spyder.Client.Net
         private ObservableCollection<Treatment> treatments;
         public ObservableCollection<Treatment> Treatments
         {
-            get 
+            get
             {
                 if (treatments == null)
                 {
                     //Start a pull for treatments.  This will update this collection when it completes
                     GetTreatments();
                 }
-                return treatments; 
+                return treatments;
             }
             protected set
             {
@@ -288,37 +309,49 @@ namespace Spyder.Client.Net
             }
 
             //Update our internal collections by calling their general data getters
+            var tasks = new List<Task>();
             if (commandKeys != null)
-                await GetCommandKeys();
+                tasks.Add(GetCommandKeys());
 
             if (scripts != null)
-                await GetScripts();
+                tasks.Add(GetScripts());
 
             if (functionKeys != null)
-                await GetFunctionKeys();
+                tasks.Add(GetFunctionKeys());
 
             if (sources != null)
-                await GetSources();
+                tasks.Add(GetSources());
 
             if (treatments != null)
-                await GetTreatments();
+                tasks.Add(GetTreatments());
 
             if (stills != null)
-                await GetStills();
+                tasks.Add(GetStills());
 
             if (playItems != null)
-                await GetPlayItems();
+                tasks.Add(GetPlayItems());
 
             if (pixelSpaces != null)
-                await GetPixelSpaces();
+                tasks.Add(GetPixelSpaces());
 
             if (inputConfigs != null)
-                await GetInputConfigs();
+                tasks.Add(GetInputConfigs());
+
+            //Wait for any pending operations above to complete
+            if (tasks.Count > 0)
+                await Task.WhenAll(tasks);
 
             return true;
         }
 
         #region ISpyderClient interface wrapper
+
+        public event DataObjectChangedHandler DataObjectChanged;
+        protected void OnDataObjectChanged(DataObjectChangedEventArgs e)
+        {
+            if (DataObjectChanged != null)
+                DataObjectChanged(this, e);
+        }
 
         public event DrawingDataReceivedHandler DrawingDataReceived;
         protected void OnDrawingDataReceived(DrawingDataReceivedEventArgs e)
@@ -367,54 +400,89 @@ namespace Spyder.Client.Net
             }
         }
 
-        public async Task<bool> Startup()
+        public async Task<bool> StartupAsync()
         {
-            Shutdown();
+            await ShutdownAsync();
 
             //Hook for trace messages so we can see messages related to connections from the server side
             client.TraceLogMessageReceived += client_TraceLogMessageReceived;
 
-            if (!await client.Startup())
+            if (!await client.StartupAsync())
             {
-                Shutdown();
+                await ShutdownAsync();
                 return false;
             }
 
             //Do additional initialization here
             client.DrawingDataReceived += client_DrawingDataReceived;
-            
+            client.DataObjectChanged += client_DataObjectChanged;
+
             return true;
         }
 
-        
-        public void Shutdown()
+        public async Task ShutdownAsync()
         {
-            client.DrawingDataReceived -= client_DrawingDataReceived;
             client.TraceLogMessageReceived -= client_TraceLogMessageReceived;
+            client.DrawingDataReceived -= client_DrawingDataReceived;
+            client.DataObjectChanged -= client_DataObjectChanged;
 
-            client.Shutdown();
+            await client.ShutdownAsync();
+
+            drawingData = null;
+            lastDataObjectVersion = -1;
+            this.commandKeys = null;
+            this.functionKeys = null;
+            this.sources = null;
+            this.stills = null;
+            this.traceMessages = null;
+            this.inputConfigs = null;
+            this.pixelSpaces = null;
+            this.playItems = null;
+            this.scripts = null;
+            this.treatments = null;
+            this.userDiagnosticOverallStatus = DiagnosticStatus.Unknown;
+        }
+
+        private void EvaluateAndRaiseDataObjectChanged(int dataObjectVersion, DataType changedDataTypes)
+        {
+            if (!IsRunning || dataObjectVersion == lastDataObjectVersion)
+                return;
+
+            //If we've missed a data object version, then there may be more than one type of data changed.  Upgrade change types to all
+            if (dataObjectVersion - lastDataObjectVersion != 1 && lastDataObjectVersion != -1)
+                changedDataTypes = DataType.All;
+
+            lastDataObjectVersion = dataObjectVersion;
+            OnDataObjectChanged(new DataObjectChangedEventArgs(ServerIP, dataObjectVersion, changedDataTypes));
+        }
+
+        private void client_DataObjectChanged(object sender, DataObjectChangedEventArgs e)
+        {
+            EvaluateAndRaiseDataObjectChanged(e.Version, e.ChangedDataTypes);
         }
 
         void client_DrawingDataReceived(object sender, DrawingDataReceivedEventArgs e)
         {
-            if (!IsRunning)
+            if (!IsRunning || e.DrawingData == null)
                 return;
 
             try
             {
+                var drawingData = e.DrawingData;
+
                 //Update overall status
-                if(e.DrawingData == null)
-                {
-                    this.UserDiagnosticOverallStatus = DiagnosticStatus.Unknown;
-                }
-                else if(e.DrawingData.DiagnosticWarnings == null || e.DrawingData.DiagnosticWarnings.Count == 0)
+                if (drawingData.DiagnosticWarnings == null || drawingData.DiagnosticWarnings.Count == 0)
                 {
                     this.userDiagnosticOverallStatus = DiagnosticStatus.NotRun;
                 }
                 else
                 {
-                    this.UserDiagnosticOverallStatus = e.DrawingData.DiagnosticWarnings.Values.Min();
+                    this.UserDiagnosticOverallStatus = drawingData.DiagnosticWarnings.Values.Min();
                 }
+
+                //Check dataobject changed.  It's a good check here even though we get an explicit dataObjectChanged message
+                //from the server, because it's possible that we'll miss the UDP message
+                EvaluateAndRaiseDataObjectChanged(e.DrawingData.DataObjectVersion, e.DrawingData.DataObjectLastChangeType);
 
                 this.DrawingData = e.DrawingData;
                 OnDrawingDataReceived(e);
@@ -445,7 +513,7 @@ namespace Spyder.Client.Net
                     if (msgToRemove.Level == this.traceMessagesOverallLevel)
                         updateSeverity = true;
                 }
-                if(updateSeverity)
+                if (updateSeverity)
                 {
                     this.TraceMessagesOverallLevel = TraceMessages.Min(msg => msg.Level);
                 }
@@ -464,11 +532,16 @@ namespace Spyder.Client.Net
             return client.GetImageFileStream(fileName);
         }
 
-        public Task<IEnumerable<RegisterPage>> GetRegisterPages(RegisterType type)
+        public Task<bool> SetImageFileStream(string fileName, Stream fileStream)
+        {
+            return client.SetImageFileStream(fileName, fileStream);
+        }
+
+        public Task<List<RegisterPage>> GetRegisterPages(RegisterType type)
         {
             return client.GetRegisterPages(type);
         }
-        public Task<IEnumerable<IRegister>> GetRegisters(RegisterType type)
+        public Task<List<IRegister>> GetRegisters(RegisterType type)
         {
             return client.GetRegisters(type);
         }
@@ -477,7 +550,7 @@ namespace Spyder.Client.Net
             return client.GetRegister(type, registerID);
         }
 
-        public Task<IEnumerable<Source>> GetSources()
+        public Task<List<Source>> GetSources()
         {
             var task = client.GetSources();
             task.ContinueWith((t) => UpdateList(t, (list) => this.Sources = list));
@@ -496,8 +569,8 @@ namespace Spyder.Client.Net
         {
             return client.GetSource(sourceName);
         }
-        
-        public Task<IEnumerable<CommandKey>> GetCommandKeys()
+
+        public Task<List<CommandKey>> GetCommandKeys()
         {
             var task = client.GetCommandKeys();
             task.ContinueWith((t) => UpdateList(t, (list) => this.CommandKeys = list));
@@ -512,7 +585,7 @@ namespace Spyder.Client.Net
             return client.GetCommandKey(commandKeyRegister);
         }
 
-        public Task<IEnumerable<Script>> GetScripts()
+        public Task<List<Script>> GetScripts()
         {
             var task = client.GetScripts();
             task.ContinueWith((t) => UpdateList(t, (list) => this.Scripts = list));
@@ -534,7 +607,7 @@ namespace Spyder.Client.Net
             return client.GetRunningCommandKeyCue(registerID);
         }
 
-        public Task<IEnumerable<Treatment>> GetTreatments()
+        public Task<List<Treatment>> GetTreatments()
         {
             var task = client.GetTreatments();
             task.ContinueWith((t) => UpdateList(t, (list) => this.Treatments = list));
@@ -549,7 +622,7 @@ namespace Spyder.Client.Net
             return client.GetTreatment(treatmentRegister);
         }
 
-        public Task<IEnumerable<FunctionKey>> GetFunctionKeys()
+        public Task<List<FunctionKey>> GetFunctionKeys()
         {
             var task = client.GetFunctionKeys();
             task.ContinueWith((t) => UpdateList(t, (list) => this.FunctionKeys = list));
@@ -564,7 +637,7 @@ namespace Spyder.Client.Net
             return client.GetFunctionKey(functionKeyRegister);
         }
 
-        public Task<IEnumerable<Still>> GetStills()
+        public Task<List<Still>> GetStills()
         {
             var task = client.GetStills();
             task.ContinueWith((t) => UpdateList(t, (list) => this.Stills = list));
@@ -579,7 +652,7 @@ namespace Spyder.Client.Net
             return client.GetStill(stillRegister);
         }
 
-        public Task<IEnumerable<PlayItem>> GetPlayItems()
+        public Task<List<PlayItem>> GetPlayItems()
         {
             var task = client.GetPlayItems();
             task.ContinueWith((t) => UpdateList(t, (list) => this.PlayItems = list));
@@ -594,7 +667,7 @@ namespace Spyder.Client.Net
             return client.GetPlayItem(playItemRegister);
         }
 
-        public Task<IEnumerable<PixelSpace>> GetPixelSpaces()
+        public Task<List<PixelSpace>> GetPixelSpaces()
         {
             var task = client.GetPixelSpaces();
             task.ContinueWith((t) => UpdateList(t, (list) => this.PixelSpaces = list));
@@ -606,7 +679,7 @@ namespace Spyder.Client.Net
             return client.GetPixelSpace(pixelSpaceID);
         }
 
-        public Task<IEnumerable<InputConfig>> GetInputConfigs()
+        public Task<List<InputConfig>> GetInputConfigs()
         {
             var task = client.GetInputConfigs();
             task.ContinueWith((t) => UpdateList(t, (list) => this.InputConfigs = list));
@@ -656,7 +729,7 @@ namespace Spyder.Client.Net
         /// <typeparam name="T"></typeparam>
         /// <param name="newCollectionTask"></param>
         /// <param name="updateMethod"></param>
-        private void UpdateList<T>(Task<IEnumerable<T>> newCollectionTask, Action<ObservableCollection<T>> updateMethod)
+        private void UpdateList<T>(Task<List<T>> newCollectionTask, Action<ObservableCollection<T>> updateMethod)
         {
             if (newCollectionTask == null || newCollectionTask.Exception != null || newCollectionTask.Status != TaskStatus.RanToCompletion)
                 return;
@@ -680,6 +753,11 @@ namespace Spyder.Client.Net
             return client.GetShape(shapeFileName);
         }
 
+        public Task<bool> SetShape(Shape shape)
+        {
+            return client.SetShape(shape);
+        }
+
         public Task<List<string>> GetShapeFileNames()
         {
             return client.GetShapeFileNames();
@@ -699,12 +777,12 @@ namespace Spyder.Client.Net
         {
             return client.MixBackground(duration);
         }
-        
+
         #region Layer Interaction
 
-        public Task<int> RequestLayerCount()
+        public Task<int> GetLayerCount()
         {
-            return client.RequestLayerCount();
+            return client.GetLayerCount();
         }
 
         public Task<int> GetFirstAvailableLayerID()
@@ -903,6 +981,75 @@ namespace Spyder.Client.Net
 
         #endregion
 
+        #region Output Configuration
+
+        public Task<bool> FreezeOutput(params int[] outputIDs)
+        {
+            return client.FreezeOutput(outputIDs);
+        }
+
+        public Task<bool> UnFreezeOutput(params int[] outputIDs)
+        {
+            return client.UnFreezeOutput(outputIDs);
+        }
+
+        public Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex)
+        {
+            return client.LoadStillOnOutput(fileName, outputID, dx4ChannelIndex);
+        }
+
+        public Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex)
+        {
+            return client.ClearStillOnOutput(outputID, dx4ChannelIndex);
+        }
+
+        public Task<bool> SaveOutputConfiguration(int outputID)
+        {
+            return client.SaveOutputConfiguration(outputID);
+        }
+
+        public Task<bool> SetOutputBlend(int outputID, BlendEdge edge, bool enabled, int blendSize, BlendMode blendMode, float curve1, float curve2)
+        {
+            return SetOutputBlend(outputID, edge, enabled, blendSize, blendMode, curve1, curve2);
+        }
+
+        public Task<bool> ClearOutputBlend(int outputID, BlendEdge edge)
+        {
+            return client.ClearOutputBlend(outputID, edge);
+        }
+
+        public Task<bool> RotateOutput(int outputID, RotationMode mode)
+        {
+            return client.RotateOutput(outputID, mode);
+        }
+
+        public Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex)
+        {
+            return client.SetOutputModeToNormal(outputID, hStart, vStart, dx4ChannelIndex);
+        }
+
+        public Task<bool> SetOutputModeToOpMon(int outputID, int pixelSpaceID)
+        {
+            return client.SetOutputModeToOpMon(outputID, pixelSpaceID);
+        }
+
+        public Task<bool> SetOutputModeToScaled(int outputID, int pixelSpaceID)
+        {
+            return client.SetOutputModeToScaled(outputID, pixelSpaceID);
+        }
+
+        public Task<bool> SetOutputModeToSourceMon(int outputID)
+        {
+            return client.SetOutputModeToSourceMon(outputID);
+        }
+
+        public Task<bool> SetOutputFormat(int outputID, int hActive, int vActive, float refreshRate, bool interlaced, bool useReducedBlanking)
+        {
+            return client.SetOutputFormat(outputID, hActive, vActive, refreshRate, interlaced, useReducedBlanking);
+        }
+
+        #endregion
+        
         #region PixelSpace Interaction
 
         public Task<bool> MixBackground(TimeSpan duration)
@@ -913,16 +1060,6 @@ namespace Spyder.Client.Net
         public Task<bool> LoadBackgroundImage(int pixelSpaceID, BackgroundImageBus bus, string fileName)
         {
             return client.LoadBackgroundImage(pixelSpaceID, bus, fileName);
-        }
-
-        public Task<List<PixelSpace>> RequestPixelSpaces()
-        {
-            return client.RequestPixelSpaces();
-        }
-
-        public Task<PixelSpace> RequestPixelSpace(int pixelSpaceID)
-        {
-            return client.RequestPixelSpace(pixelSpaceID);
         }
 
         #endregion

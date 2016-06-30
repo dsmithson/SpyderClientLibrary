@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Spyder.Client.Common
 {
-    public class Treatment : KeyFrame, IRegister
+    public class Treatment : KeyFrame, IRegister, IEquatable<Treatment>
     {
         private int id;
         public int ID
@@ -186,44 +186,62 @@ namespace Spyder.Client.Common
 
         public virtual void CopyFrom(IRegister copyFrom)
         {
-            if (copyFrom is KeyFrame)
+            var kf = copyFrom as KeyFrame;
+            if (kf != null)
             {
                 CopyFrom((KeyFrame)copyFrom);
             }
+
+            Register.Copy(copyFrom, this);
+        }
+        
+        public override void CopyFrom(KeyFrame copyFrom)
+        {
+            Treatment treatment = copyFrom as Treatment;
+            if (treatment != null)
+            {
+                CopyFrom(treatment);
+            }
             else
             {
-                Register.Copy(copyFrom, this);
+                //Update keyframe properties
+                base.CopyFrom(copyFrom);
+
+                //Update reister properties
+                var myRegister = copyFrom as IRegister;
+                if (myRegister != null)
+                {
+                    Register.Copy(myRegister, this);
+                }
             }
         }
 
-        public override void CopyFrom(KeyFrame copyFrom)
+        public virtual void CopyFrom(Treatment copyFrom)
         {
+            if(copyFrom == null)
+                return;
+
             //Update keyframe properties
             base.CopyFrom(copyFrom);
 
-            //Update reister properties
-            var myRegister = copyFrom as IRegister;
-            if (myRegister != null)
+            //Update treatment properties
+            if (copyFrom != null)
             {
-                Register.Copy(myRegister, this);
+                this.ID = copyFrom.ID;
+                this.IsAspectRatioOffsetEnabled = copyFrom.IsAspectRatioOffsetEnabled;
+                this.IsBorderEnabled = copyFrom.IsBorderEnabled;
+                this.IsCloneEnabled = copyFrom.IsCloneEnabled;
+                this.IsCropEnabled = copyFrom.IsCropEnabled;
+                this.IsDurationEnabled = copyFrom.IsDurationEnabled;
+                this.IsPanZoomEnabled = copyFrom.IsPanZoomEnabled;
+                this.IsHPositionEnabled = copyFrom.IsHPositionEnabled;
+                this.IsVPositionEnabled = copyFrom.IsVPositionEnabled;
+                this.IsShadowEnabled = copyFrom.IsShadowEnabled;
+                this.IsSizeEnabled = copyFrom.IsSizeEnabled;
             }
 
-            //Update treatment properties
-            var myCopyFrom = copyFrom as Treatment;
-            if (myCopyFrom != null)
-            {
-                this.ID = myCopyFrom.ID;
-                this.IsAspectRatioOffsetEnabled = myCopyFrom.IsAspectRatioOffsetEnabled;
-                this.IsBorderEnabled = myCopyFrom.IsBorderEnabled;
-                this.IsCloneEnabled = myCopyFrom.IsCloneEnabled;
-                this.IsCropEnabled = myCopyFrom.IsCropEnabled;
-                this.IsDurationEnabled = myCopyFrom.IsDurationEnabled;
-                this.IsPanZoomEnabled = myCopyFrom.IsPanZoomEnabled;
-                this.IsHPositionEnabled = myCopyFrom.IsHPositionEnabled;
-                this.IsVPositionEnabled = myCopyFrom.IsVPositionEnabled;
-                this.IsShadowEnabled = myCopyFrom.IsShadowEnabled;
-                this.IsSizeEnabled = myCopyFrom.IsSizeEnabled;
-            }
+            //Update register properties
+            Register.Copy(copyFrom, this);
         }
 
         #region IRegister Implementation
@@ -318,5 +336,66 @@ namespace Spyder.Client.Common
         }
 
         #endregion
+
+        public override int GetHashCode()
+        {
+            return (((int)Type * 251) + RegisterID) * 251 + LookupID;
+        }
+        
+        public bool Equals(Treatment other)
+        {
+            if(other == null)
+                return false;
+            else if(this.id != other.id)
+                return false;
+            else if(this.isAspectRatioOffsetEnabled != other.isAspectRatioOffsetEnabled)
+                return false;
+            else if(this.isBorderEnabled != other.isBorderEnabled)
+                return false;
+            else if(this.isCloneEnabled != other.isCloneEnabled)
+                return false;
+            else if(this.isDurationEnabled != other.isDurationEnabled)
+                return false;
+            else if(this.isPanZoomEnabled != other.isPanZoomEnabled)
+                return false;
+            else if(this.isHPositionEnabled != other.isHPositionEnabled)
+                return false;
+            else if(this.isVPositionEnabled != other.isVPositionEnabled)
+                return false;
+            else if(this.isShadowEnabled != other.isShadowEnabled)
+                return false;
+            else if(this.isSizeEnabled != other.isSizeEnabled)
+                return false;
+            else
+                return base.Equals(other);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+                return false;
+
+            Treatment compare = obj as Treatment;
+            if (compare == null)
+                return false;
+            else
+                return this.Equals(compare);
+        }
+
+        public static bool operator ==(Treatment t1, Treatment t2)
+        {
+            if (((object)t1 == null) || ((object)t2) == null)
+                return Object.Equals(t1, t2);
+
+            return t1.Equals(t2);
+        }
+
+        public static bool operator !=(Treatment t1, Treatment t2)
+        {
+            if (((object)t1 == null) || ((object)t2) == null)
+                return !Object.Equals(t1, t2);
+
+            return !t1.Equals(t2);
+        }
     }
 }

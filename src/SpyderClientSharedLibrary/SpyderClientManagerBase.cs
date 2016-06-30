@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Spyder.Client.IO;
 using Spyder.Client.Common;
 using Spyder.Client.Net;
+using Knightware.Threading.Tasks;
 
 namespace Spyder.Client
 {
@@ -22,9 +23,12 @@ namespace Spyder.Client
     public class SpyderClientManagerBase : INotifyPropertyChanged
     {
         private readonly SynchronizationContext context;
-        private readonly SpyderServerEventListenerBase serverEventListener;
+        private readonly Func<Task<SpyderServerEventListenerBase>> getServerEventListener;
         private readonly Func<string, Task<ISpyderClientExtended>> getSpyderClient;
+        private readonly AsyncLock spyderServersLock = new AsyncLock();
+        private readonly AsyncLock spyderServersInitializingLock = new AsyncLock();
         private List<BindableSpyderClient> spyderServers = new List<BindableSpyderClient>();
+        private SpyderServerEventListenerBase serverEventListener;
 
         public event EventHandler ServerListChanged;
         protected void OnServerListChanged(EventArgs e)
@@ -62,37 +66,47 @@ namespace Spyder.Client
 
         public bool IsRunning { get; private set; }
         
-        protected SpyderClientManagerBase(SpyderServerEventListenerBase serverEventListener, Func<string, Task<ISpyderClientExtended>> getSpyderClient)
+        protected SpyderClientManagerBase(Func<Task<SpyderServerEventListenerBase>> getServerEventListener, Func<string, Task<ISpyderClientExtended>> getSpyderClient)
         {
             this.getSpyderClient = getSpyderClient;
-            this.serverEventListener = serverEventListener;
+            this.getServerEventListener = getServerEventListener;
                         
             //Grab current synchronization context
             this.context = SynchronizationContext.Current;                
         }
 
-        public virtual Task<bool> Startup()
+        public virtual async Task<bool> StartupAsync()
         {
-            Shutdown();
+            await ShutdownAsync();
             IsRunning = true;
 
-            serverEventListener.ServerAnnounceMessageReceived += serverEventListener_ServerAnnounceMessageReceived;
-            return Task.FromResult(true);
+            serverEventListener = await getServerEventListener();
+            if (serverEventListener != null)
+            {
+                serverEventListener.ServerAnnounceMessageReceived += serverEventListener_ServerAnnounceMessageReceived;
+            }
+            return true;
         }
 
-        public virtual void Shutdown()
+        public virtual async Task ShutdownAsync()
         {
             IsRunning = false;
 
-            serverEventListener.ServerAnnounceMessageReceived -= serverEventListener_ServerAnnounceMessageReceived;
-
-            lock(spyderServers)
+            if (serverEventListener != null)
             {
+                serverEventListener.ServerAnnounceMessageReceived -= serverEventListener_ServerAnnounceMessageReceived;
+                serverEventListener = null;
+            }
+
+            using(await spyderServersLock.LockAsync())
+            {
+                var tasks = new List<Task>();
                 foreach (var bindableClient in spyderServers)
                 {
                     bindableClient.DrawingDataReceived -= BindableClient_DrawingDataReceived;
-                    bindableClient.Shutdown();
+                    tasks.Add(bindableClient.ShutdownAsync());
                 }
+                await Task.WhenAll(tasks);
 
                 spyderServers.Clear();
                 spyderServersInitializing.Clear();
@@ -103,30 +117,30 @@ namespace Spyder.Client
         {
             var client = new SpyderDemoClient(serverData);
             var bindableClient = new BindableSpyderClient(client);
-            if (!await bindableClient.Startup())
+            if (!await bindableClient.StartupAsync())
                 return false;
 
-            lock (spyderServers)
+            using(await spyderServersLock.LockAsync())
             {
                 spyderServers.Add(bindableClient);
             }
             return true;
         }
 
-        public BindableSpyderClient GetServer(string serverIP)
+        public async Task<BindableSpyderClient> GetServerAsync(string serverIP)
         {
             if (string.IsNullOrEmpty(serverIP))
                 return null;
 
-            lock (spyderServers)
+            using(await spyderServersLock.LockAsync())
             {
                 return spyderServers.FirstOrDefault(s => s.ServerIP == serverIP);
             }
         }
 
-        public List<BindableSpyderClient> GetServers()
+        public async Task<List<BindableSpyderClient>> GetServers()
         {
-            lock (spyderServers)
+            using(await spyderServersLock.LockAsync())
             {
                 return new List<BindableSpyderClient>(spyderServers);
             }
@@ -142,10 +156,10 @@ namespace Spyder.Client
             if (!IsRunning)
                 return;
             
-            if (GetServer(serverInfo.Address) == null)
+            if (await GetServerAsync(serverInfo.Address) == null)
             {
                 bool isInitializing;
-                lock (spyderServersInitializing)
+                using(await spyderServersInitializingLock.LockAsync())
                 {
                     isInitializing = spyderServersInitializing.Contains(serverInfo.Address);
                 }
@@ -165,13 +179,13 @@ namespace Spyder.Client
 
                     //Startup our client asynchronously
                     var bindableClient = new BindableSpyderClient(client);
-                    if (await bindableClient.Startup())
+                    if (await bindableClient.StartupAsync())
                     {
-                        lock (spyderServers)
+                        using(await spyderServersLock.LockAsync())
                         {
                             spyderServers.Add(bindableClient);
                         }
-                        lock (spyderServersInitializing)
+                        using(await spyderServersInitializingLock.LockAsync())
                         {
                             spyderServersInitializing.Remove(serverInfo.Address);
                         }

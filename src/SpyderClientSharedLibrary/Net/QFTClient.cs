@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO.Compression;
 
 namespace Spyder.Client.Net
 {
@@ -27,14 +28,13 @@ namespace Spyder.Client.Net
         private Func<IStreamSocket> getStreamSocket;
         private AutoResetWorker pingWorker;
         private DateTime lastCommandTime;
-
-        private readonly AsyncSemaphore semaphore = new AsyncSemaphore(1);
+        private readonly AsyncLock commandLock = new AsyncLock();
 
         public bool IsRunning { get; private set; }
 
         public string ServerIP { get; private set; }
         public int ServerPort { get; private set; }
-
+        
         public bool IsConnected
         {
             get
@@ -46,6 +46,8 @@ namespace Spyder.Client.Net
             }
         }
 
+        public bool FileCompressionEnabled { get; private set; }
+
         public QFTClient(Func<IStreamSocket> getStreamSocket, string serverIP, int serverPort = 7280)
         {
             this.getStreamSocket = getStreamSocket;
@@ -53,30 +55,40 @@ namespace Spyder.Client.Net
             this.ServerPort = serverPort;
         }
 
-        public Task<bool> Startup()
+        public Task<bool> StartupAsync()
         {
-            return Startup(true, true);
+            return StartupAsync(true, true, true);
         }
 
-        protected async Task<bool> Startup(bool sendRemoteDisconnectRequest, bool acquireSemaphore)
+        protected async Task<bool> StartupAsync(bool sendRemoteDisconnectRequest, bool acquireSemaphore, bool enableCompression)
         {
-            await Shutdown(sendRemoteDisconnectRequest, acquireSemaphore);
+            await ShutdownAsync(sendRemoteDisconnectRequest, acquireSemaphore);
             IsRunning = true;
 
             try
             {
                 socket = getStreamSocket();
-                if (!await socket.Startup(ServerIP, ServerPort))
+                if (!await socket.StartupAsync(ServerIP, ServerPort))
                 {
                     TraceQueue.Trace(TracingLevel.Warning, "Failed to initialize socket for QFT Client. Shutting down...");
-                    await Shutdown();
+                    await ShutdownAsync();
                     return false;
+                }
+
+                //try to enable compression for session
+                if (enableCompression)
+                {
+                    if (!await EnableCompressionForCurrentSession(acquireSemaphore))
+                    {
+                        //Failed to enable compression; startup without compression
+                        return await StartupAsync(sendRemoteDisconnectRequest, acquireSemaphore, false);
+                    }
                 }
 
                 lastCommandTime = DateTime.Now;
                 pingWorker = new AutoResetWorker();
                 pingWorker.PeriodicSignallingTime = TimeSpan.FromSeconds(10);
-                pingWorker.Startup(PingWorker_DoWork, null, () => IsRunning);
+                await pingWorker.StartupAsync(PingWorker_DoWork, null, () => IsRunning);
 
                 return true;
             }
@@ -85,28 +97,29 @@ namespace Spyder.Client.Net
                 TraceQueue.Trace(TracingLevel.Error, "{0} occurred while initializing socket: {1}", ex.GetType().Name, ex.Message);
             }
 
-            await Shutdown();
+            await ShutdownAsync();
             return false;
         }
 
-        public Task Shutdown()
+        public Task ShutdownAsync()
         {
-            return Shutdown(true, true);
+            return ShutdownAsync(true, true);
         }
-
-        private async Task Shutdown(bool sendRemoteDisconnectRequest, bool acquireSemaphore)
+        
+        private async Task ShutdownAsync(bool sendRemoteDisconnectRequest, bool acquireSemaphore)
         {
+            AsyncLock.Releaser? releaser = null;
             try
             {
                 if (pingWorker != null)
                 {
-                    pingWorker.Shutdown();
+                    await pingWorker.ShutdownAsync();
                     pingWorker = null;
                 }
 
                 if (acquireSemaphore)
                 {
-                    await semaphore.WaitAsync();
+                    releaser = await commandLock.LockAsync();
                 }
 
                 if (IsConnected && sendRemoteDisconnectRequest)
@@ -118,9 +131,11 @@ namespace Spyder.Client.Net
 
                 if (socket != null)
                 {
-                    socket.Shutdown();
+                    await socket.ShutdownAsync();
                     socket = null;
                 }
+
+                FileCompressionEnabled = false;
             }
             catch (Exception ex)
             {
@@ -128,10 +143,8 @@ namespace Spyder.Client.Net
             }
             finally
             {
-                if (acquireSemaphore)
-                {
-                    semaphore.Release();
-                }
+                if(releaser.HasValue)
+                    releaser.Value.Dispose();
             }
         }
         
@@ -222,14 +235,14 @@ namespace Spyder.Client.Net
                 {
                     //Connection has been lost.  Attempt to recover
                     TraceQueue.Trace(this, TracingLevel.Information, "QFT connection to {0} is closed.  Attempting to open a new connection.", ServerIP);
-                    if (await Startup(false, false))
+                    if (await StartupAsync(false, false, true))
                     {
                         TraceQueue.Trace(this, TracingLevel.Information, "QFT connection to {0} has been re-opened.", ServerIP);
                     }
                     else
                     {
                         TraceQueue.Trace(this, TracingLevel.Warning, "Failed to open a new connection to {0}.", ServerIP);
-                        await Shutdown();
+                        await ShutdownAsync();
                         return -1;
                     }
                 }
@@ -277,8 +290,49 @@ namespace Spyder.Client.Net
             }
 
             //If we get here, we failed above
-            await Shutdown(false, false);
+            await ShutdownAsync(false, false);
             return -1;
+        }
+
+        public async Task<bool> EnableCompressionForCurrentSession(bool acquireSemaphore)
+        {
+            const string command = "?CREG\r";
+            const int size = 1;
+            byte[] buffer = new byte[size];
+
+            AsyncLock.Releaser? releaser = null;
+            try
+            {
+                if (acquireSemaphore)
+                    releaser = await commandLock.LockAsync();
+
+                TraceQueue.Trace(this, TracingLevel.Information, "Attempting to enable file compression with server {0}", ServerIP);
+                await ReceiveBytes(command, ref buffer, false);
+
+                if (buffer[0] == 0x01)
+                {
+                    FileCompressionEnabled = true;
+                    TraceQueue.Trace(this, TracingLevel.Information, "Compression for current session has been enabled");
+                    return true;
+                }
+                else
+                {
+                    FileCompressionEnabled = false;
+                    TraceQueue.Trace(this, TracingLevel.Information, "Unable to enable file compression for current session");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                FileCompressionEnabled = false;
+                TraceQueue.Trace(this, TracingLevel.Warning, "QFTClient encountered {0} in compression request: {1}", ex.GetType().Name, ex.Message);
+                return false;
+            }
+            finally
+            {
+                if (releaser.HasValue)
+                    releaser.Value.Dispose();
+            }
         }
 
         #endregion
@@ -300,10 +354,11 @@ namespace Spyder.Client.Net
             const int size = 1;
             byte[] buffer = new byte[size];
 
+            AsyncLock.Releaser? releaser = null;
             try
             {
                 if (obtainSemaphore)
-                    await semaphore.WaitAsync();
+                    releaser = await commandLock.LockAsync();
 
                 TraceQueue.Trace(this, TracingLevel.Information, "Pinging server at {0}", ServerIP);
                 await ReceiveBytes(command, ref buffer, false);
@@ -320,8 +375,8 @@ namespace Spyder.Client.Net
             }
             finally
             {
-                if (obtainSemaphore)
-                    semaphore.Release();
+                if (releaser.HasValue)
+                    releaser.Value.Dispose();
             }
         }
 
@@ -337,11 +392,12 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Getting Remote time offset from {0}", ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return TimeSpan.MinValue;
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Getting Remote time offset from {0}", ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return TimeSpan.MinValue;
+                }
 
                 //Parse remote time and send time skew
                 DateTime remoteTime = DateTimeFromOADate(BitConverter.ToDouble(buffer, 0)).ToUniversalTime();
@@ -353,10 +409,6 @@ namespace Spyder.Client.Net
             {
                 Log(ex, "GetRemoteTimeOffset");
                 return TimeSpan.MinValue;
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -374,11 +426,12 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Getting creation time for '{0}' on {1}", RemoteFile, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return DateTime.MinValue;
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Getting creation time for '{0}' on {1}", RemoteFile, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return DateTime.MinValue;
+                }
 
                 long fileTime = BitConverter.ToInt64(buffer, 0);
                 DateTime response = DateTime.FromFileTimeUtc(fileTime);
@@ -389,10 +442,6 @@ namespace Spyder.Client.Net
             {
                 Log(ex, "GetCreationTime");
                 return DateTime.MinValue;
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -409,22 +458,18 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Setting file modify time to {0} for '{1}' on {2}", newTime, remoteFile, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return false;
-
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Setting file modify time to {0} for '{1}' on {2}", newTime, remoteFile, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return false;
+                }
                 return (buffer[0] == 1 ? true : false);
             }
             catch (Exception ex)
             {
                 Log(ex, "SetModifiedTime");
                 return false;
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -441,12 +486,12 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Getting last modified time for '{0}' on {1}", remoteFile, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return DateTime.MinValue;
-
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Getting last modified time for '{0}' on {1}", remoteFile, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return DateTime.MinValue;
+                }
                 long fileTime = BitConverter.ToInt64(buffer, 0);
                 DateTime response = DateTime.FromFileTimeUtc(fileTime);
 
@@ -457,10 +502,6 @@ namespace Spyder.Client.Net
             {
                 Log(ex, "GetModifiedTime");
                 return DateTime.MinValue;
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -480,45 +521,41 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Getting file list in {0} on {1}", directory, ServerIP);
-                byte[] sizeBuffer = new byte[8];
-                if (await ReceiveBytes(command, ref sizeBuffer, true) <= 0)
-                    return null;
-
-                for (int i = 0; i < 4; i++)
-                    totalLength |= (((int)sizeBuffer[i]) << (i * 8));
-
-                //Any files?
-                if (totalLength <= 0)
-                    return new string[0];
-
-                builder = new StringBuilder((int)totalLength);
-                do
+                using (await commandLock.LockAsync())
                 {
-                    if (totalLength < buffer.Length)
-                        buffer = new byte[totalLength];
+                    TraceQueue.Trace(this, TracingLevel.Information, "Getting file list in {0} on {1}", directory, ServerIP);
+                    byte[] sizeBuffer = new byte[8];
+                    if (await ReceiveBytes(command, ref sizeBuffer, true) <= 0)
+                        return null;
 
-                    //Receive the data - we've already sent the command
-                    read = await ReceiveBytes(string.Empty, ref buffer, false);
-                    for (int i = 0; i < read; i++)
-                        builder.Append((char)buffer[i]);
+                    for (int i = 0; i < 4; i++)
+                        totalLength |= (((int)sizeBuffer[i]) << (i * 8));
 
-                    totalLength -= read;
+                    //Any files?
+                    if (totalLength <= 0)
+                        return new string[0];
 
-                } while (read > 0 && totalLength > 0);
+                    builder = new StringBuilder((int)totalLength);
+                    do
+                    {
+                        if (totalLength < buffer.Length)
+                            buffer = new byte[totalLength];
 
+                        //Receive the data - we've already sent the command
+                        read = await ReceiveBytes(string.Empty, ref buffer, false);
+                        for (int i = 0; i < read; i++)
+                            builder.Append((char)buffer[i]);
+
+                        totalLength -= read;
+
+                    } while (read > 0 && totalLength > 0);
+                }
                 return builder.ToString().Split('\\');
             }
             catch (Exception ex)
             {
                 Log(ex, "GetFiles");
                 return new string[0];
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -537,34 +574,35 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Getting directories in '{0}' on {1}", directory, ServerIP);
                 byte[] sizeBuffer = new byte[8];
-                if (await ReceiveBytes(command, ref sizeBuffer, true) <= 0)
-                    return null;
-
-                for (int i = 0; i < 4; i++)
-                    totalLength |= (((int)sizeBuffer[i]) << (i * 8));
-
-                //Any Directories?
-                if (totalLength <= 0)
-                    return new string[0];
-
-                builder = new StringBuilder((int)totalLength);
-                do
+                using (await commandLock.LockAsync())
                 {
-                    if (totalLength < buffer.Length)
-                        buffer = new byte[totalLength];
+                    TraceQueue.Trace(this, TracingLevel.Information, "Getting directories in '{0}' on {1}", directory, ServerIP);
+                    if (await ReceiveBytes(command, ref sizeBuffer, true) <= 0)
+                        return null;
 
-                    //Receive the data - we've already sent the command
-                    read = await ReceiveBytes(string.Empty, ref buffer, false);
-                    for (int i = 0; i < read; i++)
-                        builder.Append((char)buffer[i]);
+                    for (int i = 0; i < 4; i++)
+                        totalLength |= (((int)sizeBuffer[i]) << (i * 8));
 
-                    totalLength -= read;
+                    //Any Directories?
+                    if (totalLength <= 0)
+                        return new string[0];
 
-                } while (read > 0 && totalLength > 0);
+                    builder = new StringBuilder((int)totalLength);
+                    do
+                    {
+                        if (totalLength < buffer.Length)
+                            buffer = new byte[totalLength];
+
+                        //Receive the data - we've already sent the command
+                        read = await ReceiveBytes(string.Empty, ref buffer, false);
+                        for (int i = 0; i < read; i++)
+                            builder.Append((char)buffer[i]);
+
+                        totalLength -= read;
+
+                    } while (read > 0 && totalLength > 0);
+                }
 
                 return builder.ToString().Split('\\');
             }
@@ -572,10 +610,6 @@ namespace Spyder.Client.Net
             {
                 Log(ex, "GetDirectories");
                 return new string[0];
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -592,12 +626,12 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Deleting file '{0}' on {1}", remoteFile, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return false;
-
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Deleting file '{0}' on {1}", remoteFile, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return false;
+                }
                 return (buffer[0] == 1 ? true : false);
             }
             catch (Exception ex)
@@ -605,17 +639,13 @@ namespace Spyder.Client.Net
                 Log(ex, "DeleteFile");
                 return false;
             }
-            finally
-            {
-                semaphore.Release();
-            }
         }
 
 
         /// <summary>
         /// Deletes a directory recursively from the remote server
         /// </summary>
-        /// <param name="RemoteFile">Server root relative file path to delete</param>
+        /// <param name="remoteDirectory">Server root relative directory path to delete</param>
         /// <returns></returns>
         public async Task<bool> DeleteDirectory(string remoteDirectory)
         {
@@ -625,12 +655,12 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Deleting directory '{0}' on {1}", remoteDirectory, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return false;
-
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Deleting directory '{0}' on {1}", remoteDirectory, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return false;
+                }
                 return (buffer[0] == 1 ? true : false);
             }
             catch (Exception ex)
@@ -638,17 +668,13 @@ namespace Spyder.Client.Net
                 Log(ex, "DeleteDirectory");
                 return false;
             }
-            finally
-            {
-                semaphore.Release();
-            }
         }
 
 
         /// <summary>
         /// Creates a directory on the remote server
         /// </summary>
-        /// <param name="RemoteFile">Server root relative file path to delete</param>
+        /// <param name="remoteDirectory">Server root relative directory to create</param>
         /// <returns></returns>
         public async Task<bool> CreateDirectory(string remoteDirectory)
         {
@@ -658,12 +684,12 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Creating directory '{0}' on {1}", remoteDirectory, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return false;
-
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Creating directory '{0}' on {1}", remoteDirectory, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return false;
+                }
                 return (buffer[0] == 1 ? true : false);
             }
             catch (Exception ex)
@@ -671,23 +697,18 @@ namespace Spyder.Client.Net
                 Log(ex, "CreateDirectory");
                 return false;
             }
-            finally
-            {
-                semaphore.Release();
-            }
         }
 
         /// <summary>
         /// Sends a local file to the remote server
         /// </summary>
-        /// <param name="LocalFile">Full path to local file that is to be sent</param>
         /// <param name="remoteFile">Remote file location to sent to (server root relative)</param>
         /// <returns>true for success, false for failure</returns>
-        public async Task<bool> SendFile(Stream stream, string remoteFile, FileProgressDelegate progress)
+        public async Task<bool> SendFile(Stream source, string remoteFile, FileProgressDelegate progress)
         {
-            if (stream == null || !stream.CanRead)
+            if (source == null || !source.CanRead)
             {
-                TraceQueue.Trace(this, TracingLevel.Warning, "Cannot process QFT Command SendFile, becuase supplied stream was null or not readable.");
+                TraceQueue.Trace(this, TracingLevel.Warning, "Cannot process QFT Command SendFile, because supplied stream was null or not readable.");
                 return false;
             }
             if (!IsRunning)
@@ -696,86 +717,108 @@ namespace Spyder.Client.Net
                 return false;
             }
 
+            Stream stream = source;
+            bool disposeStream = false;
+            PCLStorage.IFile tempFile = null;
+
             try
             {
-                await semaphore.WaitAsync();
+                //Pre-compress the stream to a temp file if compression is enabled
+                if (FileCompressionEnabled)
+                {
+                    //Create a new stream which will contain compressed data to be sent over the network
+                    string tempFileName = "qftCompressionTempFile-" + Guid.NewGuid().ToString();
+                    tempFile = await PCLStorage.FileSystem.Current.LocalStorage.CreateFileAsync(tempFileName, PCLStorage.CreationCollisionOption.ReplaceExisting);
+                    stream = await tempFile.OpenAsync(PCLStorage.FileAccess.ReadAndWrite);
+                    disposeStream = true;
 
-                TraceQueue.Trace(this, TracingLevel.Information, "Sending file '{0}' to {1}", remoteFile, ServerIP);
-                long lengthRemaining = stream.Length;
-                byte[] command;
-                if (lengthRemaining.ToString().Length <= 8)
-                {
-                    //The CRE1 command is the most widely supported command, however it will only work in cases where the 
-                    //length of the file when represented as a string is eight characters or less.
-                    string streamLength = lengthRemaining.ToString().PadLeft(8, '0');
-                    command = Encoding.UTF8.GetBytes(string.Format("?CRE1{0}\r{1}", remoteFile, streamLength));
-                }
-                else
-                {
-                    //The CREI command takes a full long value for a file size, so it can be used whenever the file size
-                    //being transferred is longer than the eight ASCII character limit present in the CRE1 command.
-                    command = Encoding.UTF8.GetBytes(string.Format("?CREI{0}\r00000000", remoteFile));
-                    for (int i = 0; i < 8; i++)
+                    //Compress stream
+                    using (DeflateStream compressor = new DeflateStream(stream, CompressionMode.Compress, true))
                     {
-                        byte currentByte = (byte)(lengthRemaining >> (i * 8));
-                        int offset = command.Length - i - 1;
-                        command[offset] = currentByte;
+                        await source.CopyToAsync(compressor);
+                        await compressor.FlushAsync();
                     }
                 }
 
-                byte[] empty = new byte[0];
-                byte[] txBuffer = new byte[StreamBlockSize];
-                byte[] buffer = new byte[4];
-                long totalLength = stream.Length;
-                int count = (lengthRemaining > StreamBlockSize ? StreamBlockSize : (int)lengthRemaining);
-                bool cmdSent = false;
-
-                string name = Path.GetFileName(remoteFile);
-                stream.Seek(0, SeekOrigin.Begin);
-                lengthRemaining = stream.Length;
-
-                do
+                using (await commandLock.LockAsync())
                 {
-                    if (!cmdSent)
+                    TraceQueue.Trace(this, TracingLevel.Information, "Sending file '{0}' to {1}", remoteFile, ServerIP);
+                    long lengthRemaining = stream.Length;
+                    byte[] command;
+                    if (lengthRemaining.ToString().Length <= 8)
                     {
-                        //First iteration of loop, so ensure the connection
-                        await ReceiveBytes(command, empty, true);	//don't receive anything back yet
-                        cmdSent = true;
-                        continue;
-                    }
-                    else if (lengthRemaining > StreamBlockSize)
-                    {
-                        //don't receive anything back yet
-                        await stream.ReadAsync(txBuffer, 0, count);
-                        if (await ReceiveBytes(txBuffer, empty, false) == -1)
-                        {
-                            TraceQueue.Trace(this, TracingLevel.Warning, "Send failed to remote server");
-                            return false;
-                        }
+                        //The CRE1 command is the most widely supported command, however it will only work in cases where the 
+                        //length of the file when represented as a string is eight characters or less.
+                        string streamLength = lengthRemaining.ToString().PadLeft(8, '0');
+                        command = Encoding.UTF8.GetBytes(string.Format("?CRE1{0}\r{1}", remoteFile, streamLength));
                     }
                     else
                     {
-                        int timeout = 1000 * 60 * 5;    //5 minutes
-                        txBuffer = new byte[count];
-                        await stream.ReadAsync(txBuffer, 0, count);
-                        await ReceiveBytes(txBuffer, buffer, false, timeout);			//last transmission, so get acknowledgement back
+                        //The CREI command takes a full long value for a file size, so it can be used whenever the file size
+                        //being transferred is longer than the eight ASCII character limit present in the CRE1 command.
+                        command = Encoding.UTF8.GetBytes(string.Format("?CREI{0}\r00000000", remoteFile));
+                        for (int i = 0; i < 8; i++)
+                        {
+                            byte currentByte = (byte)(lengthRemaining >> (i * 8));
+                            int offset = command.Length - i - 1;
+                            command[offset] = currentByte;
+                        }
                     }
 
-                    lengthRemaining -= count;
-                    if (lengthRemaining < count)
-                        count = (int)lengthRemaining;
+                    byte[] empty = new byte[0];
+                    byte[] txBuffer = new byte[StreamBlockSize];
+                    byte[] buffer = new byte[4];
+                    long totalLength = stream.Length;
+                    int count = (lengthRemaining > StreamBlockSize ? StreamBlockSize : (int)lengthRemaining);
+                    bool cmdSent = false;
 
-                    if (progress != null)
-                        progress(totalLength - lengthRemaining, totalLength, "Sending " + name);
+                    string name = Path.GetFileName(remoteFile);
+                    stream.Seek(0, SeekOrigin.Begin);
+                    lengthRemaining = stream.Length;
 
-                } while (count > 0);
+                    do
+                    {
+                        if (!cmdSent)
+                        {
+                            //First iteration of loop, so ensure the connection
+                            await ReceiveBytes(command, empty, true);   //don't receive anything back yet
+                            cmdSent = true;
+                            continue;
+                        }
+                        else if (lengthRemaining > StreamBlockSize)
+                        {
+                            //don't receive anything back yet
+                            await stream.ReadAsync(txBuffer, 0, count);
+                            if (await ReceiveBytes(txBuffer, empty, false) == -1)
+                            {
+                                TraceQueue.Trace(this, TracingLevel.Warning, "Send failed to remote server");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            int timeout = 1000 * 60 * 5;    //5 minutes
+                            txBuffer = new byte[count];
+                            await stream.ReadAsync(txBuffer, 0, count);
+                            await ReceiveBytes(txBuffer, buffer, false, timeout);           //last transmission, so get acknowledgement back
+                        }
 
-                if (buffer[0] == 'd' && buffer[1] == 'o' && buffer[2] == 'n' && buffer[3] == 'e')
-                    return true;
-                else
-                {
-                    TraceQueue.Trace(this, TracingLevel.Warning, "Failed to get confirmation of file transfer from remote server.");
-                    return false;
+                        lengthRemaining -= count;
+                        if (lengthRemaining < count)
+                            count = (int)lengthRemaining;
+
+                        if (progress != null)
+                            progress(totalLength - lengthRemaining, totalLength, "Sending " + name);
+
+                    } while (count > 0);
+
+                    if (buffer[0] == 'd' && buffer[1] == 'o' && buffer[2] == 'n' && buffer[3] == 'e')
+                        return true;
+                    else
+                    {
+                        TraceQueue.Trace(this, TracingLevel.Warning, "Failed to get confirmation of file transfer from remote server.");
+                        return false;
+                    }
                 }
             }
             catch (Exception ex)
@@ -785,7 +828,18 @@ namespace Spyder.Client.Net
             }
             finally
             {
-                semaphore.Release();
+                if(disposeStream)
+                    stream.Dispose();
+
+                try
+                {
+                    if (tempFile != null)
+                        await tempFile.DeleteAsync();
+                }
+                catch (Exception ex)
+                {
+                    TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred when trying to delete QFT temp file {1}: {2}", ex.GetType().Name, tempFile.Name, ex.Message);
+                }
             }
         }
 
@@ -802,22 +856,18 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Checking if file '{0}' exists on {1}", remoteFile, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return false;
-
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Checking if file '{0}' exists on {1}", remoteFile, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return false;
+                }
                 return (buffer[0] == 1 ? true : false);
             }
             catch (Exception ex)
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "QFTClient encountered an error checking for file existance: " + ex.Message);
                 return false;
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -848,7 +898,7 @@ namespace Spyder.Client.Net
         /// <summary>
         /// Checks remote server for existance of a specified file
         /// </summary>
-        /// <param name="RemoteFile">File to check for.</param>
+        /// <param name="remoteDirectory">Directory to check for</param>
         /// <returns>True if file exists, false if not</returns>
         public async Task<bool> DirectoryExists(string remoteDirectory)
         {
@@ -858,22 +908,18 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Checking if directory '{0}' exists on {1}", remoteDirectory, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return false;
-
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Checking if directory '{0}' exists on {1}", remoteDirectory, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return false;
+                }
                 return (buffer[0] == 1 ? true : false);
             }
             catch (Exception ex)
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "QFTClient encountered an error checking for directory existance: " + ex.Message);
                 return false;
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -915,35 +961,35 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Attempting to get file '{0}' from {1}", remoteFile, ServerIP);
-                name = Path.GetFileName(remoteFile);
-                destination.Seek(0, SeekOrigin.Begin);
-                do
+                using (await commandLock.LockAsync())
                 {
-                    //Only sends command if read is 0, which can only be the case the first time through this loop
-                    bool firstIteration = (read == 0);
-                    if (remainingLength > buffer.Length)
+                    TraceQueue.Trace(this, TracingLevel.Information, "Attempting to get file '{0}' from {1}", remoteFile, ServerIP);
+                    name = Path.GetFileName(remoteFile);
+                    destination.Seek(0, SeekOrigin.Begin);
+                    do
                     {
-                        read = await ReceiveBytes((firstIteration ? command : string.Empty), ref buffer, firstIteration);
-                        destination.Write(buffer, 0, read);
-                        remainingLength -= read;
-                    }
-                    else
-                    {
-                        //Last packet expected for this file
-                        buffer = new byte[remainingLength];
-                        read = await ReceiveBytes((read == 0 ? command : string.Empty), ref buffer, false);
-                        destination.Write(buffer, 0, read);
-                        break;
-                    }
+                        //Only sends command if read is 0, which can only be the case the first time through this loop
+                        bool firstIteration = (read == 0);
+                        if (remainingLength > buffer.Length)
+                        {
+                            read = await ReceiveBytes((firstIteration ? command : string.Empty), ref buffer, firstIteration);
+                            destination.Write(buffer, 0, read);
+                            remainingLength -= read;
+                        }
+                        else
+                        {
+                            //Last packet expected for this file
+                            buffer = new byte[remainingLength];
+                            read = await ReceiveBytes((read == 0 ? command : string.Empty), ref buffer, false);
+                            destination.Write(buffer, 0, read);
+                            break;
+                        }
 
-                    if (progress != null)
-                        progress(totalLength - remainingLength, totalLength, "Getting " + name);
+                        if (progress != null)
+                            progress(totalLength - remainingLength, totalLength, "Getting " + name);
 
-                } while (read > 0 && remainingLength > 0);
-
+                    } while (read > 0 && remainingLength > 0);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -951,10 +997,6 @@ namespace Spyder.Client.Net
                 Log(ex, "ReceiveFile");
                 destination.Flush();
                 return false;
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -971,11 +1013,12 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-
-                TraceQueue.Trace(this, TracingLevel.Information, "Getting file length for '{0}' on {1}", remoteFile, ServerIP);
-                if (await ReceiveBytes(command, ref buffer, true) <= 0)
-                    return 0;
+                using (await commandLock.LockAsync())
+                {
+                    TraceQueue.Trace(this, TracingLevel.Information, "Getting file length for '{0}' on {1}", remoteFile, ServerIP);
+                    if (await ReceiveBytes(command, ref buffer, true) <= 0)
+                        return 0;
+                }
 
                 long response = 0;
                 for (int i = 0; i < 8; i++)
@@ -987,10 +1030,6 @@ namespace Spyder.Client.Net
             {
                 Log(ex, "GetFileSize");
                 return 0;
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 
@@ -1008,23 +1047,21 @@ namespace Spyder.Client.Net
 
             try
             {
-                await semaphore.WaitAsync();
-                if (IsConnected && lastCommandTime.AddSeconds(InactivityDisconnectSeconds) < DateTime.Now)
+                using (await commandLock.LockAsync())
                 {
-                    //We've been inactive for longer than our inactivity timeout.  Shutdown the socket connection now
-                    TraceQueue.Trace(this, TracingLevel.Warning, "Closing QFT socket connection to {0} due to {1} seconds of inactivity", ServerIP, InactivityDisconnectSeconds);
-                    await requestServerDisconnect();
-                    socket.Shutdown();
-                    socket = null;
+                    if (IsConnected && lastCommandTime.AddSeconds(InactivityDisconnectSeconds) < DateTime.Now)
+                    {
+                        //We've been inactive for longer than our inactivity timeout.  Shutdown the socket connection now
+                        TraceQueue.Trace(this, TracingLevel.Warning, "Closing QFT socket connection to {0} due to {1} seconds of inactivity", ServerIP, InactivityDisconnectSeconds);
+                        await requestServerDisconnect();
+                        await socket.ShutdownAsync();
+                        socket = null;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while processing ping worker: {1}", ex.GetType().Name, ex.Message);
-            }
-            finally
-            {
-                semaphore.Release();
             }
         }
 

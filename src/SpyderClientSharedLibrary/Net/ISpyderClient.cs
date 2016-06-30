@@ -17,43 +17,43 @@ namespace Spyder.Client.Net
         bool IsRunning { get; }
         string ServerIP { get; }
 
-        Task<bool> Startup();
-        void Shutdown();
+        Task<bool> StartupAsync();
+        Task ShutdownAsync();
 
         #region Server Filesystem Access
 
         Task<Stream> GetImageFileStream(string fileName);
-
+        
         #endregion
 
         #region Register List Data Access
 
-        Task<IEnumerable<RegisterPage>> GetRegisterPages(RegisterType type);
-        Task<IEnumerable<IRegister>> GetRegisters(RegisterType type);
+        Task<List<RegisterPage>> GetRegisterPages(RegisterType type);
+        Task<List<IRegister>> GetRegisters(RegisterType type);
         Task<IRegister> GetRegister(RegisterType type, int registerID);
 
-        Task<IEnumerable<Source>> GetSources();
+        Task<List<Source>> GetSources();
         Task<Source> GetSource(int sourceRegisterID);
         Task<Source> GetSource(IRegister sourceRegister);
         Task<Source> GetSource(string sourceName);
 
-        Task<IEnumerable<CommandKey>> GetCommandKeys();
+        Task<List<CommandKey>> GetCommandKeys();
         Task<CommandKey> GetCommandKey(int commandKeyRegisterID);
         Task<CommandKey> GetCommandKey(IRegister commandKeyRegister);
 
-        Task<IEnumerable<Treatment>> GetTreatments();
+        Task<List<Treatment>> GetTreatments();
         Task<Treatment> GetTreatment(int treatmentRegisterID);
         Task<Treatment> GetTreatment(IRegister treatmentRegister);
 
-        Task<IEnumerable<FunctionKey>> GetFunctionKeys();
+        Task<List<FunctionKey>> GetFunctionKeys();
         Task<FunctionKey> GetFunctionKey(int functionKeyRegisterID);
         Task<FunctionKey> GetFunctionKey(IRegister functionKeyRegister);
 
-        Task<IEnumerable<Still>> GetStills();
+        Task<List<Still>> GetStills();
         Task<Still> GetStill(int stillRegisterID);
         Task<Still> GetStill(IRegister stillRegister);
 
-        Task<IEnumerable<PlayItem>> GetPlayItems();
+        Task<List<PlayItem>> GetPlayItems();
         Task<PlayItem> GetPlayItem(int playItemRegisterID);
         Task<PlayItem> GetPlayItem(IRegister playItemRegister);
 
@@ -61,7 +61,7 @@ namespace Spyder.Client.Net
 
         #region Layer Interaction
         
-        Task<int> RequestLayerCount();
+        Task<int> GetLayerCount();
 
         Task<int> GetFirstAvailableLayerID();
                 
@@ -225,8 +225,38 @@ namespace Spyder.Client.Net
         /// <param name="layerIDs"></param>
         /// <returns></returns>
         Task<bool> LayerAssignPixelSpace(int pixelSpaceID, bool makeLayerVisible, params int[] layerIDs);
-        
+
         #endregion
+
+        #endregion
+
+        #region Output Configuration
+
+        Task<bool> FreezeOutput(params int[] outputIDs);
+
+        Task<bool> UnFreezeOutput(params int[] outputIDs);
+
+        Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex);
+
+        Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex);
+
+        Task<bool> SaveOutputConfiguration(int outputID);
+
+        Task<bool> SetOutputBlend(int outputID, BlendEdge edge, bool enabled, int blendSize, BlendMode blendMode, float curve1, float curve2);
+
+        Task<bool> ClearOutputBlend(int outputID, BlendEdge edge);
+
+        Task<bool> RotateOutput(int outputID, RotationMode mode);
+
+        Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex);
+
+        Task<bool> SetOutputModeToOpMon(int outputID, int pixelSpaceID);
+
+        Task<bool> SetOutputModeToScaled(int outputID, int pixelSpaceID);
+
+        Task<bool> SetOutputModeToSourceMon(int outputID);
+
+        Task<bool> SetOutputFormat(int outputID, int hActive, int vActive, float refreshRate, bool interlaced, bool useReducedBlanking);
 
         #endregion
 
@@ -236,9 +266,9 @@ namespace Spyder.Client.Net
 
         Task<bool> LoadBackgroundImage(int pixelSpaceID, BackgroundImageBus bus, string fileName);
 
-        Task<List<PixelSpace>> RequestPixelSpaces();
+        Task<List<PixelSpace>> GetPixelSpaces();
 
-        Task<PixelSpace> RequestPixelSpace(int pixelSpaceID);
+        Task<PixelSpace> GetPixelSpace(int pixelSpaceID);
 
         #endregion
 

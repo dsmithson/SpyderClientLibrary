@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Spyder.Client.Common
 {
-    public class Still : Register
+    public class Still : Register, IEquatable<Still>
     {
         private bool imageExistsAtServer;
         public bool ImageExistsAtServer
@@ -102,6 +102,57 @@ namespace Spyder.Client.Common
                 this.Height = myCopyFrom.Height;
                 this.FileSize = myCopyFrom.FileSize;
             }
+        }
+
+        public bool Equals(Still other)
+        {
+            if(other == null)
+                return false;
+            else if(this.imageExistsAtServer != other.imageExistsAtServer)
+                return false;
+            else if(this.fileName != other.fileName)
+                return false;
+            else if(this.width != other.width)
+                return false;
+            else if(this.height != other.height)
+                return false;
+            else if(this.fileSize != other.fileSize)
+                return false;
+            else
+                return base.Equals(other);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj != null)
+                return false;
+
+            Still still = obj as Still;
+            if (still == null)
+                return false;
+            else
+                return this.Equals(still);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public static bool operator ==(Still still1, Still still2)
+        {
+            if (((object)still1 == null) || ((object)still2) == null)
+                return Object.Equals(still1, still2);
+
+            return still1.Equals(still2);
+        }
+
+        public static bool operator !=(Still still1, Still still2)
+        {
+            if (((object)still1 == null) || ((object)still2) == null)
+                return !Object.Equals(still1, still2);
+
+            return !still1.Equals(still2);
         }
     }
 }

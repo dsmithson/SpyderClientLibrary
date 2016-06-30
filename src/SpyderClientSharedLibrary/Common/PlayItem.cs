@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Spyder.Client.Common
 {
-    public class PlayItem : Register
+    public class PlayItem : Register, IEquatable<PlayItem>
     {
         private int id;
         public int ID
@@ -190,6 +190,65 @@ namespace Spyder.Client.Common
                 this.Thumbnail = myCopyFrom.Thumbnail;
                 this.FieldRate = myCopyFrom.FieldRate;
             }
+        }
+
+        public bool Equals(PlayItem other)
+        {
+            if(other == null)
+                return false;
+            else if(this.id != other.id)
+                return false;
+            else if(this.inTime != other.inTime)
+                return false;
+            else if(this.outTime != other.outTime)
+                return false;
+            else if(this.preRollFrames != other.preRollFrames)
+                return false;
+            else if(this.rollOutFrames != other.rollOutFrames)
+                return false;
+            else if(this.clipName != other.clipName)
+                return false;
+            else if(this.machineFlags != other.machineFlags)
+                return false;
+            else if(this.thumbnail != other.thumbnail)
+                return false;
+            else if(this.fieldRate != other.fieldRate)
+                return false;
+            else
+                return base.Equals(other);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj != null)
+                return false;
+
+            var playItem = obj as PlayItem;
+            if (playItem == null)
+                return false;
+            else
+                return this.Equals(playItem);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public static bool operator ==(PlayItem playItem1, PlayItem playItem2)
+        {
+            if (((object)playItem1 == null) || ((object)playItem2) == null)
+                return Object.Equals(playItem1, playItem2);
+
+            return playItem1.Equals(playItem2);
+        }
+
+        public static bool operator !=(PlayItem playItem1, PlayItem playItem2)
+        {
+            if (((object)playItem1 == null) || ((object)playItem2) == null)
+                return !Object.Equals(playItem1, playItem2);
+
+            return !playItem1.Equals(playItem2);
         }
     }
 }

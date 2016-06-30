@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Spyder.Client.Common
 {
-    public class CommandKey : Register
+    public class CommandKey : Register, IEquatable<CommandKey>
     {
         /// <summary>
         /// Associated Script ID for this command key
@@ -76,6 +76,53 @@ namespace Spyder.Client.Common
                 this.IsRelative = myCopyFrom.IsRelative;
                 this.CueCount = myCopyFrom.CueCount;
             }
+        }
+
+        public bool Equals(CommandKey other)
+        {
+            if(other == null)
+                return false;
+            else if(this.scriptID != other.scriptID)
+                return false;
+            else if(this.isRelative != other.isRelative)
+                return false;
+            else if(this.cueCount != other.cueCount)
+                return false;
+            else
+                return base.Equals(other);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj != null)
+                return false;
+
+            var cmdKey = obj as CommandKey;
+            if (cmdKey == null)
+                return false;
+            else
+                return this.Equals(cmdKey);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public static bool operator ==(CommandKey key1, CommandKey key2)
+        {
+            if (((object)key1 == null) || ((object)key2) == null)
+                return Object.Equals(key1, key2);
+
+            return key1.Equals(key2);
+        }
+
+        public static bool operator !=(CommandKey key1, CommandKey key2)
+        {
+            if (((object)key1 == null) || ((object)key2) == null)
+                return !Object.Equals(key1, key2);
+
+            return !key1.Equals(key2);
         }
     }
 }

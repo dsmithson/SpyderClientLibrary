@@ -26,9 +26,9 @@ namespace Spyder.Client.Images
 
         public bool IsRunning { get; private set; }
 
-        public virtual Task<bool> Startup()
+        public virtual async Task<bool> StartupAsync()
         {
-            Shutdown();
+            await ShutdownAsync();
             IsRunning = true;
 
             lock (imagesLock)
@@ -36,24 +36,24 @@ namespace Spyder.Client.Images
                 images = new Dictionary<K, U>();
             }
 
-            imageProcessor = new AsyncListProcessor<ThumbnailListItem>(ProcessThumbnailListItem);
-            if (!imageProcessor.Startup())
+            imageProcessor = new AsyncListProcessor<ThumbnailListItem>(ProcessThumbnailListItem, maxDegreeOfParallelism: Environment.ProcessorCount);
+            if (!await imageProcessor.StartupAsync())
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "Failed to initialize image processor.  Shutting down...");
-                Shutdown();
-                return Task.FromResult(false);
+                await ShutdownAsync();
+                return false;
             }
 
-            return Task.FromResult(true);
+            return true;
         }
 
-        public virtual Task Shutdown()
+        public virtual async Task ShutdownAsync()
         {
             IsRunning = false;
 
             if (imageProcessor != null)
             {
-                imageProcessor.Shutdown();
+                await imageProcessor.ShutdownAsync();
                 imageProcessor = null;
             }
 
@@ -68,8 +68,6 @@ namespace Spyder.Client.Images
                     images = null;
                 }
             }
-
-            return Task.FromResult(true);
         }
 
         public U GetThumbnail(K identifier)
@@ -134,7 +132,7 @@ namespace Spyder.Client.Images
             }
 
             //Set result on item, even if we errored out above
-            await e.Item.ThumbnailImage.Dispatcher.BeginInvoke(() => e.Item.ThumbnailImage.SetImage(e.Item.Size, result));
+            Task t = e.Item.ThumbnailImage.Dispatcher.BeginInvoke(() => e.Item.ThumbnailImage.SetImage(e.Item.Size, result));
         }
 
         /// <summary>
