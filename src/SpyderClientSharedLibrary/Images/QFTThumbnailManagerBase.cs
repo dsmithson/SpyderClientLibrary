@@ -112,7 +112,7 @@ namespace Spyder.Client.Images
                             var file = await preScaledFolder.GetFileAsync(identifier.FileName);
                             if (file != null)
                             {
-                                fileStream = await file.OpenAsync(FileAccess.Read);
+                                fileStream = await file.OpenAsync(PCLStorage.FileAccess.Read);
                                 fileStreamIsScaled = true;
                             }
                         }
@@ -146,7 +146,7 @@ namespace Spyder.Client.Images
                         var file = await serverImagesFolder.GetFileAsync(identifier.FileName);
                         if (file != null)
                         {
-                            fileStream = await file.OpenAsync(FileAccess.Read);
+                            fileStream = await file.OpenAsync(PCLStorage.FileAccess.Read);
                             if (fileStream.Length == 0)
                             {
                                 //Invalid file.  Remove it.
@@ -174,7 +174,7 @@ namespace Spyder.Client.Images
                     if (qftClient != null)
                     {
                         IFile newFile = await serverImagesFolder.CreateFileAsync(identifier.FileName, CreationCollisionOption.ReplaceExisting);
-                        fileStream = await newFile.OpenAsync(FileAccess.ReadAndWrite);
+                        fileStream = await newFile.OpenAsync(PCLStorage.FileAccess.ReadAndWrite);
                         string remoteFile = qftClient.ConvertAbsolutePathToRelative(Path.Combine(remoteImagePath, identifier.FileName));
                         if (await qftClient.ReceiveFile(remoteFile, fileStream, null))
                         {
@@ -215,7 +215,7 @@ namespace Spyder.Client.Images
 
                         var preScaledFolder = await serverImagesFolder.CreateFolderAsync(scaledFolderName, CreationCollisionOption.OpenIfExists);
                         var preScaledFile = await preScaledFolder.CreateFileAsync(identifier.FileName, CreationCollisionOption.ReplaceExisting);
-                        using (var stream = await preScaledFile.OpenAsync(FileAccess.ReadAndWrite))
+                        using (var stream = await preScaledFile.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
                         {
                             await fileStream.CopyToAsync(stream);
                         }
@@ -348,7 +348,7 @@ namespace Spyder.Client.Images
             {
                 try
                 {
-                    using (Stream stream = await file.OpenAsync(FileAccess.Read))
+                    using (Stream stream = await file.OpenAsync(PCLStorage.FileAccess.Read))
                     {
                         if (stream.Length > 0)
                         {
@@ -414,7 +414,7 @@ namespace Spyder.Client.Images
                 if (file == null)
                     return false;
 
-                using (Stream stream = await file.OpenAsync(FileAccess.ReadAndWrite))
+                using (Stream stream = await file.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
                 {
                     return SaveImageMetadata(serverIP, stream);
                 }
@@ -498,7 +498,7 @@ namespace Spyder.Client.Images
                     if (serverImagesFolder != null)
                     {
                         IFile newFile = await serverImagesFolder.CreateFileAsync(identifier.FileName, CreationCollisionOption.ReplaceExisting);
-                        using (var fileStream = await newFile.OpenAsync(FileAccess.ReadAndWrite))
+                        using (var fileStream = await newFile.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
                         {
                             stream.Seek(0, SeekOrigin.Begin);
                             await stream.CopyToAsync(fileStream);

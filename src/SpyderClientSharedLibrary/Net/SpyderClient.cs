@@ -508,7 +508,7 @@ namespace Spyder.Client.Net
                     IFile file = (await imageCacheFolder.GetFilesAsync()).FirstOrDefault(f => string.Compare(f.Name, fileName, StringComparison.CurrentCultureIgnoreCase) == 0);
                     if (file != null)
                     {
-                        return await file.OpenAsync(FileAccess.Read);
+                        return await file.OpenAsync(PCLStorage.FileAccess.Read);
                     }
                 }
 
@@ -523,7 +523,7 @@ namespace Spyder.Client.Net
                     {
                         IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
                         IFile file = await imageCacheFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-                        using (Stream fileStream = await file.OpenAsync(FileAccess.ReadAndWrite))
+                        using (Stream fileStream = await file.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
                         {
                             response.Seek(0, SeekOrigin.Begin);
                             await response.CopyToAsync(fileStream);
@@ -578,7 +578,7 @@ namespace Spyder.Client.Net
                 {
                     IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
                     IFile file = await imageCacheFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-                    using (Stream stream = await file.OpenAsync(FileAccess.ReadAndWrite))
+                    using (Stream stream = await file.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
                     {
                         fileStream.Seek(0, SeekOrigin.Begin);
                         await fileStream.CopyToAsync(stream);

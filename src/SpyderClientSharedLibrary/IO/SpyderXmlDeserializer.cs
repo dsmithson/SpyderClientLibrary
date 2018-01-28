@@ -12,8 +12,6 @@ using Knightware.Core;
 
 namespace Spyder.Client.IO
 {
-    public delegate void XmlReadFailedHandler(object sender, string propertyName);
-
     public class SpyderXmlDeserializer : XmlDeserializer
     {
         public TimeCode Read(XElement parent, string elementName, TimeCode defaultValue)

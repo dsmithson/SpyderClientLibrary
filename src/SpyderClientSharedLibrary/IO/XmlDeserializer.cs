@@ -127,7 +127,7 @@ namespace Spyder.Client.IO
                 });
         }
 
-        private T Read<T>(XElement parent, string elementName, T defaultValue, Func<string, T> parser)
+        protected T Read<T>(XElement parent, string elementName, T defaultValue, Func<string, T> parser)
         {
             try
             {
@@ -161,7 +161,7 @@ namespace Spyder.Client.IO
             }
         }
 
-        private T ReturnDefaultValue<T>(string elementName, T defaultValue)
+        protected T ReturnDefaultValue<T>(string elementName, T defaultValue)
         {
             OnElementReadFailed(elementName);
             return defaultValue;
