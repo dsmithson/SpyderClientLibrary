@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Spyder.Client</RootNamespace>
     <AssemblyName>SpyderClientLibraryWPF</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
@@ -79,32 +79,11 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Threading.Tasks, Version=1.0.12.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.Bcl.Async.1.0.168\lib\net40\Microsoft.Threading.Tasks.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Threading.Tasks.Extensions, Version=1.0.12.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.Bcl.Async.1.0.168\lib\net40\Microsoft.Threading.Tasks.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Threading.Tasks.Extensions.Desktop">
-      <HintPath>..\packages\Microsoft.Bcl.Async.1.0.168\lib\net40\Microsoft.Threading.Tasks.Extensions.Desktop.dll</HintPath>
-    </Reference>
-    <Reference Include="PCLStorage">
-      <HintPath>..\packages\PCLStorage.1.0.2\lib\net45\PCLStorage.dll</HintPath>
-    </Reference>
-    <Reference Include="PCLStorage.Abstractions">
-      <HintPath>..\packages\PCLStorage.1.0.2\lib\net45\PCLStorage.Abstractions.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.24.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Tpl.Dataflow.4.5.24\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -114,33 +93,22 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\SpyderClientLibraryRT\Images\DesignerThumbnailImage.cs">
-      <Link>Images\DesignerThumbnailImage.cs</Link>
-    </Compile>
-    <Compile Include="..\SpyderClientLibraryRT\Images\ImageStreamGetRequestedEventArgs.cs">
-      <Link>Images\ImageStreamGetRequestedEventArgs.cs</Link>
-    </Compile>
-    <Compile Include="..\SpyderClientLibraryRT\Images\ImageStreamSetRequestedEventArgs.cs">
-      <Link>Images\ImageStreamSetRequestedEventArgs.cs</Link>
-    </Compile>
-    <Compile Include="..\SpyderClientLibraryRT\Images\StaticThumbnailImage.cs">
-      <Link>Images\StaticThumbnailImage.cs</Link>
-    </Compile>
-    <Compile Include="..\SpyderClientLibraryRT\Images\ThumbnailIdentifier.cs">
-      <Link>Images\ThumbnailIdentifier.cs</Link>
-    </Compile>
-    <Compile Include="..\SpyderClientLibraryRT\Images\ThumbnailImage.cs">
-      <Link>Images\ThumbnailImage.cs</Link>
-    </Compile>
-    <Compile Include="..\SpyderClientLibraryRT\Images\ThumbnailManager.cs">
-      <Link>Images\ThumbnailManager.cs</Link>
-    </Compile>
+    <Compile Include="Images\DesignerThumbnailImage.cs" />
+    <Compile Include="Images\ImageStreamGetRequestedEventArgs.cs" />
+    <Compile Include="Images\ImageStreamSetRequestedEventArgs.cs" />
+    <Compile Include="Images\StaticThumbnailImage.cs" />
+    <Compile Include="Images\ThumbnailIdentifier.cs" />
+    <Compile Include="Images\ThumbnailImage.cs" />
+    <Compile Include="Images\ThumbnailManager.cs" />
     <Compile Include="Images\ThumbnailManager.Desktop.cs" />
-    <Compile Include="Net\Notifications\SpyderServerEventListener.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpyderClientManager.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj">
+      <Project>{bb51a3e4-136e-409e-ad6a-b7c38c9c7c37}</Project>
+      <Name>KnightwareCore</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SpyderClientSharedLibrary\SpyderClientSharedLibrary.csproj">
       <Project>{2de05b6e-23bf-440a-921d-79043cf14599}</Project>
       <Name>SpyderClientSharedLibrary</Name>

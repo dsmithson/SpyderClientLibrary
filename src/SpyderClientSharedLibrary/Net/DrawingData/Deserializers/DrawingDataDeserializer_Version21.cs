@@ -10,10 +10,21 @@ using Knightware.Primitives;
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
     /// <summary>
-    /// Deserializes DrawingData messages in the version 8 (Version 2.10.8) serialization format
+    /// Deserializes DrawingData messages in the version 21 serialization format - Spyder Studio / X80
     /// </summary>
-    public class DrawingDataDeserializer_Version8 : IDrawingDataDeserializer
+    public class DrawingDataDeserializer_Version21 : IDrawingDataDeserializer
     {
+        private string serverVersion;
+
+
+        [Flags]
+        private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
+
+        public DrawingDataDeserializer_Version21(string serverVersion)
+        {
+            this.serverVersion = serverVersion;
+        }
+
         public DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
@@ -24,35 +35,47 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
             int newPsCount = stream[index++];
             int newDkCount = stream[index++];
+            int newPvwDkCount = stream[index++];
             int newRtrCount = stream[index++];
             int newOutputCount = stream[index++];
             int previewPixelSpaceCount = stream[index++];
             int stereoPixelSpaceCount = stream[index++];
             int newMachineCount = stream[index++];
             int frameCount = stream[index++];
-            int frameAORCount = stream[index++];
             int runningScriptCount = stream[index++];
             int diagnosticWarningCount = stream[index++];
 
             //Global values
-            response.TimeOfDay = TimeSpan.Zero; //Not supported in version 8
+            response.TimeOfDay = new TimeSpan(
+                stream[index++],
+                stream[index++],
+                stream[index++]
+                );
 
             response.PercentComplete = stream[index++];
             response.LastFrontPanelMsg = (FrontPanelDisplayCommand)stream[index++];
             response.ProgressString = stream.GetString(ref index);
             response.ConfigSource = stream.GetString(ref index);
             response.ConfigLayer = stream.GetInt(ref index);
+            response.ConfigBus = (MixerBus)stream[index++];
             response.ConfigOutput = stream.GetInt(ref index);
-            
+
+            response.HardwareType = (HardwareType)stream[index++];
+            response.DataObjectVersion = stream.GetInt(ref index);
+            response.DataObjectLastChangeType = (DataType)stream.GetInt(ref index);
+
             //Global Flags
             byte flags = stream[index++];
             response.OpMonOverlay = (flags & 0x01) > 0;
-            response.IsLayerZeroPreviewBackground = (flags & 0x02) > 0; //TODO:  Validate that this is the same as 'IsBackgroundLayerZero'
+            response.IsLayerZeroPreviewBackground = (flags & 0x02) > 0;
             response.IsMachineHalEnabled = (flags & 0x04) > 0;
             response.IsRouterHalEnabled = (flags & 0x08) > 0;
-            response.IsPreviewOnlyScriptingEnabled = false; //Not supported in version 8
-            response.IsStillServerConnected = false; //Not supported in version 8
-            response.IsLiveUpdateEnabled = true; //Not supported in version 8
+            response.IsDataIOIdle = (flags & 0x10) > 0;
+            response.IsPreviewOnlyScriptingEnabled = (flags & 0x20) > 0;
+            response.IsStillServerConnected = (flags & 0x40) > 0;
+            response.IsLiveUpdateEnabled = (flags & 0x80) > 0;
+            flags = stream[index++];
+            response.LiveUpdatesTemporarilyDisabled = (flags & 0x01) > 0;
 
             //System Frame Rate
             response.SystemFrameRate = (FieldRate)stream[index++];
@@ -61,25 +84,23 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             for (int i = 0; i < frameCount; i++)
             {
                 int frameID = stream[index++];
-                response.Frames.Add(frameID, new DrawingFrame()
+                var frame = new DrawingFrame()
                 {
                     FrameID = frameID,
+                    FrameAOR = stream.GetRectangle(ref index),
+                    PreviewAOR = stream.GetRectangle(ref index),
+                    Model = (SpyderModels)stream[index++],
                     RenewalMasterFrameID = stream[index++]
-                });
-            }
-
-            //Get the frame AORs
-            for (int i = 0; i < frameAORCount; i++)
-            {
-                int frameID = stream[index++];
-                response.Frames[frameID].FrameAOR = stream.GetRectangle(ref index);
+                };
+                frame.ProgramAOR = frame.FrameAOR; //In X80 for some reason we have no program AOR?
+                response.Frames.Add(frameID, frame);
             }
 
             //Get the running scripts
             for (int i = 0; i < runningScriptCount; i++)
             {
                 int scriptID = stream.GetInt(ref index);
-                long countDown = stream.GetInt(ref index);
+                long countDown = stream.GetLong(ref index);
                 response.RunningScripts.Add(scriptID, countDown);
             }
 
@@ -114,13 +135,16 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 newPS.NextBackgroundStillIsOnLayer1 = !response.IsLayerZeroPreviewBackground;
                 newPS.LastBackgroundStill = stream.GetString(ref index);	//Last background still
                 newPS.NextBackgroundStill = stream.GetString(ref index);	//Next Background still
+                newPS.StereoMode = (PixelSpaceStereoMode)stream[index++];
 
                 //Add Pixelspace to the list
                 response.PixelSpaces.Add(newPS.ID, newPS);
             }
 
             //Get all of our DrawingKeyFrames
-            for (int i = 0; i < newDkCount; i++)
+            int allLayerCount = newDkCount + newPvwDkCount;
+
+            for (int i = 0; i < allLayerCount; i++)
             {
                 DrawingKeyFrame l = new DrawingKeyFrame();
                 KeyFrame kf = l.KeyFrame;
@@ -130,20 +154,27 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 l.HActive = stream.GetShort(ref index);			//HActive of the input itself (used for calculating the scaled border size)
                 l.VActive = stream.GetShort(ref index);			//VActive of the input itself (used for Pan calculations)
                 l.LayerID = stream.GetShort(ref index);			//Layer ID
-                l.IsBackground = (l.LayerID < 2);
-                
                 short cloneHOffset = stream.GetShort(ref index);
                 l.PixelSpaceID = stream.GetInt(ref index);				//Pixelspace ID
                 l.EffectID = stream.GetInt(ref index);
                 l.LastScript = stream.GetInt(ref index);
                 l.LastCue = stream.GetInt(ref index);
-                int renewalMasterFrameID = stream.GetInt(ref index);
 
                 l.Thumbnail = stream.GetString(ref index);		//thumbnail
                 l.WindowLabel = stream.GetString(ref index);
                 l.Source = stream.GetString(ref index);
+                l.LoadedStill = stream.GetString(ref index);
+                l.SourceRouterID = stream.GetInt(ref index);
+                l.SourceRouterInput = stream.GetInt(ref index);
+                l.InputConfigID = stream.GetInt(ref index);
+
+                l.LinearKeySource = stream.GetString(ref index);
+                l.LinearKeyRouterID = stream.GetInt(ref index);
+                l.LinearKeyRouterInput = stream.GetInt(ref index);
+
                 l.AspectRatio = stream.GetFloat(ref index);	//aspect ratio
                 l.LayerRect = stream.GetRectangle(ref index);
+                l.AOIRect = stream.GetRectangle(ref index);
                 
                 //Not storing element type
                 //l.ElementType = (ElementType)stream[index++];	//Element Type
@@ -166,15 +197,27 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 flags = stream[index++];
                 kf.BorderOutsideSoftTop = (flags & 0x01) > 0;
                 kf.UseDefaultMotionValues = (flags & 0x02) > 0;
-                
+                l.IsBackground = (flags & 0x04) > 0;
+                l.IsHardwarePreview = (flags & 0x08) > 0;
+                l.IsMixing = (flags & 0x10) > 0;
+                l.IsWithinPixelSpace = (flags & 0x20) > 0;
+                l.HdcpAuthenticated = (flags & 0x40) > 0;
+                l.ShadowIsEnabled = (flags & 0x80) > 0;
+
                 kf.BorderThickness = stream.GetShort(ref index);	//border thickness
                 kf.Width = stream.GetShort(ref index);			//HSize
                 kf.BorderInsideSoftness = stream.GetShort(ref index);	//Border inside softness
                 kf.BorderOutsideSoftness = stream.GetShort(ref index);	//Border outside softness
-                kf.ShadowHOffset = stream.GetShort(ref index);	//Shadow H Offset
-                kf.ShadowVOffset = stream.GetShort(ref index);	//Shadow V Offset
-                kf.ShadowHSize = stream.GetShort(ref index);		//Shadow H Size
-                kf.ShadowVSize = stream.GetShort(ref index);		//Shadow V Size
+                
+                //kf.ShadowHOffset = stream.GetShort(ref index);	//Shadow H Offset
+                //kf.ShadowVOffset = stream.GetShort(ref index);	//Shadow V Offset
+                //kf.ShadowHSize = stream.GetShort(ref index);		//Shadow H Size
+                //kf.ShadowVSize = stream.GetShort(ref index);		//Shadow V Size
+
+                //TODO: How do I translate these back to normal shadow offiset/size values?
+                var shadowDirection = stream.GetFloat(ref index);	//Shadow Direction
+                var shadowDepth = stream.GetFloat(ref index);	//Shadow Depth
+
                 kf.ShadowSoftness = stream.GetShort(ref index);	//Shadow softness
                 kf.ShadowTransparency = stream.GetShort(ref index);	//Shadow Transparency
                 kf.BorderLumaOffsetBottom = stream.GetShort(ref index);
@@ -202,10 +245,25 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     stream[index++],
                     stream[index++]);
 
-                kf.ShadowColor = new Color(0, 0, 0);    //Not supported in version 8
+                kf.ShadowColor = new Color(
+                    stream[index++],
+                    stream[index++],
+                    stream[index++]);
 
                 kf.CropAnchor = (CropAnchorTypes)(int)stream[index++];
                 l.StereoMode = (InputStereoMode)stream[index++];
+
+                //Frame Config
+                l.FrameID = stream[index++];
+
+                kf.BorderShapeSource = (ShapeSource)stream[index++];
+                kf.BorderShape = (ShapeType)stream[index++];
+                kf.BorderShapeFile = stream.GetString(ref index);
+
+                kf.BorderFillSource = (TextureFillSource)stream[index++];
+                kf.BorderTextureType = (TextureType)stream[index++];
+                kf.BorderTileMode = (TextureTileMode)stream[index++];
+                kf.BorderTextureFile = stream.GetString(ref index);
 
                 //Calculated values
                 l.CloneRect = new Rectangle()
@@ -213,19 +271,11 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     X = l.LayerRect.X + cloneHOffset,
                     Y = l.LayerRect.Y,
                     Width = l.LayerRect.Width,
-                    Height = l.LayerRect.Height
+                    Height= l.LayerRect.Height
                 };
 
                 //Scale (coerced from parent pixelspace)
                 l.Scale = (response.PixelSpaces.ContainsKey(l.PixelSpaceID) ? response.PixelSpaces[l.PixelSpaceID].Scale : 1);
-
-                //AOI (coerced from layer info)
-                l.AOIRect = LayerHelpers.GetAOIRectangle(l.KeyFrame, new InputConfig()
-                    {
-                        AspectRatio = l.AspectRatio,
-                        HActive = l.HActive,
-                        VActive = l.VActive,
-                    });
 
                 //Add Keyframe to list
                 if (i < newDkCount)
@@ -268,21 +318,45 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((InputConnector)(int)stream[index++]).ToConnectorType();
+                router.ConnectorType = ((ConnectorType)(int)stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
                 //Write the soft patch for the router
-                router.Crosspoints = new List<int>();
-                for (int outputIndex = 0; outputIndex < router.OutputCount; outputIndex++)
-                    router.Crosspoints.Add(-1);
-
-                int crosspointsCount = stream[index++];
-                for (int crosspointIndex = 0; crosspointIndex < crosspointsCount; crosspointIndex++)
+                int patchCount = stream[index++];
+                router.Patch.Clear();
+                for (int patchIndex = 0; patchIndex < patchCount; patchIndex++)
                 {
-                    int output = stream.GetShort(ref index);
-                    int input = stream.GetShort(ref index);
-                    router.Crosspoints[output] = input;
+                    int physicalOutput = stream[index++];
+                    int downstreamRouterID = stream[index++];
+                    int downstreamRouterInput = stream[index++];
+
+                    //downstream ID may be -1 or -2 if we are patched to a layer.  This will have been clipped to 255
+                    if (downstreamRouterID == 255)
+                        downstreamRouterID = -1;
+                    else if (downstreamRouterID == 254)
+                        downstreamRouterID = -2;
+
+                    router.SetRouterOutputPatch(physicalOutput, downstreamRouterID, downstreamRouterInput);
+                }
+
+                //Write the crosspoints for the router
+                for (int outputID = 0; outputID < router.OutputCount; outputID++)
+                {
+                    if (router.InputCount >= 255)
+                    {
+                        //Desrialize two bytes of data
+                        router.Crosspoints.Add(stream.GetShort(ref index));
+                    }
+                    else
+                    {
+                        //Deserialize only one byte of data
+                        int input = stream[index++];
+                        if (input == 255)
+                            input = -1;
+
+                        router.Crosspoints.Add(input);
+                    }
                 }
 
                 //Add router to list
@@ -295,7 +369,16 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 var newMachine = new DrawingMachine();
                 MachineStatus status = newMachine.Status;
 
+                //Port ID
+                newMachine.Port = stream[index++];
+
+                //Last PlayItemID
+                newMachine.LastPlayItemID = stream.GetInt(ref index);
+
+                //Machine Time
+                FieldRate frameRate = (FieldRate)stream[index++];
                 long frames = stream.GetLong(ref index);
+                newMachine.Time.Set(frameRate, frames);
 
                 //Machine Status (Block 1)
                 flags = stream[index++];
@@ -324,20 +407,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 status.TsoMode = (flags & 0x01) > 0;
                 status.Var = (flags & 0x02) > 0;
 
-                //Stuff we don't use
-                string machineType = stream.GetString(ref index);
-                string machineName = stream.GetString(ref index);
-                int baud = stream.GetShort(ref index);
-                
-                newMachine.LastPlayItemID = stream.GetShort(ref index);
-                FieldRate rate = (FieldRate)stream[index++];
-                newMachine.Time.Set(rate, frames);
-                newMachine.Port = stream[index++];
-
-                //Few more things we don't use
-                byte parity = stream[index++];
-                byte stopBits = stream[index++];
-
                 //Add to collection
                 response.Machines.Add(newMachine.Port, newMachine);
             }
@@ -348,65 +417,38 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 DrawingOutput output = new DrawingOutput();
 
                 output.OutputType = (OutputModuleType)stream[index++];
+                output.ID = stream.GetShort(ref index);
+                output.FrameID = stream.GetShort(ref index);
+                output.RenewalMasterFrameID = stream.GetShort(ref index);
+                output.HActive = stream.GetShort(ref index);
+                output.VActive = stream.GetShort(ref index);
+                output.HTotal = stream.GetShort(ref index);
+                output.VTotal = stream.GetShort(ref index);
 
-                if(output.OutputType == OutputModuleType.SpyderDX4)
-                {
-                    output.ID = stream.GetShort(ref index);
-                    int outputFrameID = stream.GetShort(ref index); //TODO:  Do I need this?
-                    int outputAX = stream.GetShort(ref index);
-                    int outputAY = stream.GetShort(ref index);
-                    int outputBOffset = stream.GetShort(ref index);
-                    int outputCX = stream.GetShort(ref index);
-                    int outputCY = stream.GetShort(ref index);
-                    int outputDOffset = stream.GetShort(ref index);
-                    byte pairModeAB = stream[index++];
-                    byte pairModeCD = stream[index++];
-                    output.HActive = stream.GetShort(ref index);
-                    output.VActive = stream.GetShort(ref index);
-                    output.Name = stream.GetString(ref index);
-                    output.Rotation = (RotationMode)stream[index++];    //TODO:  Verify this enum maps correctly
+                output.DirectAuxId = stream.GetInt(ref index);
 
-                    //TODO:  Number of output rects actually depends on the mode of the DX4...
-                    output.OutputMode = OutputMode.Normal;
-                    output.Rectangles.Add(new Rectangle(outputAX, outputAY, output.HActive, output.VActive));
-                    output.Rectangles.Add(new Rectangle(outputAX + outputBOffset, outputAY, output.HActive, output.VActive));
-                    output.Rectangles.Add(new Rectangle(outputCX, outputCY, output.HActive, output.VActive));
-                    output.Rectangles.Add(new Rectangle(outputCX + outputDOffset, outputCY, output.HActive, output.VActive));
-                }
-                else if (output.OutputType == OutputModuleType.SpyderUniversal)
-                {
-                    output.ID = stream.GetShort(ref index);
-                    int outputFrameID = stream.GetShort(ref index); //TODO:  Do I need this?
-                    int x = stream.GetInt(ref index);
-                    int y = stream.GetShort(ref index);
-                    output.HActive = stream.GetShort(ref index);
-                    output.VActive = stream.GetShort(ref index);
-                    output.Name = stream.GetString(ref index);
-                    output.OutputMode = (OutputMode)stream[index++];
-                    if(output.OutputMode == OutputMode.Scaled)
-                    {
-                        output.ScaledSource = stream.GetRectangle(ref index);
-                    }
-                    else if(output.OutputMode == OutputMode.OpMon)
-                    {
-                        output.OpMonPreviewSource = stream.GetRectangle(ref index);
-                        output.OpMonPreviewDest = stream.GetRectangle(ref index);
-                        output.OpMonProgramSource = stream.GetRectangle(ref index);
-                        output.OpMonProgramDest = stream.GetRectangle(ref index);
-                    }
-                    else
-                    {
-                        output.Rectangles.Add(new Rectangle(x, y, output.HActive, output.VActive));
-                    }
-                }
-                else //Output base (enum value doesn't map correctly though...)
-                {
-                    output.ID = stream.GetShort(ref index);
-                    int outputFrameID = stream.GetShort(ref index); //TODO:  Do I need this?
-                    output.HActive = stream.GetShort(ref index);
-                    output.VActive = stream.GetShort(ref index);
-                    output.Name = stream.GetString(ref index);
-                }
+                var outputFlags = (OutputFlags)stream[index++];
+                output.Interlaced = outputFlags.HasFlag(OutputFlags.Interlaced);
+                output.IsFrameLocked = outputFlags.HasFlag(OutputFlags.IsFrameLocked);
+                
+                output.VerticalRefresh = stream.GetFloat(ref index);
+                output.Name = stream.GetString(ref index);
+                output.HdcpStatus = (HdcpLinkStatus)stream[index++];
+
+                output.OutputMode = (OutputMode)stream[index++];
+                output.Rotation = (RotationMode)stream[index++];
+
+                output.OpMonProgramSource = stream.GetRectangle(ref index);
+                output.OpMonProgramDest = stream.GetRectangle(ref index);
+                output.OpMonPreviewSource = stream.GetRectangle(ref index);
+                output.OpMonPreviewDest = stream.GetRectangle(ref index);
+                output.ScaledSource = stream.GetRectangle(ref index);
+                output.ScaledDest = stream.GetRectangle(ref index);
+                output.SourceName = stream.GetString(ref index);
+
+                int rectCount = stream[index++];
+                for (int j = 0; j < rectCount; j++)
+                    output.Rectangles.Add(stream.GetRectangle(ref index));
 
                 response.Outputs.Add(output.ID, output);
             }
@@ -418,8 +460,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 DiagnosticType diagnosticType = (DiagnosticType)stream[index++];
                 response.DiagnosticWarnings.Add(diagnosticType, status);
             }
-
-            response.IsDataIOIdle = (stream[index++] == 1);
 
             return response;
         }

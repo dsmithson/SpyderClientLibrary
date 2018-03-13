@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Spyder.Client.Primitives;
 
 namespace Spyder.Client.Drawing
 {
@@ -13,9 +13,9 @@ namespace Spyder.Client.Drawing
         {
             double luminance = CalculateLuminance(backgroundColor);
             if (luminance > 128)
-                return new Color(0, 0, 0);
+                return Color.FromArgb(0, 0, 0);
             else
-                return new Color(255, 255, 255);
+                return Color.FromArgb(255, 255, 255);
         }
 
         public static double CalculateLuminance(Color color)

@@ -25,15 +25,12 @@ namespace Spyder.Client.Net
     {
         public const int ServerPort = 11116;
         public const int DefaultTimeoutSeconds = 5;
-
-        private readonly Func<IUDPSocket> getUdpSocket;
-        
+                
         public bool IsRunning { get; private set; }
         public string ServerIP { get; private set; }
 
-        public SpyderUdpClient(Func<IUDPSocket> getUdpSocket, string serverIP)
+        public SpyderUdpClient(string serverIP)
         {
-            this.getUdpSocket = getUdpSocket;
             this.ServerIP = serverIP;
         }
 
@@ -1630,7 +1627,7 @@ namespace Spyder.Client.Net
             IUDPSocket socket = null;
             try
             {
-                socket = getUdpSocket();
+                socket = new UDPSocket();
                 if (!await socket.StartupAsync(ServerIP, ServerPort))
                 {
                     TraceQueue.Trace(this, TracingLevel.Warning, "Failed to startup socket for Spyder Client");

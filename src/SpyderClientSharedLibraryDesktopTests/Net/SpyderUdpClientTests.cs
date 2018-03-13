@@ -14,7 +14,7 @@ namespace Spyder.Client.Net
         public SpyderUdpClientTests()
         : base((address) =>
         {
-            ISpyderClient client = new SpyderUdpClient(() => new UDPSocket(), serverIP);
+            ISpyderClient client = new SpyderUdpClient(serverIP);
             return Task.FromResult(client);
         })
         {

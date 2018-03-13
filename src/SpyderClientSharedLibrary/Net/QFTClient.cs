@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO.Compression;
+using Knightware.Net;
 
 namespace Spyder.Client.Net
 {
@@ -25,7 +26,6 @@ namespace Spyder.Client.Net
         public const int InactivityDisconnectSeconds = 15;
 
         private IStreamSocket socket;
-        private Func<IStreamSocket> getStreamSocket;
         private AutoResetWorker pingWorker;
         private DateTime lastCommandTime;
         private readonly AsyncLock commandLock = new AsyncLock();
@@ -48,9 +48,8 @@ namespace Spyder.Client.Net
 
         public bool FileCompressionEnabled { get; private set; }
 
-        public QFTClient(Func<IStreamSocket> getStreamSocket, string serverIP, int serverPort = 7280)
+        public QFTClient(string serverIP, int serverPort = 7280)
         {
-            this.getStreamSocket = getStreamSocket;
             this.ServerIP = serverIP;
             this.ServerPort = serverPort;
         }
@@ -67,7 +66,7 @@ namespace Spyder.Client.Net
 
             try
             {
-                socket = getStreamSocket();
+                socket = new TCPSocket();
                 if (!await socket.StartupAsync(ServerIP, ServerPort))
                 {
                     TraceQueue.Trace(TracingLevel.Warning, "Failed to initialize socket for QFT Client. Shutting down...");
@@ -719,7 +718,7 @@ namespace Spyder.Client.Net
 
             Stream stream = source;
             bool disposeStream = false;
-            PCLStorage.IFile tempFile = null;
+            string tempFileName = null;
 
             try
             {
@@ -727,9 +726,9 @@ namespace Spyder.Client.Net
                 if (FileCompressionEnabled)
                 {
                     //Create a new stream which will contain compressed data to be sent over the network
-                    string tempFileName = "qftCompressionTempFile-" + Guid.NewGuid().ToString();
-                    tempFile = await PCLStorage.FileSystem.Current.LocalStorage.CreateFileAsync(tempFileName, PCLStorage.CreationCollisionOption.ReplaceExisting);
-                    stream = await tempFile.OpenAsync(PCLStorage.FileAccess.ReadAndWrite);
+                    tempFileName = Path.GetTempFileName();
+                    
+                    stream = File.Create(tempFileName);
                     disposeStream = true;
 
                     //Compress stream
@@ -833,12 +832,12 @@ namespace Spyder.Client.Net
 
                 try
                 {
-                    if (tempFile != null)
-                        await tempFile.DeleteAsync();
+                    if (!string.IsNullOrWhiteSpace(tempFileName) && File.Exists(tempFileName))
+                        File.Delete(tempFileName);
                 }
                 catch (Exception ex)
                 {
-                    TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred when trying to delete QFT temp file {1}: {2}", ex.GetType().Name, tempFile.Name, ex.Message);
+                    TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred when trying to delete QFT temp file {1}: {2}", ex.GetType().Name, tempFileName, ex.Message);
                 }
             }
         }

@@ -451,7 +451,7 @@ namespace Spyder.Client.Common
                     ID = deserializer.Read(item, "ID", -1),
                     Name = deserializer.Read(item, "Name", string.Empty),
                     RouterType = deserializer.Read(item, "RouterType", string.Empty),
-                    ConnectorType = deserializer.ReadEnum(item, "ConnectorType", InputConnector.HD15),
+                    ConnectorType = deserializer.ReadEnum(item, "ConnectorType", InputConnector.HD15).ToConnectorType(),
                     InputCount = deserializer.Read(item, "Inputs", -1),
                     OutputCount = deserializer.Read(item, "Outputs", -1),
                     Port = deserializer.Read(item, "Port", -1),

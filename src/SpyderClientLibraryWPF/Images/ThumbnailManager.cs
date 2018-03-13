@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using PCLStorage;
 using Knightware.Diagnostics;
 using Knightware.Net;
 using Knightware.Primitives;
@@ -41,8 +40,8 @@ namespace Spyder.Client.Images
                 ImageStreamGetRequested(this, e);
         }
 
-        public ThumbnailManager(IFolder localImagesFolder)
-            : base(() => new TCPSocket(), localImagesFolder)
+        public ThumbnailManager(string localImagesFolder)
+            : base(localImagesFolder)
         {
         }
 
@@ -58,9 +57,9 @@ namespace Spyder.Client.Images
                 });
         }
 
-        public virtual Task<IFolder> GetDemoServerImageFolder()
+        public virtual Task<string> GetDemoServerImageFolder()
         {
-            return GetFolder("Demo");
+            return Task.FromResult(GetFolder("Demo"));
         }
 
         public override async Task<Stream> GetImageStreamAsync(ThumbnailIdentifier identifier, ImageSize targetSize)

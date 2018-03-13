@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Spyder.Client.Net.Notifications;
 using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
-using PCLStorage;
 using Knightware.Primitives;
 using Knightware.Net.Sockets;
 using Spyder.Client.Net.DrawingData;
@@ -21,11 +20,8 @@ namespace Spyder.Client.Net
     /// </summary>
     public class SpyderClient : SpyderUdpClient, ISpyderClientExtended
     {
-        private readonly Func<IStreamSocket> getStreamSocket;
-        private readonly Func<Task<SpyderServerEventListenerBase>> getServerEventListener;
-
-        private SpyderServerEventListenerBase serverEventListener;
-        private IFolder localCacheFolder;
+        private SpyderServerEventListener serverEventListener;
+        private readonly string localCacheFolder;
         private QFTClient qftClient;
         private SystemData systemData;
         private DrawingData.DrawingData drawingData;
@@ -70,11 +66,9 @@ namespace Spyder.Client.Net
 
         public string ServerName { get; set; }
         
-        public SpyderClient(Func<Task<SpyderServerEventListenerBase>> getServerEventListener, Func<IStreamSocket> getStreamSocket, Func<IUDPSocket> getUdpSocket, string serverIP, IFolder localCacheFolder)
-            : base(getUdpSocket, serverIP)
+        public SpyderClient(string serverIP, string localCacheFolder)
+            : base(serverIP)
         {
-            this.getServerEventListener = getServerEventListener;
-            this.getStreamSocket = getStreamSocket;
             this.localCacheFolder = localCacheFolder;
         }
 
@@ -84,7 +78,7 @@ namespace Spyder.Client.Net
                 return false;
             
             //Init our QFT Client
-            qftClient = new QFTClient(getStreamSocket, ServerIP);
+            qftClient = new QFTClient(ServerIP);
             if (!await qftClient.StartupAsync())
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "Failed to startup QFT Client.  Shutting down...");
@@ -100,7 +94,7 @@ namespace Spyder.Client.Net
             }
 
             //Startup event listener
-            serverEventListener = await getServerEventListener();
+            serverEventListener = await SpyderServerEventListener.GetInstanceAsync();
             if (serverEventListener != null)
             {
                 serverEventListener.DrawingDataReceived += serverEventListener_DrawingDataReceived;
@@ -504,11 +498,12 @@ namespace Spyder.Client.Net
                 //First lets look in our cache for the file
                 if (localCacheFolder != null)
                 {
-                    IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
-                    IFile file = (await imageCacheFolder.GetFilesAsync()).FirstOrDefault(f => string.Compare(f.Name, fileName, StringComparison.CurrentCultureIgnoreCase) == 0);
-                    if (file != null)
+                    string imageCacheFolder = Path.Combine(localCacheFolder, "Images");
+                    string file = Path.Combine(imageCacheFolder, fileName);
+                    if(File.Exists(file))
                     {
-                        return await file.OpenAsync(PCLStorage.FileAccess.Read);
+                        Stream fileStream = File.OpenRead(file);
+                        return fileStream;
                     }
                 }
 
@@ -521,9 +516,9 @@ namespace Spyder.Client.Net
                     //Success.  Save file to local cache
                     if (localCacheFolder != null)
                     {
-                        IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
-                        IFile file = await imageCacheFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-                        using (Stream fileStream = await file.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
+                        string imageCacheFolder = Path.Combine(localCacheFolder, "Images");
+                        string file = Path.Combine(imageCacheFolder, fileName);
+                        using (Stream fileStream = File.Create(file))
                         {
                             response.Seek(0, SeekOrigin.Begin);
                             await response.CopyToAsync(fileStream);
@@ -576,9 +571,9 @@ namespace Spyder.Client.Net
                 //Write file to our local cache
                 if (writeFileToLocalCache && localCacheFolder != null)
                 {
-                    IFolder imageCacheFolder = await localCacheFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
-                    IFile file = await imageCacheFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-                    using (Stream stream = await file.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
+                    string imageCacheFolder = Path.Combine(localCacheFolder, "Images");
+                    string file = Path.Combine(imageCacheFolder, fileName);
+                    using (Stream stream = File.Create(file))
                     {
                         fileStream.Seek(0, SeekOrigin.Begin);
                         await fileStream.CopyToAsync(stream);

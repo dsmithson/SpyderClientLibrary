@@ -123,7 +123,22 @@ namespace Spyder.Client.Net.DrawingData
                 }
             }
         }
-        
+
+        private int directAuxId;
+        public int DirectAuxId
+        {
+            get { return directAuxId; }
+            set
+            {
+                if(directAuxId != value)
+                {
+                    directAuxId = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+
         private bool interlaced;
         public bool Interlaced
         {
@@ -133,6 +148,20 @@ namespace Spyder.Client.Net.DrawingData
                 if (interlaced != value)
                 {
                     interlaced = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool isFrameLocked;
+        public bool IsFrameLocked
+        {
+            get { return isFrameLocked; }
+            set
+            {
+                if(isFrameLocked != value)
+                {
+                    isFrameLocked = value;
                     OnPropertyChanged();
                 }
             }
@@ -306,5 +335,20 @@ namespace Spyder.Client.Net.DrawingData
                 }
             }
         }
+
+        private string sourceName;
+        public string SourceName
+        {
+            get { return sourceName; }
+            set
+            {
+                if(sourceName != value)
+                {
+                    sourceName = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
     }
 }

@@ -19,12 +19,12 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         private int rxSequence = -1;
         private int rxPacketCount = -1;
         private SortedDictionary<int, byte[]> rxCache = new SortedDictionary<int,byte[]>();
-        private IStreamDecompressor zipDecompressor;
+        private readonly IStreamDecompressor zipDecompressor = new GZipStreamDecompressor();
 
         public string ServerIP { get; private set; }
         public string ServerVersion { get; private set; }
 
-        public DrawingDataDeserializer(string serverIP, string serverVersion, IStreamDecompressor zipDecompressor)
+        public DrawingDataDeserializer(string serverIP, string serverVersion)
         {
             this.ServerIP = serverIP;
             this.ServerVersion = serverVersion;

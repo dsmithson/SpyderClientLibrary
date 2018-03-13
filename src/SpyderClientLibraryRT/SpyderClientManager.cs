@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Spyder.Client.IO;
 using Spyder.Client.Net.Notifications;
-using PCLStorage;
 using Spyder.Client.Net;
 
 namespace Spyder.Client
@@ -27,43 +26,14 @@ namespace Spyder.Client
         /// <param name="localCacheRoot">Folder name in local storage name for saving image and other cached files.  If the specified folder does not exist in local storage, it will be created.</param>
         public SpyderClientManager(string localCacheRoot)
         : base(
-              async () => await SpyderServerEventListener.GetInstanceAsync(),
-
-            async (serverIP) =>
+            (serverIP) =>
             {
-                var serverCacheFolder = await FileSystem.Current.LocalStorage.CreateFolderAsync(localCacheRoot, CreationCollisionOption.OpenIfExists);
+                ISpyderClientExtended response = new SpyderClient(serverIP, localCacheRoot);
 
-                ISpyderClientExtended response = new SpyderClient(
-                async () => await SpyderServerEventListener.GetInstanceAsync(),
-                () => new TCPSocket(),
-                () => new UDPSocket(),
-                serverIP,
-                serverCacheFolder);
-
-                return response;
+                return Task.FromResult(response);
             })
         {
         }
 
-        public SpyderClientManager(IFolder localCacheRoot)
-            : base(
-
-                  async () => await SpyderServerEventListener.GetInstanceAsync(),
-
-            async (serverIP) =>
-            {
-                var serverCacheFolder = await localCacheRoot.CreateFolderAsync(serverIP, CreationCollisionOption.OpenIfExists);
-
-                ISpyderClientExtended response = new SpyderClient(
-                async () => await SpyderServerEventListener.GetInstanceAsync(),
-                () => new TCPSocket(),
-                () => new UDPSocket(),
-                serverIP,
-                serverCacheFolder);
-
-                return response;
-            })
-        {
-        }
     }
 }

@@ -27,7 +27,7 @@ namespace Spyder.Client.Net
             server = new VistaQFT.QFTServer(@"c:\", IPAddress.Loopback, QFTClient.SERVER_PORT, watcherDirectory);
             server.Startup();
 
-            client = new QFTClient(() => new TestStreamSocket(), "127.0.0.1", 7280);
+            client = new QFTClient("127.0.0.1", 7280);
             Assert.IsTrue(client.StartupAsync().Result, "Failed to startup client connection");
         }
 

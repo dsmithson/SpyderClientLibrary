@@ -10,6 +10,8 @@ using Spyder.Client.Net.DrawingData.Deserializers;
 using Knightware.Net.Sockets;
 using Spyder.Client.Net.DrawingData;
 using Knightware.IO;
+using Knightware.Threading.Tasks;
+using Knightware.Net;
 
 namespace Spyder.Client.Net.Notifications
 {
@@ -21,8 +23,27 @@ namespace Spyder.Client.Net.Notifications
     /// <summary>
     /// Listens for UDP multicast / broadcast messages from Spyder servers
     /// </summary>
-    public class SpyderServerEventListenerBase
+    public class SpyderServerEventListener
     {
+        private static SpyderServerEventListener sharedInstance;
+        private static readonly AsyncLock sharedInstanceLock = new AsyncLock();
+
+        public static async Task<SpyderServerEventListener> GetInstanceAsync()
+        {
+            if (sharedInstance == null)
+            {
+                using (await sharedInstanceLock.LockAsync())
+                {
+                    if (sharedInstance == null)
+                    {
+                        sharedInstance = new SpyderServerEventListener();
+                        await sharedInstance.StartupAsync();
+                    }
+                }
+            }
+            return sharedInstance;
+        }
+
         private class SpyderServerListenerState
         {
             public DrawingDataDeserializer Deserializer { get; set; }
@@ -32,8 +53,8 @@ namespace Spyder.Client.Net.Notifications
 
         public const string multicastIP = "239.192.25.25";
         public const int multicastPort = 11118;
-        private IMulticastListener listener;
-        private Func<IGZipStreamDecompressor> getDrawingDataDecompressor;
+        private readonly IMulticastListener listener;
+        private readonly GZipStreamDecompressor drawingDataDecompressor;
         private Dictionary<string, SpyderServerListenerState> serverInfoCache;
 
         /// <summary>
@@ -43,10 +64,10 @@ namespace Spyder.Client.Net.Notifications
 
         public bool IsRunning { get; private set; }
 
-        public SpyderServerEventListenerBase(IMulticastListener listener, Func<IGZipStreamDecompressor> getDrawingDataDecompressor)
+        public SpyderServerEventListener()
         {
-            this.listener = listener;
-            this.getDrawingDataDecompressor = getDrawingDataDecompressor;
+            this.listener = new UDPMulticastListener();
+            this.drawingDataDecompressor = new GZipStreamDecompressor();
         }
 
         public async Task<bool> StartupAsync()
@@ -169,7 +190,7 @@ namespace Spyder.Client.Net.Notifications
                         DrawingDataDeserializer deserializer;
                         if (serverInfo.Deserializer == null)
                         {
-                            deserializer = new DrawingDataDeserializer(e.SenderAddress, serverInfo.ServerAnnounceInfo.Version.ToShortString(), getDrawingDataDecompressor());
+                            deserializer = new DrawingDataDeserializer(e.SenderAddress, serverInfo.ServerAnnounceInfo.Version.ToShortString());
                             deserializer.DrawingDataDeserialized += deserializer_DrawingDataDeserialized;
                             serverInfo.Deserializer = deserializer;
                         }
@@ -241,12 +262,27 @@ namespace Spyder.Client.Net.Notifications
             if (data == null || data.Length < 12)
                 return null;
 
-            var expected = new byte[] { (byte)'s', (byte)'p', (byte)'y', (byte)'d', (byte)'e', (byte)'r', 0x00 };
-            for (int i = 0; i < expected.Length; i++)
+            //Spyder studio (v5 and above) changes the spyder header to mantis, so we need to check both
+            var expectedHeaders = new byte[][]
             {
-                if (expected[i] != data[i])
-                    return null;
+                new byte[] { (byte)'s', (byte)'p', (byte)'y', (byte)'d', (byte)'e', (byte)'r', 0x00 },
+                new byte[] { (byte)'m', (byte)'a', (byte)'n', (byte)'t', (byte)'i', (byte)'s', 0x00 }
+            };
+
+            bool matched = false;
+            foreach (byte[] expected in expectedHeaders)
+            {
+                for (int i = 0; i < expected.Length; i++)
+                {
+                    if (expected[i] != data[i])
+                        break;
+                }
+                matched = true;
+                break;
             }
+
+            if (!matched)
+                return null;
 
             ServerEventType eventType = (ServerEventType)(data[10] | (data[11] << 8));
             return eventType;

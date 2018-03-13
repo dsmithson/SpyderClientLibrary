@@ -1,11 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard1.3</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <PackageTargetFallback>$(PackageTargetFallback);portable-win+net45+wp8+win81+wpa8</PackageTargetFallback>
+    <RootNamespace>Spyder.Client</RootNamespace>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="PCLStorage" Version="1.0.2" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj" />
   </ItemGroup>

@@ -1,5 +1,4 @@
-﻿using PCLStorage;
-using Knightware.Net;
+﻿using Knightware.Net;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,10 +21,9 @@ namespace Spyder.Client.Images
         where T : class
         where K : QFTThumbnailIdentifier
     {
-        private IFolder localImagesFolder;
+        private readonly string localImagesFolder;
         private string remoteImagePath = @"c:\spyder\images";
         private readonly Dictionary<string, QFTClient> qftClients;
-        private Func<IStreamSocket> getStreamSocket;
         private Dictionary<QFTThumbnailIdentifier, Size> knownResolutions = new Dictionary<QFTThumbnailIdentifier, Size>();
 
         public string RemoteImagePath
@@ -38,10 +36,9 @@ namespace Spyder.Client.Images
         /// Initiliazes a new instance of the QFTThumbnailManagerBase class
         /// </summary>
         /// <param name="localImagesFolder">root directory for storing downloaded images (cache).  Subfolders will be created for each sub-server IP.</param>
-        protected QFTThumbnailManagerBase(Func<IStreamSocket> getStreamSocket, IFolder localImagesFolder)
+        protected QFTThumbnailManagerBase(string localImagesFolder)
         {
             this.localImagesFolder = localImagesFolder;
-            this.getStreamSocket = getStreamSocket;
 
             this.qftClients = new Dictionary<string, QFTClient>();
         }
@@ -88,8 +85,8 @@ namespace Spyder.Client.Images
         public virtual async Task<Stream> GetImageStreamAsync(K identifier, ImageSize targetSize)
         {
             //If we have no local backing store, we can't get an image stream.
-            var serverImagesFolder = await GetFolder(identifier.ServerIP);
-            if (serverImagesFolder == null)
+            string serverImagesFolder = GetFolder(identifier.ServerIP);
+            if (string.IsNullOrWhiteSpace(serverImagesFolder))
                 return null;
 
             string scaledFolderName = "Scaled_" + (int)targetSize;
@@ -102,19 +99,16 @@ namespace Spyder.Client.Images
                 //First look for a cached image file pre-scaled
                 try
                 {
-                    var preScaledFolder = await serverImagesFolder.GetFolderAsync(scaledFolderName);
+                    var preScaledFolder = Path.Combine(serverImagesFolder, scaledFolderName);
+                    var preScaledFile = Path.Combine(preScaledFolder, identifier.FileName);
 
-                    if (preScaledFolder != null)
+                    if (File.Exists(preScaledFile))
                     {
                         //Look for the existance of a pre-scaled image already in our folder
                         try
                         {
-                            var file = await preScaledFolder.GetFileAsync(identifier.FileName);
-                            if (file != null)
-                            {
-                                fileStream = await file.OpenAsync(PCLStorage.FileAccess.Read);
-                                fileStreamIsScaled = true;
-                            }
+                            fileStream = File.OpenRead(preScaledFile);
+                            fileStreamIsScaled = true;
                         }
                         catch (FileNotFoundException)
                         {
@@ -143,16 +137,16 @@ namespace Spyder.Client.Images
                     try
                     {
                         //Look in our unscaled image cache
-                        var file = await serverImagesFolder.GetFileAsync(identifier.FileName);
-                        if (file != null)
+                        string fileName = Path.Combine(serverImagesFolder, identifier.FileName);
+                        if (File.Exists(fileName))
                         {
-                            fileStream = await file.OpenAsync(PCLStorage.FileAccess.Read);
+                            fileStream = File.OpenRead(fileName);
                             if (fileStream.Length == 0)
                             {
                                 //Invalid file.  Remove it.
                                 fileStream.Dispose();
                                 fileStream = null;
-                                await file.DeleteAsync();
+                                File.Delete(fileName);
                             }
                         }
                     }
@@ -173,8 +167,8 @@ namespace Spyder.Client.Images
                     var qftClient = await GetQFTClient(identifier.ServerIP);
                     if (qftClient != null)
                     {
-                        IFile newFile = await serverImagesFolder.CreateFileAsync(identifier.FileName, CreationCollisionOption.ReplaceExisting);
-                        fileStream = await newFile.OpenAsync(PCLStorage.FileAccess.ReadAndWrite);
+                        string newFile = Path.Combine(serverImagesFolder, identifier.FileName);
+                        fileStream = File.Create(newFile);
                         string remoteFile = qftClient.ConvertAbsolutePathToRelative(Path.Combine(remoteImagePath, identifier.FileName));
                         if (await qftClient.ReceiveFile(remoteFile, fileStream, null))
                         {
@@ -186,8 +180,8 @@ namespace Spyder.Client.Images
                             //Download failed.  Delete our local cache file
                             fileStream.Dispose();
                             fileStream = null;
-
-                            await newFile.DeleteAsync();
+                            
+                            File.Delete(newFile);
                         }
                     }
                 }
@@ -213,9 +207,12 @@ namespace Spyder.Client.Images
                         fileStream = imageResult.ScaledStream;
                         fileStream.Seek(0, SeekOrigin.Begin);
 
-                        var preScaledFolder = await serverImagesFolder.CreateFolderAsync(scaledFolderName, CreationCollisionOption.OpenIfExists);
-                        var preScaledFile = await preScaledFolder.CreateFileAsync(identifier.FileName, CreationCollisionOption.ReplaceExisting);
-                        using (var stream = await preScaledFile.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
+                        var preScaledFolder = Path.Combine(serverImagesFolder, scaledFolderName);
+                        if (!Directory.Exists(preScaledFolder))
+                            Directory.CreateDirectory(preScaledFolder);
+
+                        var preScaledFile = Path.Combine(preScaledFolder, identifier.FileName);
+                        using (var stream = File.Create(preScaledFile))
                         {
                             await fileStream.CopyToAsync(stream);
                         }
@@ -299,14 +296,16 @@ namespace Spyder.Client.Images
 
             return Task.FromResult(true);
         }
-
-        protected async Task<IFolder> GetFolder(string serverIP)
+        
+        protected string GetFolder(string serverIP)
         {
             if (localImagesFolder == null)
                 return null;
 
-            var serverRootFolder = await localImagesFolder.CreateFolderAsync(serverIP, CreationCollisionOption.OpenIfExists);
-            var imageRootFolder = await serverRootFolder.CreateFolderAsync("Images", CreationCollisionOption.OpenIfExists);
+            string imageRootFolder = Path.Combine(localImagesFolder, serverIP, "Images");
+            if (!Directory.Exists(imageRootFolder))
+                Directory.CreateDirectory(imageRootFolder);
+
             return imageRootFolder;
         }
 
@@ -319,7 +318,7 @@ namespace Spyder.Client.Images
             }
             else
             {
-                response = new QFTClient(getStreamSocket, serverIP);
+                response = new QFTClient(serverIP);
                 qftClients.Add(serverIP, response);
             }
 
@@ -339,16 +338,16 @@ namespace Spyder.Client.Images
 
         protected async Task<bool> LoadImageMetadata(string serverIP)
         {
-            var serverImagesFolder = await GetFolder(serverIP);
-            if (serverImagesFolder == null)
+            string serverImagesFolder = GetFolder(serverIP);
+            if (string.IsNullOrWhiteSpace(serverImagesFolder))
                 return false;
 
-            var file = (await serverImagesFolder.GetFilesAsync()).FirstOrDefault(f => string.Compare(f.Name, imageMetadataFileName, StringComparison.CurrentCultureIgnoreCase) == 0);
-            if (file != null)
+            string metadataFile = Path.Combine(serverImagesFolder, imageMetadataFileName);
+            if(File.Exists(metadataFile))
             {
                 try
                 {
-                    using (Stream stream = await file.OpenAsync(PCLStorage.FileAccess.Read))
+                    using (Stream stream = File.OpenRead(metadataFile))
                     {
                         if (stream.Length > 0)
                         {
@@ -364,7 +363,7 @@ namespace Spyder.Client.Images
                 }
 
                 //Delete this file - it appears to have failed to load above
-                await file.DeleteAsync();
+                File.Delete(metadataFile);
             }
             return false;
         }
@@ -404,19 +403,16 @@ namespace Spyder.Client.Images
 
         protected async Task<bool> SaveImageMetadata(string serverIP)
         {
-            var serverImagesFolder = await GetFolder(serverIP);
-            if (serverImagesFolder == null)
+            string serverImagesFolder = GetFolder(serverIP);
+            if (string.IsNullOrWhiteSpace(serverImagesFolder))
                 return false;
 
             try
             {
-                var file = await serverImagesFolder.CreateFileAsync(imageMetadataFileName, CreationCollisionOption.ReplaceExisting);
-                if (file == null)
-                    return false;
-
-                using (Stream stream = await file.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
+                string metadataFile = Path.Combine(serverImagesFolder, imageMetadataFileName); 
+                using (Stream stream = File.Create(metadataFile))
                 {
-                    return SaveImageMetadata(serverIP, stream);
+                    return await SaveImageMetadata(serverIP, stream);
                 }
             }
             catch (Exception ex)
@@ -427,7 +423,7 @@ namespace Spyder.Client.Images
             return false;
         }
 
-        protected bool SaveImageMetadata(string serverIP, Stream metadataFileStream)
+        protected async Task<bool> SaveImageMetadata(string serverIP, Stream metadataFileStream)
         {
             if (string.IsNullOrEmpty(serverIP) || metadataFileStream == null)
                 return false;
@@ -446,21 +442,23 @@ namespace Spyder.Client.Images
 
                 using (XmlWriter writer = XmlWriter.Create(metadataFileStream))
                 {
-                    writer.WriteStartDocument();
-                    writer.WriteStartElement("ThumbnailManagerMetadata");
-                    writer.WriteStartElement("ThumbnailImages");
+                    //TODO:  Check .Net Reference source to figure out how to populate args for the async version of calls below
+                    await writer.WriteStartDocumentAsync();
+                    await writer.WriteStartElementAsync(string.Empty, "ThumbnailManagerMetadata", string.Empty);
+                    await writer.WriteStartElementAsync(string.Empty, "ThumbnailImages", string.Empty);
 
                     foreach (var item in imageItems)
                     {
-                        writer.WriteStartElement("ThumbnailImage");
-                        writer.WriteElementString("FileName", item.Item1);
-                        writer.WriteElementString("Width", item.Item2.ToString());
-                        writer.WriteElementString("Height", item.Item3.ToString());
+                        await writer.WriteStartElementAsync(string.Empty, "ThumbnailImage", string.Empty);
+                        await writer.WriteElementStringAsync(String.Empty, "FileName", string.Empty, item.Item1);
+                        await writer.WriteElementStringAsync(string.Empty, "Width", string.Empty, item.Item2.ToString());
+                        await writer.WriteElementStringAsync(string.Empty, "Height", string.Empty, item.Item3.ToString());
                     }
 
-                    writer.WriteEndElement();
-                    writer.WriteEndElement();
-                    writer.WriteEndDocument();
+                    await writer.WriteEndElementAsync();
+                    await writer.WriteEndElementAsync();
+                    await writer.WriteEndDocumentAsync();
+                    await writer.FlushAsync();
                 }
                 return true;
             }
@@ -494,11 +492,11 @@ namespace Spyder.Client.Images
                 //Before we return, let's also write the file to our local cache to avoid a subsequent download
                 try
                 {
-                    var serverImagesFolder = await GetFolder(identifier.ServerIP);
-                    if (serverImagesFolder != null)
+                    string serverImagesFolder = GetFolder(identifier.ServerIP);
+                    if (!string.IsNullOrWhiteSpace(serverImagesFolder))
                     {
-                        IFile newFile = await serverImagesFolder.CreateFileAsync(identifier.FileName, CreationCollisionOption.ReplaceExisting);
-                        using (var fileStream = await newFile.OpenAsync(PCLStorage.FileAccess.ReadAndWrite))
+                        string newFile = Path.Combine(serverImagesFolder, identifier.FileName);
+                        using (var fileStream = File.Create(newFile))
                         {
                             stream.Seek(0, SeekOrigin.Begin);
                             await stream.CopyToAsync(fileStream);

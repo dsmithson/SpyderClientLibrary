@@ -23,12 +23,11 @@ namespace Spyder.Client
     public class SpyderClientManagerBase : INotifyPropertyChanged
     {
         private readonly SynchronizationContext context;
-        private readonly Func<Task<SpyderServerEventListenerBase>> getServerEventListener;
         private readonly Func<string, Task<ISpyderClientExtended>> getSpyderClient;
         private readonly AsyncLock spyderServersLock = new AsyncLock();
         private readonly AsyncLock spyderServersInitializingLock = new AsyncLock();
         private List<BindableSpyderClient> spyderServers = new List<BindableSpyderClient>();
-        private SpyderServerEventListenerBase serverEventListener;
+        private SpyderServerEventListener serverEventListener;
 
         public event EventHandler ServerListChanged;
         protected void OnServerListChanged(EventArgs e)
@@ -40,7 +39,7 @@ namespace Spyder.Client
         public event DrawingDataReceivedHandler DrawingDataReceived;
         protected void OnDrawingDataReceived(DrawingDataReceivedEventArgs e)
         {
-            if(DrawingDataReceived != null)
+            if (DrawingDataReceived != null)
                 DrawingDataReceived(this, e);
         }
 
@@ -65,14 +64,13 @@ namespace Spyder.Client
         private bool raiseDrawingDataChanged;
 
         public bool IsRunning { get; private set; }
-        
-        protected SpyderClientManagerBase(Func<Task<SpyderServerEventListenerBase>> getServerEventListener, Func<string, Task<ISpyderClientExtended>> getSpyderClient)
+
+        protected SpyderClientManagerBase(Func<string, Task<ISpyderClientExtended>> getSpyderClient)
         {
             this.getSpyderClient = getSpyderClient;
-            this.getServerEventListener = getServerEventListener;
-                        
+
             //Grab current synchronization context
-            this.context = SynchronizationContext.Current;                
+            this.context = SynchronizationContext.Current;
         }
 
         public virtual async Task<bool> StartupAsync()
@@ -80,7 +78,7 @@ namespace Spyder.Client
             await ShutdownAsync();
             IsRunning = true;
 
-            serverEventListener = await getServerEventListener();
+            serverEventListener = await SpyderServerEventListener.GetInstanceAsync();
             if (serverEventListener != null)
             {
                 serverEventListener.ServerAnnounceMessageReceived += serverEventListener_ServerAnnounceMessageReceived;
@@ -98,7 +96,7 @@ namespace Spyder.Client
                 serverEventListener = null;
             }
 
-            using(await spyderServersLock.LockAsync())
+            using (await spyderServersLock.LockAsync())
             {
                 var tasks = new List<Task>();
                 foreach (var bindableClient in spyderServers)
@@ -120,7 +118,7 @@ namespace Spyder.Client
             if (!await bindableClient.StartupAsync())
                 return false;
 
-            using(await spyderServersLock.LockAsync())
+            using (await spyderServersLock.LockAsync())
             {
                 spyderServers.Add(bindableClient);
             }
@@ -132,7 +130,7 @@ namespace Spyder.Client
             if (string.IsNullOrEmpty(serverIP))
                 return null;
 
-            using(await spyderServersLock.LockAsync())
+            using (await spyderServersLock.LockAsync())
             {
                 return spyderServers.FirstOrDefault(s => s.ServerIP == serverIP);
             }
@@ -140,7 +138,7 @@ namespace Spyder.Client
 
         public async Task<List<BindableSpyderClient>> GetServers()
         {
-            using(await spyderServersLock.LockAsync())
+            using (await spyderServersLock.LockAsync())
             {
                 return new List<BindableSpyderClient>(spyderServers);
             }
@@ -155,11 +153,11 @@ namespace Spyder.Client
         {
             if (!IsRunning)
                 return;
-            
+
             if (await GetServerAsync(serverInfo.Address) == null)
             {
                 bool isInitializing;
-                using(await spyderServersInitializingLock.LockAsync())
+                using (await spyderServersInitializingLock.LockAsync())
                 {
                     isInitializing = spyderServersInitializing.Contains(serverInfo.Address);
                 }
@@ -169,23 +167,22 @@ namespace Spyder.Client
                     spyderServersInitializing.Add(serverInfo.Address);
 
                     //Add a new server to our list
-                    ISpyderClientExtended client = await getSpyderClient(serverInfo.Address);
-                    var spyderClient = client as SpyderClient;
-                    if (spyderClient != null)
+                    var spyderClient = new SpyderClient(serverInfo.Address, "SpyderClient")
                     {
-                        spyderClient.Version = serverInfo.Version;
-                        spyderClient.ServerName = serverInfo.ServerName;
-                    }
+                        Version = serverInfo.Version,
+                        ServerName = serverInfo.ServerName
+                    };
+
 
                     //Startup our client asynchronously
-                    var bindableClient = new BindableSpyderClient(client);
+                    var bindableClient = new BindableSpyderClient(spyderClient);
                     if (await bindableClient.StartupAsync())
                     {
-                        using(await spyderServersLock.LockAsync())
+                        using (await spyderServersLock.LockAsync())
                         {
                             spyderServers.Add(bindableClient);
                         }
-                        using(await spyderServersInitializingLock.LockAsync())
+                        using (await spyderServersInitializingLock.LockAsync())
                         {
                             spyderServersInitializing.Remove(serverInfo.Address);
                         }

@@ -50,8 +50,8 @@ namespace Spyder.Client.Common
             }
         }
 
-        private InputConnector connectorType;
-        public InputConnector ConnectorType
+        private ConnectorType connectorType;
+        public ConnectorType ConnectorType
         {
             get { return connectorType; }
             set

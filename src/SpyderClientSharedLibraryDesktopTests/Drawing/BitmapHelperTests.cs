@@ -18,7 +18,7 @@ namespace Spyder.Client.Drawing
         {
             const int imageWidth = 800;
             const int imageHeight = 600;
-            var color = new Knightware.Primitives.Color(50, 100, 150);
+            var color = Color.FromArgb(50, 100, 150);
 
 
             using (MemoryStream stream = new MemoryStream())

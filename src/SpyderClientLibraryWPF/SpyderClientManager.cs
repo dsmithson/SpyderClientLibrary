@@ -1,5 +1,4 @@
-﻿using PCLStorage;
-using Knightware.Net;
+﻿using Knightware.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,20 +17,15 @@ namespace Spyder.Client
         /// </summary>
         public SpyderClientManager()
         : base(
-            async () => await SpyderServerEventListener.GetInstanceAsync(),
-
-            async (serverIP) =>
+            (serverIP) =>
             {
-                var serverCacheFolder = await FileSystem.Current.LocalStorage.CreateFolderAsync("SpyderClient", CreationCollisionOption.OpenIfExists);
+                var serverCacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SpyderClient");
+                if (!Directory.Exists(serverCacheFolder))
+                    Directory.CreateDirectory(serverCacheFolder);
 
-                ISpyderClientExtended response = new SpyderClient(
-                async () => await SpyderServerEventListener.GetInstanceAsync(),
-                () => new TCPSocket(),
-                () => new UDPSocket(),
-                serverIP,
-                serverCacheFolder);
+                ISpyderClientExtended response = new SpyderClient(serverIP, serverCacheFolder);
 
-                return response;
+                return Task.FromResult(response);
             })
         {
         }
@@ -43,47 +37,18 @@ namespace Spyder.Client
         /// <param name="localCacheRoot">Directory root for saving image and other cached files.  If the specified directory does not exist, it will be created.</param>
         public SpyderClientManager(string localCacheRoot)
         : base(
-            async () => await SpyderServerEventListener.GetInstanceAsync(),
-
-            async (serverIP) =>
+            (serverIP) =>
             {
                 string serverCacheFolderPath = Path.Combine(localCacheRoot, serverIP);
                 if (!Directory.Exists(serverCacheFolderPath))
                     Directory.CreateDirectory(serverCacheFolderPath);
+                
+                ISpyderClientExtended response = new SpyderClient(serverIP, serverCacheFolderPath);
 
-                var serverCacheFolder = await FileSystem.Current.GetFolderFromPathAsync(serverCacheFolderPath);
-
-                ISpyderClientExtended response = new SpyderClient(
-                async () => await SpyderServerEventListener.GetInstanceAsync(),
-                () => new TCPSocket(),
-                () => new UDPSocket(),
-                serverIP,
-                serverCacheFolder);
-
-                return response;
+                return Task.FromResult(response);
             })
         {
         }
-
-        public SpyderClientManager(IFolder localCacheRoot)
-            : base(
-
-            async () => await SpyderServerEventListener.GetInstanceAsync(),
-
-            async (serverIP) =>
-            {
-                var serverCacheFolder = await localCacheRoot.CreateFolderAsync(serverIP, CreationCollisionOption.OpenIfExists);
-
-                ISpyderClientExtended response = new SpyderClient(
-                async () => await SpyderServerEventListener.GetInstanceAsync(),
-                () => new TCPSocket(),
-                () => new UDPSocket(),
-                serverIP,
-                serverCacheFolder);
-
-                return response;
-            })
-        {
-        }
+        
     }
 }

@@ -310,7 +310,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = (InputConnector)(int)stream[index++];
+                router.ConnectorType = ((InputConnector)(int)stream[index++]).ToConnectorType();
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 

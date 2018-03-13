@@ -66,6 +66,20 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
+        private bool shadowIsEnabled;
+        public bool ShadowIsEnabled
+        {
+            get { return shadowIsEnabled; }
+            set
+            {
+                if(shadowIsEnabled != value)
+                {
+                    shadowIsEnabled = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private string linearKeySource;
         public string LinearKeySource
         {

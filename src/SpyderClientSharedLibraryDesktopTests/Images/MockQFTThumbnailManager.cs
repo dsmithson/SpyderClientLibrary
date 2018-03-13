@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using PCLStorage;
-using Knightware.Net;
 using System.Drawing;
 using System.IO;
 using Spyder.Client.Net;
@@ -13,8 +11,8 @@ namespace Spyder.Client.Images
 {
     public class MockQFTThumbnailManager : QFTThumbnailManagerBase<QFTThumbnailIdentifier, string, MockThumbnailImage<QFTThumbnailIdentifier>>
     {
-        public MockQFTThumbnailManager(IFolder imageFolderRoot)
-            : base(() => new TestStreamSocket(), imageFolderRoot)
+        public MockQFTThumbnailManager(string imageFolderRoot)
+            : base(imageFolderRoot)
         {
         }
 

@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PCLStorage;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +16,6 @@ namespace Spyder.Client.Images
 
         private static string remoteImagePath;
         private static string localImagePath;
-        private static IFolder localImageFolder;
         private static Vista.QFT.QFTServer qftServer;
         private static Spyder.Client.Net.QFTClient qftClient;
         
@@ -40,17 +38,15 @@ namespace Spyder.Client.Images
             }
 
             //Initialize our local folder object that will be used for our client directory
-            localImageFolder = FileSystem.Current.GetFolderFromPathAsync(localImagePath).Result;
-            Assert.IsNotNull(localImageFolder, "Failed to initialize our local folder item");
+            if (!Directory.Exists(localImagePath))
+                Directory.CreateDirectory(localImagePath);
 
             //Initialize our QFT Server
             qftServer = new Vista.QFT.QFTServer();
             qftServer.Startup();
 
             //Initialize our QFT Client
-            qftClient = new Spyder.Client.Net.QFTClient(
-                () => new Net.TestStreamSocket(),
-                "127.0.0.1");
+            qftClient = new Spyder.Client.Net.QFTClient("127.0.0.1");
             Assert.IsTrue(qftClient.StartupAsync().Result, "Failed to initialize QFT Client");
         }
 
@@ -70,7 +66,6 @@ namespace Spyder.Client.Images
             }
 
             CleanDirectories(false, localImagePath, remoteImagePath);
-            localImageFolder = null;
             localImagePath = null;
             remoteImagePath = null;
         }
@@ -81,7 +76,7 @@ namespace Spyder.Client.Images
             //Reset image process event awaiters
             imageProcessedEvents = new Dictionary<string, ManualResetEvent>();
 
-            thumbnailManager = new MockQFTThumbnailManager(localImageFolder);
+            thumbnailManager = new MockQFTThumbnailManager(localImagePath);
             thumbnailManager.RemoteImagePath = remoteImagePath;
             thumbnailManager.ProcessImageStreamRequested += thumbnailManager_ProcessImageStreamRequested;
             Assert.IsTrue(thumbnailManager.StartupAsync().Result, "Failed to initialize thumbnail manager");

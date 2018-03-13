@@ -181,6 +181,20 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
+        private MixerBus configBus = MixerBus.Program;
+        public MixerBus ConfigBus
+        {
+            get { return configBus; }
+            set
+            {
+                if(configBus != value)
+                {
+                    configBus = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private string configSource;
         public string ConfigSource
         {
