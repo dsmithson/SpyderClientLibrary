@@ -10,9 +10,9 @@ using Knightware.Primitives;
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
     /// <summary>
-    /// Deserializes DrawingData messages in the version 21 serialization format - Spyder Studio / X80
+    /// Deserializes DrawingData messages in the version 50 serialization format - Spyder Studio / X80
     /// </summary>
-    public class DrawingDataDeserializer_Version21 : IDrawingDataDeserializer
+    public class DrawingDataDeserializer_Version50 : IDrawingDataDeserializer
     {
         private string serverVersion;
 
@@ -20,7 +20,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         [Flags]
         private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
 
-        public DrawingDataDeserializer_Version21(string serverVersion)
+        public DrawingDataDeserializer_Version50(string serverVersion)
         {
             this.serverVersion = serverVersion;
         }

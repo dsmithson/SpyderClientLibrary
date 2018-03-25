@@ -61,7 +61,7 @@ namespace Spyder.Client
                 }
             }
         }
-        private bool raiseDrawingDataChanged;
+        private bool raiseDrawingDataChanged = true;
 
         public bool IsRunning { get; private set; }
 
