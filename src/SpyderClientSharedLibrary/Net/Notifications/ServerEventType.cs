@@ -31,6 +31,17 @@ namespace Spyder.Client.Net.Notifications
         ScriptModified,
         FileChange,
         FrontPanelChange,
-        UserDiagnosticsRefreshed
+        UserDiagnosticsRefreshed,
+        FrameConfigsChanged,
+        RoutersChanged,
+        MultiviewerConfigsChanged,
+        UserEdidsChanged,
+        InputEdidsChanged,
+        IP4AddressChanged,
+        FrontPanelCommandKeysChanged,
+        FrontPanelFunctionKeysChanged,
+        FrontPanelTestPatternsChanged,
+        FrontPanelLockUpdated
     };
+    
 }

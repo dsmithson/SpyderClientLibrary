@@ -11,6 +11,7 @@ namespace Spyder.Client.Common
         Virtual,
         Montage,
         Spyder300,
-        SpyderX20
+        SpyderX20,
+        SpyderX80
     }
 }
