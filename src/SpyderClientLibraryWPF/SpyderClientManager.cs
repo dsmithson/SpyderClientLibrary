@@ -17,13 +17,13 @@ namespace Spyder.Client
         /// </summary>
         public SpyderClientManager()
         : base(
-            (serverIP) =>
+            (hardwareType, serverIP) =>
             {
                 var serverCacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SpyderClient");
                 if (!Directory.Exists(serverCacheFolder))
                     Directory.CreateDirectory(serverCacheFolder);
 
-                ISpyderClientExtended response = new SpyderClient(serverIP, serverCacheFolder);
+                ISpyderClientExtended response = new SpyderClient(hardwareType, serverIP, serverCacheFolder);
 
                 return Task.FromResult(response);
             })
@@ -37,13 +37,13 @@ namespace Spyder.Client
         /// <param name="localCacheRoot">Directory root for saving image and other cached files.  If the specified directory does not exist, it will be created.</param>
         public SpyderClientManager(string localCacheRoot)
         : base(
-            (serverIP) =>
+            (hardwareType, serverIP) =>
             {
                 string serverCacheFolderPath = Path.Combine(localCacheRoot, serverIP);
                 if (!Directory.Exists(serverCacheFolderPath))
                     Directory.CreateDirectory(serverCacheFolderPath);
                 
-                ISpyderClientExtended response = new SpyderClient(serverIP, serverCacheFolderPath);
+                ISpyderClientExtended response = new SpyderClient(hardwareType, serverIP, serverCacheFolderPath);
 
                 return Task.FromResult(response);
             })

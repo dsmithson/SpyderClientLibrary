@@ -12,14 +12,14 @@ namespace Spyder.Client.Net
     public class SpyderClientTests : ISpyderClientTestBase
     {
         public SpyderClientTests()
-            : base((address) =>
+            : base((hardwareType, address) =>
                 {
                     string localCacheRoot = Path.Combine(Path.GetTempPath(), "UnitTests");
                     string serverCacheFolderPath = Path.Combine(localCacheRoot, serverIP);
                     if (!Directory.Exists(serverCacheFolderPath))
                         Directory.CreateDirectory(serverCacheFolderPath);
                     
-                    return Task.FromResult((ISpyderClient)(new SpyderClient(address, serverCacheFolderPath)));
+                    return Task.FromResult((ISpyderClient)(new SpyderClient(hardwareType, address, serverCacheFolderPath)));
                 }
             )
         {

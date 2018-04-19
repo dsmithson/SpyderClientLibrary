@@ -23,7 +23,7 @@ namespace Spyder.Client
     public class SpyderClientManagerBase : INotifyPropertyChanged
     {
         private readonly SynchronizationContext context;
-        private readonly Func<string, Task<ISpyderClientExtended>> getSpyderClient;
+        private readonly Func<HardwareType, string, Task<ISpyderClientExtended>> getSpyderClient;
         private readonly AsyncLock spyderServersLock = new AsyncLock();
         private readonly AsyncLock spyderServersInitializingLock = new AsyncLock();
         private List<BindableSpyderClient> spyderServers = new List<BindableSpyderClient>();
@@ -65,7 +65,7 @@ namespace Spyder.Client
 
         public bool IsRunning { get; private set; }
 
-        protected SpyderClientManagerBase(Func<string, Task<ISpyderClientExtended>> getSpyderClient)
+        protected SpyderClientManagerBase(Func<HardwareType, string, Task<ISpyderClientExtended>> getSpyderClient)
         {
             this.getSpyderClient = getSpyderClient;
 
@@ -167,7 +167,7 @@ namespace Spyder.Client
                     spyderServersInitializing.Add(serverInfo.Address);
 
                     //Add a new server to our list
-                    var spyderClient = new SpyderClient(serverInfo.Address, "SpyderClient")
+                    var spyderClient = new SpyderClient(serverInfo.HardwareType, serverInfo.Address, "SpyderClient")
                     {
                         Version = serverInfo.Version,
                         ServerName = serverInfo.ServerName

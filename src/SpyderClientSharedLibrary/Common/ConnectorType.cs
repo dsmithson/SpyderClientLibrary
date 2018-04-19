@@ -30,6 +30,9 @@ namespace Spyder.Client.Common
 
         public static ConnectorType ToConnectorType(this InputConnector inputConnector)
         {
+            if (inputConnector == InputConnector.HD15)
+                return ConnectorType.Analog;
+
             return (ConnectorType)Enum.Parse(typeof(ConnectorType), inputConnector.ToString());
         }
     }

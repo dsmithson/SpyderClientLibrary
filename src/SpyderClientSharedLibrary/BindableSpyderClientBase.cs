@@ -7,12 +7,13 @@ using System.Threading.Tasks;
 using Spyder.Client.IO;
 using Spyder.Client.Net.Notifications;
 using Spyder.Client.Net;
+using Spyder.Client.Common;
 
 namespace Spyder.Client
 {
     public abstract class BindableSpyderClientBase : SpyderClientManagerBase
     {
-        protected BindableSpyderClientBase(Func<string, Task<ISpyderClientExtended>> getSpyderClient) 
+        protected BindableSpyderClientBase(Func<HardwareType, string, Task<ISpyderClientExtended>> getSpyderClient) 
             :base(getSpyderClient)
         {
         }

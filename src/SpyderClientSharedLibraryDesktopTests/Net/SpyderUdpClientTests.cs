@@ -12,7 +12,7 @@ namespace Spyder.Client.Net
     public class SpyderUdpClientTests : ISpyderClientTestBase
     {
         public SpyderUdpClientTests()
-        : base((address) =>
+        : base((hardwareType, address) =>
         {
             ISpyderClient client = new SpyderUdpClient(serverIP);
             return Task.FromResult(client);

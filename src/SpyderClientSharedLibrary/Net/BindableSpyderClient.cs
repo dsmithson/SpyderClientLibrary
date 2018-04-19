@@ -75,20 +75,8 @@ namespace Spyder.Client.Net
                 }
             }
         }
-
-        private ObservableCollection<TraceMessage> traceMessages = new ObservableCollection<TraceMessage>();
-        public ObservableCollection<TraceMessage> TraceMessages
-        {
-            get { return traceMessages; }
-            set
-            {
-                if (traceMessages != value)
-                {
-                    traceMessages = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        
+        public ObservableCollection<TraceMessage> TraceMessages => new ObservableCollection<TraceMessage>();
 
         private TracingLevel traceMessagesOverallLevel = TracingLevel.Success;
         public TracingLevel TraceMessagesOverallLevel
@@ -428,13 +416,14 @@ namespace Spyder.Client.Net
 
             await client.ShutdownAsync();
 
+            this.TraceMessages.Clear();
+
             drawingData = null;
             lastDataObjectVersion = -1;
             this.commandKeys = null;
             this.functionKeys = null;
             this.sources = null;
             this.stills = null;
-            this.traceMessages = null;
             this.inputConfigs = null;
             this.pixelSpaces = null;
             this.playItems = null;

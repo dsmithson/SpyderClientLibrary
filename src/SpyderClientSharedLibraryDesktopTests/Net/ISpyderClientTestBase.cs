@@ -14,9 +14,9 @@ namespace Spyder.Client.Net
         public const string serverIP = "192.168.1.175";
 
         private static ISpyderClient udp;
-        private readonly Func<string, Task<ISpyderClient>> getClient;
+        private readonly Func<HardwareType, string, Task<ISpyderClient>> getClient;
         
-        protected ISpyderClientTestBase(Func<string, Task<ISpyderClient>> getClient)
+        protected ISpyderClientTestBase(Func<HardwareType, string, Task<ISpyderClient>> getClient)
         {
             this.getClient = getClient;
         }
@@ -26,7 +26,7 @@ namespace Spyder.Client.Net
         {
             if (udp == null)
             {
-                udp = getClient(serverIP).Result;
+                udp = getClient(HardwareType.SpyderX80, serverIP).Result;
                 if (!udp.StartupAsync().Result)
                 {
                     udp = null;

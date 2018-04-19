@@ -23,7 +23,7 @@ namespace Spyder.Client.Net.DrawingData
                 }
             }
         }
-
+        
         private int sourceRouterID;
         public int SourceRouterID
         {
@@ -202,6 +202,20 @@ namespace Spyder.Client.Net.DrawingData
                 if (loadedStill != value)
                 {
                     loadedStill = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string testPattern;
+        public string TestPattern
+        {
+            get { return testPattern; }
+            set
+            {
+                if(testPattern != value)
+                {
+                    testPattern = value;
                     OnPropertyChanged();
                 }
             }
@@ -592,6 +606,7 @@ namespace Spyder.Client.Net.DrawingData
             this.Transparency = copyFrom.Transparency;
             this.VActive = copyFrom.VActive;
             this.WindowLabel = copyFrom.WindowLabel;
+            this.TestPattern = copyFrom.TestPattern;
             this.Scale = copyFrom.Scale;
         }
     }

@@ -229,8 +229,8 @@ namespace Spyder.Client.Common
                             {
                                 FunctionKey functionKey = null;
 
-                                string type = item.Attribute("typename").Value;
-                                item = item.Element("Value");
+                                string type = GetAttributeFromTypeAttribute(item);
+                                item = item.Element("Value") ?? item;
 
                                 if (type.Contains("AssignSourceKey"))
                                 {
@@ -445,7 +445,7 @@ namespace Spyder.Client.Common
             return ParseList(
                 () => document.Descendants("Routers")
                     .Elements("Item")
-                    .Select(item => item.Element("Value"))
+                    .Select(item => item.Element("Value") ?? item)
                     .Select(item => new Router()
                 {
                     ID = deserializer.Read(item, "ID", -1),
@@ -486,7 +486,7 @@ namespace Spyder.Client.Common
             return ParseList(
                 () => document.Descendants("InputConfigs")
                     .Elements("Item")
-                    .Select(item => item.Element("Value"))
+                    .Select(item => item.Element("Value") ?? item)
                     .Select(item => new InputConfig()
                     {
                         ID = deserializer.Read(item, "ID", 0),
@@ -756,7 +756,7 @@ namespace Spyder.Client.Common
             return ParseList(
                 () => document.Descendants("Scripts")
                     .Elements("Item")
-                    .Select(item => item.Element("Value"))
+                    .Select(item => item.Element("Value") ?? item)
                     .Select(item => new Script()
                     {
                         ID = deserializer.Read(item, "ID", -1),
@@ -768,9 +768,46 @@ namespace Spyder.Client.Common
                     }));
         }
 
+        string typeAttributeName;
+        private string GetAttributeFromTypeAttribute(XElement node)
+        {
+            //Depending on the vintange of the call, there may be a value sub-element where the attribute lives
+            var valueElement = node?.Element("Value");
+            if(valueElement != null)
+            {
+                string response = GetAttributeFromTypeAttribute(valueElement);
+                if (response != null)
+                    return response;
+            }
+
+            var supportedKeys = new string[] { "typename", "Type" };
+            if (typeAttributeName == null)
+            {
+                foreach (string key in supportedKeys)
+                {
+                    string response = node.Attributes(key)?.FirstOrDefault()?.Value;
+                    if (response != null)
+                    {
+                        typeAttributeName = key;
+                        return response;
+                    }
+                }
+            }
+            else
+            {
+                string response = node.Attributes(typeAttributeName)?.FirstOrDefault()?.Value;
+                return response;
+            }
+
+            return null;
+        }
+
         protected ScriptElement ParseScriptElement(XElement node)
         {
-            string elementType = node.Attributes("typename").First().Value;
+            string elementType = GetAttributeFromTypeAttribute(node);
+            if (elementType == null)
+                throw new NotSupportedException("Invalid XML markup for script element - unable to parse");
+
             node = node.Element("Value");
 
             if (elementType.Contains("ElementSource"))
@@ -827,7 +864,7 @@ namespace Spyder.Client.Common
                 IsDisabled = deserializer.Read(node, "Disabled", false),
                 KeyFrames = node.Element("KeyFrames").Descendants("Item").ToDictionary(
                     (item => deserializer.Read(item, "Key", -1)),
-                    (item => ParseKeyFrame(item.Element("Value")))),
+                    (item => ParseKeyFrame(item.Element("Value") ?? item))),
 
                 SourceNames = node.Element("Sources").Descendants("Item").ToDictionary(
                     (item => deserializer.Read(item, "Key", -1)),
@@ -843,7 +880,7 @@ namespace Spyder.Client.Common
 
         protected ScriptCue ParseScriptCue(XElement node)
         {
-            var cue = node.Element("Value");
+            var cue = node.Element("Value") ?? node;
 
             return new ScriptCue()
             {

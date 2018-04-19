@@ -28,7 +28,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         {
             this.ServerIP = serverIP;
             this.ServerVersion = serverVersion;
-            this.zipDecompressor = zipDecompressor;
         }
         
         /// <summary>
@@ -151,6 +150,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 case 19: return new DrawingDataDeserializer_Version19();
                 case 20: return new DrawingDataDeserializer_Version20(serverVersion);
                 case 50: return new DrawingDataDeserializer_Version50(serverVersion);
+                case 51: return new DrawingDataDeserializer_Version51(serverVersion);
                 default: return null;
             }
         }

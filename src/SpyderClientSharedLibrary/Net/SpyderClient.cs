@@ -22,6 +22,7 @@ namespace Spyder.Client.Net
     {
         private SpyderServerEventListener serverEventListener;
         private readonly string localCacheFolder;
+        private readonly HardwareType hardwareType;
         private QFTClient qftClient;
         private SystemData systemData;
         private DrawingData.DrawingData drawingData;
@@ -66,10 +67,11 @@ namespace Spyder.Client.Net
 
         public string ServerName { get; set; }
         
-        public SpyderClient(string serverIP, string localCacheFolder)
+        public SpyderClient(HardwareType hardwareType, string serverIP, string localCacheFolder)
             : base(serverIP)
         {
             this.localCacheFolder = localCacheFolder;
+            this.hardwareType = hardwareType;
         }
 
         public override async Task<bool> StartupAsync()
@@ -190,9 +192,17 @@ namespace Spyder.Client.Net
             MemoryStream scriptFile = null;
             try
             {
+                string configFilePath = this.hardwareType == HardwareType.SpyderX80 ?
+                    @"c:\SpyderData\V1\SystemConfiguration.xml" :
+                    @"c:\Spyder\SystemConfiguration.xml";
+
+                string scriptsFilePath = this.hardwareType == HardwareType.SpyderX80 ?
+                    @"c:\SpyderData\V1\Scripts.xml" :
+                    @"c:\Spyder\Scripts\Scripts.xml";
+
                 //Download system configuration file
                 configFile = new MemoryStream();
-                string configFileName = qftClient.ConvertAbsolutePathToRelative(@"c:\Spyder\SystemConfiguration.xml");
+                string configFileName = qftClient.ConvertAbsolutePathToRelative(configFilePath);
                 if (!await qftClient.ReceiveFile(configFileName, configFile, null))
                 {
                     TraceQueue.Trace(this, TracingLevel.Warning, "Failed to download SystemConfiguration.xml from server");
@@ -201,7 +211,7 @@ namespace Spyder.Client.Net
 
                 //Download script file
                 scriptFile = new MemoryStream();
-                string scriptFileName = qftClient.ConvertAbsolutePathToRelative(@"c:\Spyder\Scripts\Scripts.xml");
+                string scriptFileName = qftClient.ConvertAbsolutePathToRelative(scriptsFilePath);
                 if (!await qftClient.ReceiveFile(scriptFileName, scriptFile, null))
                 {
                     TraceQueue.Trace(this, TracingLevel.Warning, "Failed to download Scripts.xml from server");

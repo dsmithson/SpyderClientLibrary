@@ -542,6 +542,20 @@ namespace Spyder.Client.Common
             }
         }
 
+        private byte transparency;
+        public byte Transparency
+        {
+            get { return transparency; }
+            set
+            {
+                if(transparency != value)
+                {
+                    transparency = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private bool useDefaultMotionValues;
         public bool UseDefaultMotionValues
         {
@@ -724,6 +738,7 @@ namespace Spyder.Client.Common
             PanH = copyFrom.PanH;
             PanV = copyFrom.PanV;
             Zoom = copyFrom.Zoom;
+            Transparency = copyFrom.Transparency;
             UseDefaultMotionValues = copyFrom.UseDefaultMotionValues;
 
             BorderFillSource = copyFrom.BorderFillSource;
@@ -785,6 +800,7 @@ namespace Spyder.Client.Common
             if (this.PanH != compare.PanH) return false;
             if (this.PanV != compare.PanV) return false;
             if (this.Zoom != compare.Zoom) return false;
+            if (this.Transparency != compare.Transparency) return false;
             if (this.UseDefaultMotionValues != compare.UseDefaultMotionValues) return false;
             if (this.BorderFillSource != compare.BorderFillSource) return false;
             if (this.BorderTileMode != compare.BorderTileMode) return false;

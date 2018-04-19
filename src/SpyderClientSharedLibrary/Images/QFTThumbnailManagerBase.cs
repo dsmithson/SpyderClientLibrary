@@ -336,11 +336,11 @@ namespace Spyder.Client.Images
         protected bool imageMetadataSaveRequred;
         private const string imageMetadataFileName = "ThumbnailImageMetadata.xml";
 
-        protected async Task<bool> LoadImageMetadata(string serverIP)
+        protected Task<bool> LoadImageMetadata(string serverIP)
         {
             string serverImagesFolder = GetFolder(serverIP);
             if (string.IsNullOrWhiteSpace(serverImagesFolder))
-                return false;
+                return Task.FromResult(false);
 
             string metadataFile = Path.Combine(serverImagesFolder, imageMetadataFileName);
             if(File.Exists(metadataFile))
@@ -352,7 +352,7 @@ namespace Spyder.Client.Images
                         if (stream.Length > 0)
                         {
                             if (LoadImageMetadata(serverIP, stream))
-                                return true;
+                                return Task.FromResult(true);
                         }
                     }
                 }
@@ -365,7 +365,7 @@ namespace Spyder.Client.Images
                 //Delete this file - it appears to have failed to load above
                 File.Delete(metadataFile);
             }
-            return false;
+            return Task.FromResult(false);
         }
 
         protected bool LoadImageMetadata(string serverIP, Stream metadataFileStream)
