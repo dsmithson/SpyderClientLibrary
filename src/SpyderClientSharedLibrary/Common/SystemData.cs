@@ -145,7 +145,7 @@ namespace Spyder.Client.Common
             return ParseList(() =>
                 {
                     return document.Descendants("PixelSpaces")
-                                     .SelectMany((item) => item.Descendants("Value"))
+                                     .SelectDescendantsByValueResult()
                                      .Select((item) =>
                                      {
                                          string rect = deserializer.Read(item, "Rect", "0,0,0,0");
@@ -199,7 +199,7 @@ namespace Spyder.Client.Common
 
                 //Item processor
                 () => document.Descendants("Sources")
-                        .SelectMany((item) => item.Descendants("Value"))
+                        .SelectDescendantsByValueResult()
                         .Select((item) => new Source()
                                 {
                                     Name = deserializer.Read(item, "Name", string.Empty),
@@ -337,7 +337,7 @@ namespace Spyder.Client.Common
 
                 //Item processor
                 () => scriptsDocument.Descendants("CommandKeys")
-                    .SelectMany((item) => item.Descendants("Value"))
+                    .SelectDescendantsByValueResult()
                     .Select((item) => new CommandKey()
                     {
                         LookupID = int.Parse(item.Element("ID").Value),
@@ -390,7 +390,7 @@ namespace Spyder.Client.Common
 
                 //Item processor
                 () => document.Descendants("PlayItems")
-                        .SelectMany((item) => item.Descendants("Value"))
+                        .SelectDescendantsByValueResult()
                         .Select((item) => new PlayItem()
                         {
                             ID = deserializer.Read(item, "ID", -1),
@@ -419,7 +419,7 @@ namespace Spyder.Client.Common
 
                 //Item Processor
                 () => document.Descendants("Treatments")
-                    .SelectMany((item) => item.Descendants("Value"))
+                    .SelectDescendantsByValueResult()
                     .Select((item) => new Treatment(ParseKeyFrame(item))
                     {
                         ID = deserializer.Read(item, "ID", -1),
@@ -668,6 +668,12 @@ namespace Spyder.Client.Common
                             {
                                 int registerID = deserializer.Read(keyValuePair, "Key", -1);
                                 XElement item = deserializer.ReadElement(keyValuePair, "Value");
+                                if (item == null)
+                                    item = keyValuePair;
+
+                                if (registerID == -1)
+                                    registerID = deserializer.Read(item, "ID", -1);
+
                                 return new Register()
                                 {
                                     RegisterID = registerID,    //deserializer.Read(item, "RegisterID", -1),
