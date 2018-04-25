@@ -164,6 +164,10 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 l.WindowLabel = stream.GetString(ref index);
                 l.Source = stream.GetString(ref index);
                 l.LoadedStill = stream.GetString(ref index);
+                if (serverVersion == "5.0.1")
+                {
+                    l.TestPattern = stream.GetString(ref index);
+                }
                 l.SourceRouterID = stream.GetInt(ref index);
                 l.SourceRouterInput = stream.GetInt(ref index);
                 l.InputConfigID = stream.GetInt(ref index);
@@ -207,16 +211,22 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.BorderThickness = stream.GetShort(ref index);	//border thickness
                 kf.Width = stream.GetShort(ref index);			//HSize
                 kf.BorderInsideSoftness = stream.GetShort(ref index);	//Border inside softness
-                kf.BorderOutsideSoftness = stream.GetShort(ref index);	//Border outside softness
-                
-                //kf.ShadowHOffset = stream.GetShort(ref index);	//Shadow H Offset
-                //kf.ShadowVOffset = stream.GetShort(ref index);	//Shadow V Offset
-                //kf.ShadowHSize = stream.GetShort(ref index);		//Shadow H Size
-                //kf.ShadowVSize = stream.GetShort(ref index);		//Shadow V Size
+                kf.BorderOutsideSoftness = stream.GetShort(ref index);  //Border outside softness
 
-                //TODO: How do I translate these back to normal shadow offiset/size values?
-                var shadowDirection = stream.GetFloat(ref index);	//Shadow Direction
-                var shadowDepth = stream.GetFloat(ref index);	//Shadow Depth
+                if (serverVersion == "5.0.1")
+                {
+                    kf.ShadowHOffset = stream.GetShort(ref index);  //Shadow H Offset
+                    kf.ShadowVOffset = stream.GetShort(ref index);  //Shadow V Offset
+                    kf.ShadowHSize = stream.GetShort(ref index);        //Shadow H Size
+                    kf.ShadowVSize = kf.ShadowHSize;
+                    //kf.ShadowVSize = stream.GetShort(ref index);		//Shadow V Size
+                }
+                else
+                {
+                    //TODO: How do I translate these back to normal shadow offiset/size values?
+                    var shadowDirection = stream.GetFloat(ref index);   //Shadow Direction
+                    var shadowDepth = stream.GetFloat(ref index);   //Shadow Depth
+                }
 
                 kf.ShadowSoftness = stream.GetShort(ref index);	//Shadow softness
                 kf.ShadowTransparency = stream.GetShort(ref index);	//Shadow Transparency
