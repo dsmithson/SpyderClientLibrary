@@ -303,6 +303,16 @@ namespace Spyder.Client.Common
                                         Salvo = ParseRouterSalvo(item.Element("Salvo"))
                                     };
                                 }
+                                else if(type.Contains("BackupSourcePresetKey"))
+                                {
+                                    functionKey = new BackupSourceFunctionKey()
+                                    {
+                                        SourceName = item.Element("SourceName").Value,
+                                        SourceLookupID = int.Parse(item.Element("SourceLookupId").Value),
+                                        BackupSourceName =  item.Element("BackupSourceName").Value,
+                                        BackupType = (SourceBackupType)Enum.Parse(typeof(SourceBackupType), item.Element("BackupType").Value)
+                                    };
+                                }
                                 else
                                 {
                                     //Default to a generic function key structure
