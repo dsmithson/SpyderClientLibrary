@@ -20,7 +20,8 @@
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
     <SccProvider>SAK</SccProvider>
-    <NuGetPackageImportStamp>75e4c7b8</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -105,8 +106,12 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Common\MockServerSettings.cs" />
-    <Compile Include="Common\ServerSettingsTests.cs" />
-    <Compile Include="Common\SystemDataTests.cs" />
+    <Compile Include="Common\ServerSettingsV5Tests.cs" />
+    <Compile Include="Common\ServerSettingsV4Tests.cs" />
+    <Compile Include="Common\ServerSettingsTestBase.cs" />
+    <Compile Include="Common\SystemDataTestBase.cs" />
+    <Compile Include="Common\SystemDataV5Tests.cs" />
+    <Compile Include="Common\SystemDataV4Tests.cs" />
     <Compile Include="Drawing\BitmapHelperTests.cs" />
     <Compile Include="Images\MockImageCreateEventArgs.cs" />
     <Compile Include="Images\MockQFTThumbnailManager.cs" />
@@ -147,9 +152,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Scripts.xml" />
-    <EmbeddedResource Include="Resources\SystemConfiguration.xml" />
-    <EmbeddedResource Include="Resources\SystemSettings.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version4\Scripts.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version4\SystemConfiguration.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version4\SystemSettings.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version5\FrameConfiguration.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version5\Scripts.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version5\SystemConfiguration.xml" />
     <Content Include="Resources\Vista.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

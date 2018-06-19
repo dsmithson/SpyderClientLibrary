@@ -338,13 +338,32 @@ namespace Spyder.Client.Common
                 //Item processor
                 () => scriptsDocument.Descendants("CommandKeys")
                     .SelectDescendantsByValueResult()
-                    .Select((item) => new CommandKey()
+                    .Select((item) =>
                     {
-                        LookupID = int.Parse(item.Element("ID").Value),
-                        ScriptID = int.Parse(item.Element("ScriptID").Value),
-                        //IsRelative = !bool.Parse(item.Element("Absolute").Value),
-                        Name = item.Element("DisplayText").Value,
-                        RegisterID = (int.Parse(item.Element("Page").Value) * 1000 + int.Parse(item.Element("KeyID").Value))
+                        //Spyder studio (5.0+) refers to absolute as IsAbsolute - Advanced (4.x and below) refer to this as Absolute
+                        bool isRelative;
+                        var absoluteNode = item.Element("Absolute");
+                        if (absoluteNode != null)
+                        {
+                            isRelative = !bool.Parse(absoluteNode.Value);
+                        }
+                        else if((absoluteNode = item.Element("ScriptType")) != null)
+                        {
+                            isRelative = absoluteNode.Value.Contains("Relative");
+                        }
+                        else
+                        {
+                            throw new InvalidDataException("Unable to find relative/absolute status for command key");
+                        }
+
+                        return new CommandKey()
+                        {
+                            LookupID = int.Parse(item.Element("ID").Value),
+                            ScriptID = int.Parse(item.Element("ScriptID").Value),
+                            IsRelative = isRelative,
+                            Name = item.Element("DisplayText").Value,
+                            RegisterID = (int.Parse(item.Element("Page").Value) * 1000 + int.Parse(item.Element("KeyID").Value))
+                        };
                     }),
 
                 //Register Item Lookup

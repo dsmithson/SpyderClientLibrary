@@ -10,12 +10,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Spyder.Client.Common
 {
     [TestClass]
-    public class ServerSettingsTests
+    public abstract class ServerSettingsTestBase
     {
-        private Stream GetTestSystemSettingsStream()
-        {
-            return Assembly.GetExecutingAssembly().GetManifestResourceStream("Spyder.Client.Resources.SystemSettings.xml");
-        }
+        protected abstract Stream GetTestSystemSettingsStream();
 
         [TestMethod]
         public void LoadTest()
