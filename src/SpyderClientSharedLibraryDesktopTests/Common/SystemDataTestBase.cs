@@ -10,29 +10,21 @@ using System.Xml.Linq;
 
 namespace Spyder.Client.Common
 {
-    [TestClass]
-    public class SystemDataTests : SystemData
+    public abstract class SystemDataTestBase : SystemData
     {
-        private XDocument GetTestSystemConfigFile()
+        protected abstract Stream GetTestSystemConfigStream();
+        protected abstract Stream GetTestScriptsStream();
+
+        protected XDocument GetTestSystemConfigFile()
         {
             return XDocument.Load(GetTestSystemConfigStream());
         }
 
-        private XDocument GetTestScriptsFile()
+        protected XDocument GetTestScriptsFile()
         {
             return XDocument.Load(GetTestScriptsStream());
         }
-
-        private Stream GetTestSystemConfigStream()
-        {
-            return Assembly.GetExecutingAssembly().GetManifestResourceStream("Spyder.Client.Resources.SystemConfiguration.xml");
-        }
-
-        private Stream GetTestScriptsStream()
-        {
-            return Assembly.GetExecutingAssembly().GetManifestResourceStream("Spyder.Client.Resources.Scripts.xml");
-        }
-
+        
         [TestMethod]
         public void LoadDataTest()
         {
@@ -51,6 +43,14 @@ namespace Spyder.Client.Common
             var scripts = ParseScripts(GetTestScriptsFile());
             Assert.IsNotNull(scripts, "Failed to parse scripts");
             Assert.AreNotEqual(0, scripts.Count, "Failed to parse any scripts");
+        }
+
+        [TestMethod]
+        public void LoadFunctionKeysTest()
+        {
+            var scripts = ParseFunctionKeys(GetTestSystemConfigFile());
+            Assert.IsNotNull(scripts, "Failed to parse function keys");
+            Assert.AreNotEqual(0, scripts.Count, "Failed to parse any function keys");
         }
 
         [TestMethod]
