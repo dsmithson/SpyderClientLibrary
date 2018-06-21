@@ -118,7 +118,6 @@
     <Compile Include="..\SpyderClientLibraryWPF\Images\ThumbnailManager.cs">
       <Link>Images\ThumbnailManager.cs</Link>
     </Compile>
-    <Compile Include="Class1.cs" />
     <Compile Include="Images\ThumbnailIdentifier.cs" />
     <Compile Include="Images\ThumbnailManager.WinRT.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
