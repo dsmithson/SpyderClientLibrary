@@ -14,13 +14,14 @@ using Spyder.Client.IO;
 using Spyder.Client.Common;
 using Spyder.Client.Net;
 using Knightware.Threading.Tasks;
+using System.IO;
 
 namespace Spyder.Client
 {
     /// <summary>
     /// Listens for Spyder UDP messages and maintains a list of BindableSpyderClient instances for all discovered servers
     /// </summary>
-    public class SpyderClientManagerBase : INotifyPropertyChanged
+    public class SpyderClientManager : INotifyPropertyChanged
     {
         private readonly SynchronizationContext context;
         private readonly Func<HardwareType, string, Task<ISpyderClientExtended>> getSpyderClient;
@@ -65,7 +66,45 @@ namespace Spyder.Client
 
         public bool IsRunning { get; private set; }
 
-        protected SpyderClientManagerBase(Func<HardwareType, string, Task<ISpyderClientExtended>> getSpyderClient)
+        /// <summary>
+        /// Initializes a SpyderClientManager using a default folder path for local cache file storage
+        /// </summary>
+        public SpyderClientManager()
+        : this(
+            (hardwareType, serverIP) =>
+            {
+                var serverCacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SpyderClient");
+                if (!Directory.Exists(serverCacheFolder))
+                    Directory.CreateDirectory(serverCacheFolder);
+
+                ISpyderClientExtended response = new SpyderClient(hardwareType, serverIP, serverCacheFolder);
+
+                return Task.FromResult(response);
+            })
+        {
+        }
+
+
+        /// <summary>
+        /// Initializes a SpyderClientManager using a provided file path for local cache file storage
+        /// </summary>
+        /// <param name="localCacheRoot">Directory root for saving image and other cached files.  If the specified directory does not exist, it will be created.</param>
+        public SpyderClientManager(string localCacheRoot)
+        : this(
+            (hardwareType, serverIP) =>
+            {
+                string serverCacheFolderPath = Path.Combine(localCacheRoot, serverIP);
+                if (!Directory.Exists(serverCacheFolderPath))
+                    Directory.CreateDirectory(serverCacheFolderPath);
+
+                ISpyderClientExtended response = new SpyderClient(hardwareType, serverIP, serverCacheFolderPath);
+
+                return Task.FromResult(response);
+            })
+        {
+        }
+
+        protected SpyderClientManager(Func<HardwareType, string, Task<ISpyderClientExtended>> getSpyderClient)
         {
             this.getSpyderClient = getSpyderClient;
 

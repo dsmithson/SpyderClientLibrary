@@ -44,19 +44,7 @@ namespace Spyder.Client.Images
             : base(localImagesFolder)
         {
         }
-
-        public virtual void RemoveViewImages(int viewID)
-        {
-            PerformImageListOperation((items) =>
-                {
-                    var keysToRemove = items.Keys.Where(key => key.ViewID == viewID).ToList();
-                    foreach(var key in keysToRemove)
-                    {
-                        items.Remove(key);
-                    }
-                });
-        }
-
+        
         public virtual Task<string> GetDemoServerImageFolder()
         {
             return Task.FromResult(GetFolder("Demo"));

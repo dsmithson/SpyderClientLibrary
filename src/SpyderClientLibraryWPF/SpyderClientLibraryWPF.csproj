@@ -94,15 +94,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Images\DesignerThumbnailImage.cs" />
-    <Compile Include="Images\ImageStreamGetRequestedEventArgs.cs" />
-    <Compile Include="Images\ImageStreamSetRequestedEventArgs.cs" />
     <Compile Include="Images\StaticThumbnailImage.cs" />
     <Compile Include="Images\ThumbnailIdentifier.cs" />
     <Compile Include="Images\ThumbnailImage.cs" />
     <Compile Include="Images\ThumbnailManager.cs" />
     <Compile Include="Images\ThumbnailManager.Desktop.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SpyderClientManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SpyderClientSharedLibrary\SpyderClientSharedLibrary.csproj">

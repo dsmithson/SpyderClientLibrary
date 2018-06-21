@@ -11,7 +11,7 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace Spyder.Client.Images
 {
-    public partial class ThumbnailManager
+    public partial class ThumbnailManager : QFTThumbnailManagerBase<ThumbnailIdentifier, BitmapImage, ThumbnailImage>
     {
         protected override async Task<ProcessedImageResult> ScaleImageAsync(ThumbnailIdentifier identifier, ImageSize targetSize, Stream nativeImageStream)
         {
@@ -75,6 +75,18 @@ namespace Spyder.Client.Images
                 }
             });
             return response;
+        }
+
+        public virtual void RemoveViewImages(int viewID)
+        {
+            PerformImageListOperation((items) =>
+            {
+                var keysToRemove = items.Keys.Where(key => key.ViewID == viewID).ToList();
+                foreach (var key in keysToRemove)
+                {
+                    items.Remove(key);
+                }
+            });
         }
     }
 }

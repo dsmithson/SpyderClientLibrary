@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnightwareCore", "submodule
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KnightwareCoreTests", "submodules\knightwarecore\src\KnightwareCoreTests\KnightwareCoreTests.csproj", "{75525C2D-F1B6-4E8F-892F-2D26ED72C520}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibraryUWP", "SpyderClientLibraryUWP\SpyderClientLibraryUWP.csproj", "{2C967B09-7E92-4380-B08E-8EDA186EC162}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,22 @@ Global
 		{75525C2D-F1B6-4E8F-892F-2D26ED72C520}.Release|x64.Build.0 = Release|Any CPU
 		{75525C2D-F1B6-4E8F-892F-2D26ED72C520}.Release|x86.ActiveCfg = Release|x86
 		{75525C2D-F1B6-4E8F-892F-2D26ED72C520}.Release|x86.Build.0 = Release|x86
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|ARM.ActiveCfg = Debug|ARM
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|ARM.Build.0 = Debug|ARM
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|x64.ActiveCfg = Debug|x64
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|x64.Build.0 = Debug|x64
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|x86.ActiveCfg = Debug|x86
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|x86.Build.0 = Debug|x86
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|ARM.ActiveCfg = Release|ARM
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|ARM.Build.0 = Release|ARM
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x64.ActiveCfg = Release|x64
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x64.Build.0 = Release|x64
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x86.ActiveCfg = Release|x86
+		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
