@@ -109,6 +109,9 @@
     <Compile Include="..\SpyderClientLibraryWPF\Images\DesignerThumbnailImage.cs">
       <Link>Images\DesignerThumbnailImage.cs</Link>
     </Compile>
+    <Compile Include="..\SpyderClientLibraryWPF\Images\StaticThumbnailImage.cs">
+      <Link>Images\StaticThumbnailImage.cs</Link>
+    </Compile>
     <Compile Include="..\SpyderClientLibraryWPF\Images\ThumbnailImage.cs">
       <Link>Images\ThumbnailImage.cs</Link>
     </Compile>
