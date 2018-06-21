@@ -38,14 +38,12 @@ namespace Spyder.Client.IO
 
                 if (parts.Length == 3)
                 {
-                    byte r, g, b;
-                    if (byte.TryParse(parts[0], out r) && byte.TryParse(parts[1], out g) && byte.TryParse(parts[2], out b))
+                    if (byte.TryParse(parts[0], out byte r) && byte.TryParse(parts[1], out byte g) && byte.TryParse(parts[2], out byte b))
                         return new Color(r, g, b);
                 }
                 else if (parts.Length == 4)
                 {
-                    byte a, r, g, b;
-                    if (byte.TryParse(parts[0], out a) && byte.TryParse(parts[1], out r) && byte.TryParse(parts[2], out g) && byte.TryParse(parts[3], out b))
+                    if (byte.TryParse(parts[0], out byte a) && byte.TryParse(parts[1], out byte r) && byte.TryParse(parts[2], out byte g) && byte.TryParse(parts[3], out byte b))
                         return new Color(a, r, g, b);
                 }
                 return ReturnDefaultValue(elementName, defaultValue);

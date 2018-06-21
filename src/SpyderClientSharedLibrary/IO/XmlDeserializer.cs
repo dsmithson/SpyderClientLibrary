@@ -21,8 +21,7 @@ namespace Spyder.Client.IO
         public event XmlReadFailedHandler ElementReadFailed;
         protected void OnElementReadFailed(string elementName)
         {
-            if (ElementReadFailed != null)
-                ElementReadFailed(this, elementName);
+            ElementReadFailed?.Invoke(this, elementName);
         }
 
         public XDocument GetXDocument(Stream xmlFileStream, bool skipXmlDeclaration = true)
@@ -51,8 +50,7 @@ namespace Spyder.Client.IO
         {
             return Read(parent, elementName, defaultValue, (value) =>
                 {
-                    int response;
-                    return int.TryParse(value, out response) ? response : ReturnDefaultValue(elementName, defaultValue);
+                    return int.TryParse(value, out int response) ? response : ReturnDefaultValue(elementName, defaultValue);
                 });
         }
 
@@ -60,55 +58,15 @@ namespace Spyder.Client.IO
         {
             return Read(parent, elementName, defaultValue, (value) =>
             {
-                float response;
-                return float.TryParse(value, out response) ? response : ReturnDefaultValue(elementName, defaultValue);
+                return float.TryParse(value, out float response) ? response : ReturnDefaultValue(elementName, defaultValue);
             });
-        }
-
-        public TimeCode Read(XElement parent, string elementName, TimeCode defaultValue)
-        {
-            XElement element = ReadElement(parent, elementName);
-            if (element == null)
-                return defaultValue;
-
-            return new TimeCode()
-            {
-                Hours = Read(element, "Hours", 0),
-                Minutes = Read(element, "Minutes", 0),
-                Seconds = Read(element, "Seconds", 0),
-                Frames = Read(element, "Frames", 0),
-                FieldRate = ReadEnum(element, "FPS", FieldRate.FR_29_97)
-            };
         }
         
-        public Color Read(XElement parent, string elementName, Color defaultValue)
-        {
-            return Read(parent, elementName, defaultValue, (value) =>
-            {
-                string[] parts = value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (parts.Length == 3)
-                {
-                    byte r, g, b;
-                    if (byte.TryParse(parts[0], out r) && byte.TryParse(parts[1], out g) && byte.TryParse(parts[2], out b))
-                        return new Color(r, g, b);
-                }
-                else if (parts.Length == 4)
-                {
-                    byte a, r, g, b;
-                    if (byte.TryParse(parts[0], out a) && byte.TryParse(parts[1], out r) && byte.TryParse(parts[2], out g) && byte.TryParse(parts[3], out b))
-                        return new Color(a, r, g, b);
-                }
-                return ReturnDefaultValue(elementName, defaultValue);
-            });
-        }
-
         public bool Read(XElement parent, string elementName, bool defaultValue)
         {
             return Read(parent, elementName, defaultValue, (value) =>
             {
-                bool response;
-                return bool.TryParse(value, out response) ? response : ReturnDefaultValue(elementName, defaultValue);
+                return bool.TryParse(value, out bool response) ? response : ReturnDefaultValue(elementName, defaultValue);
             });
         }
 
@@ -122,8 +80,7 @@ namespace Spyder.Client.IO
         {
             return Read(parent, elementName, defaultValue, (value) =>
                 {
-                    TEnum response;
-                    return Enum.TryParse(value, out response) ? response : ReturnDefaultValue(elementName, defaultValue);
+                    return Enum.TryParse(value, out TEnum response) ? response : ReturnDefaultValue(elementName, defaultValue);
                 });
         }
 

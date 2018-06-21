@@ -29,15 +29,13 @@ namespace Spyder.Client.Images
         public event ImageStreamSetRequestedHandler ImageStreamSetRequested;
         protected void OnImageStreamSetRequested(ImageStreamSetRequestedEventArgs e)
         {
-            if (ImageStreamSetRequested != null)
-                ImageStreamSetRequested(this, e);
+            ImageStreamSetRequested?.Invoke(this, e);
         }
 
         public event ImageStreamGetRequestedHandler ImageStreamGetRequested;
         protected void OnImageStreamGetRequested(ImageStreamGetRequestedEventArgs e)
         {
-            if (ImageStreamGetRequested != null)
-                ImageStreamGetRequested(this, e);
+            ImageStreamGetRequested?.Invoke(this, e);
         }
 
         public ThumbnailManager(string localImagesFolder)
