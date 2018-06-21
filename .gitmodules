@@ -1,0 +1,3 @@
+[submodule "src/submodules/knightwarecore"]
+	path = src/submodules/knightwarecore
+	url = https://github.com/dsmithson/KnightwareCore.git
