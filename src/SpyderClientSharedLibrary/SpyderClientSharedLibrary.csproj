@@ -10,7 +10,7 @@
     <NoWarn />
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj" />
+    <ProjectReference Include="..\submodules\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

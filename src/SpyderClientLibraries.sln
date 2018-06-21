@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientSharedLibraryDe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "KnightwareCore", "KnightwareCore", "{E55C40C5-5CDA-4C10-A27E-2F594234DF8C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnightwareCore", "..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj", "{66258288-7801-4A88-9125-F7F89007B2D9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnightwareCore", "submodules\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj", "{66258288-7801-4A88-9125-F7F89007B2D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
