@@ -105,13 +105,13 @@
     <Compile Include="SpyderClientManager.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj">
-      <Project>{bb51a3e4-136e-409e-ad6a-b7c38c9c7c37}</Project>
-      <Name>KnightwareCore</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SpyderClientSharedLibrary\SpyderClientSharedLibrary.csproj">
       <Project>{2de05b6e-23bf-440a-921d-79043cf14599}</Project>
       <Name>SpyderClientSharedLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\submodules\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj">
+      <Project>{66258288-7801-4a88-9125-f7f89007b2d9}</Project>
+      <Name>KnightwareCore</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
