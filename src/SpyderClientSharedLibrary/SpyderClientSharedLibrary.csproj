@@ -26,6 +26,6 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\knightwarecore\src\KnightwareCore\KnightwareCore.csproj" />
+    <ProjectReference Include="..\..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj" />
   </ItemGroup>
 </Project>
