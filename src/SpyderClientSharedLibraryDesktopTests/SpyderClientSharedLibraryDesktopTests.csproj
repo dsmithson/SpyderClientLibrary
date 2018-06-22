@@ -146,7 +146,7 @@
       <Project>{2de05b6e-23bf-440a-921d-79043cf14599}</Project>
       <Name>SpyderClientSharedLibrary</Name>
     </ProjectReference>
-    <ProjectReference Include="..\submodules\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj">
+    <ProjectReference Include="..\..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj">
       <Project>{66258288-7801-4a88-9125-f7f89007b2d9}</Project>
       <Name>KnightwareCore</Name>
     </ProjectReference>

@@ -19,7 +19,7 @@ namespace Spyder.Client.Images
 {
     public class StaticThumbnailImage : ThumbnailImage
     {
-        private static Dictionary<int, StaticThumbnailImage> sourceImages = new Dictionary<int,StaticThumbnailImage>();
+        private static readonly Dictionary<int, StaticThumbnailImage> sourceImages = new Dictionary<int,StaticThumbnailImage>();
         public static StaticThumbnailImage Source 
         {
             get
@@ -42,7 +42,7 @@ namespace Spyder.Client.Images
             }
         }
 
-        private static Dictionary<int, StaticThumbnailImage> blackImages = new Dictionary<int,StaticThumbnailImage>();
+        private static readonly Dictionary<int, StaticThumbnailImage> blackImages = new Dictionary<int,StaticThumbnailImage>();
         public static StaticThumbnailImage Black
         {
             get
@@ -82,10 +82,10 @@ namespace Spyder.Client.Images
             return cache[viewID];
         }
 
-        private string uriExtraSmall;
-        private string uriSmall;
-        private string uriMedium;
-        private string uriLarge;
+        private readonly string uriExtraSmall;
+        private readonly string uriSmall;
+        private readonly string uriMedium;
+        private readonly string uriLarge;
         private BitmapImage extraSmallImage;
         private BitmapImage smallImage;
         private BitmapImage mediumImage;

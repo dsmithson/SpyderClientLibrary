@@ -11,9 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientSharedLibraryDe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "KnightwareCore", "KnightwareCore", "{E55C40C5-5CDA-4C10-A27E-2F594234DF8C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnightwareCore", "submodules\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj", "{66258288-7801-4A88-9125-F7F89007B2D9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnightwareCore", "..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj", "{66258288-7801-4A88-9125-F7F89007B2D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KnightwareCoreTests", "submodules\knightwarecore\src\KnightwareCoreTests\KnightwareCoreTests.csproj", "{75525C2D-F1B6-4E8F-892F-2D26ED72C520}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KnightwareCoreTests", "..\..\knightwarecore\src\KnightwareCoreTests\KnightwareCoreTests.csproj", "{75525C2D-F1B6-4E8F-892F-2D26ED72C520}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibraryUWP", "SpyderClientLibraryUWP\SpyderClientLibraryUWP.csproj", "{2C967B09-7E92-4380-B08E-8EDA186EC162}"
 EndProject
