@@ -11,7 +11,7 @@ namespace Spyder.Client.Net
 {
     public abstract class ISpyderClientTestBase
     {
-        public const string serverIP = "192.168.1.175";
+        public const string serverIP = "192.168.86.85";
 
         private static ISpyderClient udp;
         private readonly Func<HardwareType, string, Task<ISpyderClient>> getClient;

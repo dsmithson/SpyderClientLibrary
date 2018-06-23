@@ -15,6 +15,7 @@ using Spyder.Client.Common;
 using Spyder.Client.Net;
 using Knightware.Threading.Tasks;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Spyder.Client
 {
@@ -33,15 +34,13 @@ namespace Spyder.Client
         public event EventHandler ServerListChanged;
         protected void OnServerListChanged(EventArgs e)
         {
-            if (ServerListChanged != null)
-                ServerListChanged(this, e);
+            ServerListChanged?.Invoke(this, e);
         }
 
         public event DrawingDataReceivedHandler DrawingDataReceived;
         protected void OnDrawingDataReceived(DrawingDataReceivedEventArgs e)
         {
-            if (DrawingDataReceived != null)
-                DrawingDataReceived(this, e);
+            DrawingDataReceived?.Invoke(this, e);
         }
 
         /// <summary>
@@ -59,12 +58,25 @@ namespace Spyder.Client
                         throw new InvalidOperationException("Cannot change RaiseDrawingDataChanged while SpyderClientManager is running");
                     }
                     raiseDrawingDataChanged = value;
+                    OnPropertyChanged();
                 }
             }
         }
         private bool raiseDrawingDataChanged = true;
 
-        public bool IsRunning { get; private set; }
+        private bool isRunning;
+        public bool IsRunning
+        {
+            get { return isRunning; }
+            set
+            {
+                if(isRunning != value)
+                {
+                    isRunning = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         /// <summary>
         /// Initializes a SpyderClientManager using a default folder path for local cache file storage
@@ -263,10 +275,9 @@ namespace Spyder.Client
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanged(string propertyName)
+        protected void OnPropertyChanged([CallerMemberName]string propertyName = null)
         {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

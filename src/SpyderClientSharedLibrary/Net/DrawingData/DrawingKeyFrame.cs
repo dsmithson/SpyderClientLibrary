@@ -608,6 +608,7 @@ namespace Spyder.Client.Net.DrawingData
             this.WindowLabel = copyFrom.WindowLabel;
             this.TestPattern = copyFrom.TestPattern;
             this.Scale = copyFrom.Scale;
+            this.ShadowIsEnabled = copyFrom.ShadowIsEnabled;
         }
     }
 }

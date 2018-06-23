@@ -25,7 +25,7 @@ namespace Spyder.Client.Net
     {
         public const int ServerPort = 11116;
         public const int DefaultTimeoutSeconds = 5;
-                
+
         public bool IsRunning { get; private set; }
         public string ServerIP { get; private set; }
 
@@ -168,7 +168,7 @@ namespace Spyder.Client.Net
 
             //Sanity check on the register ID we received back. If the ID did not exist at the server, then we'll
             //get back the first register ID available, which is not the one we requested...
-            if(response.RegisterID != registerID)
+            if (response.RegisterID != registerID)
                 return null;
             else
                 return response;
@@ -367,7 +367,7 @@ namespace Spyder.Client.Net
                 return true;
 
             bool success = true;
-            foreach(int commandKeyRegisterID in commandKeyRegisterIDs)
+            foreach (int commandKeyRegisterID in commandKeyRegisterIDs)
             {
                 var result = await RetrieveAsync("DCK {0} R", commandKeyRegisterID);
                 if (result == null || result.Result != ServerOperationResultCode.Success)
@@ -403,8 +403,12 @@ namespace Spyder.Client.Net
 
         private async Task<List<T>> RequestRegisterDetails<T>(RegisterType type, Func<IRegister, Task<T>> getDetails) where T : class
         {
+            var registers = await GetRegisters(type);
+            if (registers == null)
+                return null;
+
             List<T> response = new List<T>();
-            foreach (IRegister register in await GetRegisters(type))
+            foreach (IRegister register in registers)
             {
                 response.Add(await getDetails(register));
             }
@@ -431,7 +435,7 @@ namespace Spyder.Client.Net
         }
 
         #region Layer Interaction
-        
+
         public async Task<int> GetLayerCount()
         {
             var result = await RetrieveAsync("RLC");
@@ -448,7 +452,7 @@ namespace Spyder.Client.Net
             if (layerCount <= 0)
                 return -1;
 
-            for(int i=0 ; i<layerCount ; i++)
+            for (int i = 0; i < layerCount; i++)
             {
                 int layerID = i + 2;
                 var result = await RetrieveAsync("RLK {0}", layerID);
@@ -464,7 +468,7 @@ namespace Spyder.Client.Net
             //No layers available
             return -1;
         }
-        
+
         public async Task<bool> ApplyRegisterToLayer(RegisterType type, int registerID, params int[] layerIDs)
         {
             if (layerIDs == null || layerIDs.Length == 0)
@@ -499,7 +503,7 @@ namespace Spyder.Client.Net
         public async Task<bool> MixOffAllLayers(int duration)
         {
             int layerCount = await GetLayerCount();
-            if(layerCount <= 0)
+            if (layerCount <= 0)
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "Unable to mix off all layers because call to retrieve layer count failed");
                 return false;
@@ -507,8 +511,8 @@ namespace Spyder.Client.Net
 
             //Build a collection of all layerIDs
             int[] layerIDs = new int[layerCount];
-            for(int i=0 ; i<layerCount ; i++)
-                layerIDs[i] = i+2;
+            for (int i = 0; i < layerCount; i++)
+                layerIDs[i] = i + 2;
 
             return await MixOffLayer(duration, layerIDs);
         }
@@ -544,10 +548,10 @@ namespace Spyder.Client.Net
             //We'll need to know if the target pixelspace is a program or preview pixelspace, which affects how we bring it on screen.
             //The MixOnLayer call only works correctly in PGM pixelspaces - if you call it with a layer in PVW, it is brought to PGM automatically.
             bool isProgramPixelSpace = await IsPixelSpaceProgram(pixelSpaceID);
-            
+
             //Assign this layer to the target PixelSpace, but don't yet make it visible
             bool showLayerImmediately = !isProgramPixelSpace;
-            if(!await LayerAssignPixelSpace(pixelSpaceID, showLayerImmediately, layerID))
+            if (!await LayerAssignPixelSpace(pixelSpaceID, showLayerImmediately, layerID))
                 return false;
 
             //Set layer position and size
@@ -599,9 +603,9 @@ namespace Spyder.Client.Net
                 return null;
 
             var response = new List<PixelSpaceMapping>();
-            for(int i=0 ; i<count ; i++)
+            for (int i = 0; i < count; i++)
             {
-                
+
                 int pgmID, pvwID;
                 double scale;
                 if (!int.TryParse(parts[index++], out pgmID) || !int.TryParse(parts[index++], out pvwID) || !double.TryParse(parts[index++], out scale))
@@ -631,7 +635,7 @@ namespace Spyder.Client.Net
             if (layerIDs == null || layerIDs.Length == 0)
                 return true;
 
-            if(resizeType == LayerResizeType.AbsolutePixel)
+            if (resizeType == LayerResizeType.AbsolutePixel)
             {
                 var result = await RetrieveAsync("KSZ {0} {1}", hSize, BuildLayerIDString(layerIDs));
                 return result != null && result.Result == ServerOperationResultCode.Success;
@@ -744,7 +748,7 @@ namespace Spyder.Client.Net
             }
 
             string hString, vString;
-            if(moveType == LayerMoveType.AbsolutePixel || moveType == LayerMoveType.RelativePixel)
+            if (moveType == LayerMoveType.AbsolutePixel || moveType == LayerMoveType.RelativePixel)
             {
                 hString = ((int)hPosition).ToString();
                 vString = ((int)vPosition).ToString();
@@ -793,7 +797,7 @@ namespace Spyder.Client.Net
             //Set position
             bool positionSuccess = true;
             var moveMode = moveType == MoveAndResizeType.AbsolutePositionAndSize ? LayerMoveType.AbsolutePixel : LayerMoveType.RelativePixel;
-            if(moveMode == LayerMoveType.AbsolutePixel || hPosition != 0 || vPosition != 0)
+            if (moveMode == LayerMoveType.AbsolutePixel || hPosition != 0 || vPosition != 0)
                 positionSuccess = await MoveLayer(moveMode, hPosition, vPosition, layerIDs);
 
             return resizeSuccess && positionSuccess;
@@ -882,7 +886,7 @@ namespace Spyder.Client.Net
 
                 return response;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 //Failed to parse
                 TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while trying to parse response for RLK command: {1}",
@@ -947,10 +951,10 @@ namespace Spyder.Client.Net
                 return true;
 
             bool success = true;
-            foreach(int layerID in layerIDs)
+            foreach (int layerID in layerIDs)
             {
                 var layerProperties = await RequestLayerKeyFrame(layerID);
-                if(layerProperties != null)
+                if (layerProperties != null)
                 {
                     if (!await AdjustLayerBorder(layerID, layerProperties.BorderThickness, borderColor))
                         success = false;
@@ -983,7 +987,7 @@ namespace Spyder.Client.Net
         /// <param name="borderColor">Border color</param>
         public async Task<bool> AdjustLayerBorder(int layerID, int borderThickness, Color borderColor)
         {
-            var result = await RetrieveAsync("KBD {0} {1} {2} {3} {4}", layerID, borderThickness, 
+            var result = await RetrieveAsync("KBD {0} {1} {2} {3} {4}", layerID, borderThickness,
                 borderColor.R, borderColor.G, borderColor.B);
 
             return result != null && result.Result == ServerOperationResultCode.Success;
@@ -1200,7 +1204,7 @@ namespace Spyder.Client.Net
             if (layerIDs == null || layerIDs.Length == 0)
                 return true;
 
-            var result = await RetrieveAsync("LAP {0} {1} {2}", 
+            var result = await RetrieveAsync("LAP {0} {1} {2}",
                 pixelSpaceID,
                 (makeLayerVisible ? "1" : "0"),
                 BuildLayerIDString(layerIDs));
@@ -1388,7 +1392,7 @@ namespace Spyder.Client.Net
             var mappings = await RequestPixelSpaceMappings();
 
             var response = new List<PixelSpace>();
-            for(int i=0; i<count; i++)
+            for (int i = 0; i < count; i++)
             {
                 int id, xPosition, yPosition, width, height, renewalGroupID;
                 if (!int.TryParse(parts[index++], out id))
@@ -1434,7 +1438,7 @@ namespace Spyder.Client.Net
                 pageIndex = 0;
 
             //Sanity check / validate the supplied register ID
-            if(registerID.HasValue && registerID.Value >= 0)
+            if (registerID.HasValue && registerID.Value >= 0)
             {
                 //Enforce the appropriate register offset for the supplied page index
                 registerID = (pageIndex * 1000) + (registerID % 1000);
@@ -1448,7 +1452,7 @@ namespace Spyder.Client.Net
 
                 var existingIDs = registers.Select(r => r.RegisterID).ToList();
                 int newRegisterID = pageIndex * 1000;
-                while(existingIDs.Contains(newRegisterID))
+                while (existingIDs.Contains(newRegisterID))
                 {
                     newRegisterID++;
                 }
@@ -1671,7 +1675,7 @@ namespace Spyder.Client.Net
             }
             finally
             {
-                if(socket != null)
+                if (socket != null)
                 {
                     await socket.ShutdownAsync();
                     socket = null;
