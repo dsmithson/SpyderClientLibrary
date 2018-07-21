@@ -18,6 +18,7 @@ namespace Spyder.Client.Net
     {
         private SpyderDemoServer server;
         private SystemData data;
+        public HardwareType HardwareType { get; }
 
         private string serverIP = "Demo";
         public string ServerIP
@@ -59,9 +60,10 @@ namespace Spyder.Client.Net
                 TraceLogMessageReceived(this, e);
         }
 
-        public SpyderDemoClient(SystemData data)
+        public SpyderDemoClient(SystemData data, HardwareType hardwareType = HardwareType.SpyderX80)
         {
             this.data = data;
+            this.HardwareType = hardwareType;
         }
 
         public async Task<bool> StartupAsync()

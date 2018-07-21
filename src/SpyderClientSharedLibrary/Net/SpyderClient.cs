@@ -28,6 +28,11 @@ namespace Spyder.Client.Net
         private DrawingData.DrawingData drawingData;
         private int lastDataObjectVersion = -1;
 
+        public HardwareType HardwareType
+        {
+            get { return hardwareType; }
+        }
+
         /// <summary>
         /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
         /// </summary>
