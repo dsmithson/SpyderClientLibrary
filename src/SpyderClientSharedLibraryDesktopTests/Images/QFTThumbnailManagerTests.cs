@@ -76,7 +76,7 @@ namespace Spyder.Client.Images
             //Reset image process event awaiters
             imageProcessedEvents = new Dictionary<string, ManualResetEvent>();
 
-            thumbnailManager = new MockQFTThumbnailManager(localImagePath, (serverIP) => Task.FromResult(@"c:\spyder\images"));
+            thumbnailManager = new MockQFTThumbnailManager(localImagePath, (serverIP) => Task.FromResult(remoteImagePath));
             thumbnailManager.ProcessImageStreamRequested += thumbnailManager_ProcessImageStreamRequested;
             Assert.IsTrue(thumbnailManager.StartupAsync().Result, "Failed to initialize thumbnail manager");
         }
@@ -137,7 +137,7 @@ namespace Spyder.Client.Images
             //Note:  WaitHandle.WaitAll threw a notsupported exception...
             foreach (ManualResetEvent resetEvent in resetEvents)
             {
-                Assert.IsTrue(resetEvent.WaitOne(10000), "Failed to be signalled for one or more files");
+                Assert.IsTrue(resetEvent.WaitOne(1000000), "Failed to be signalled for one or more files");
             }
 
             //Ensure our file was created in the cache folder
