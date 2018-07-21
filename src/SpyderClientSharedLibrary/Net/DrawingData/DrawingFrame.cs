@@ -38,7 +38,9 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
-        private Rectangle previewAOR;
+        /// <summary>
+        /// NOTE:  This property is no longer used starting in Spyder Studio 5.0.3.  Be careful about calculations depending on this property.
+        /// </summary>
         public Rectangle PreviewAOR
         {
             get { return previewAOR; }
@@ -51,6 +53,7 @@ namespace Spyder.Client.Net.DrawingData
                 }
             }
         }
+        private Rectangle previewAOR;
 
         private Rectangle programAOR;
         public Rectangle ProgramAOR

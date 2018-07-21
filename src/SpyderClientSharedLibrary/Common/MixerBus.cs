@@ -8,7 +8,7 @@ namespace Spyder.Client.Common
 {
     public enum MixerBus
     {
-        Program,
-        Preview
+        Preview,
+        Program
     }
 }

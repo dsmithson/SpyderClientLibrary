@@ -26,7 +26,7 @@ namespace Spyder.Client.Common
                     "Height",
                     "AutoSelectHeight",
                     "UpdateBinariesIfPresent",
-                    "VerifyPromsAfterProgra",
+                    "VerifyPromsAfterProgram",
                     "UseRouterHAL",
                     "UseMachineHAL",
                     "UseFrontPanel",

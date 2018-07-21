@@ -80,6 +80,21 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
+        private bool isLocked;
+        public bool IsLocked
+        {
+            get { return isLocked; }
+            set
+            {
+                if(isLocked != value)
+                {
+                    isLocked = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+
         private string linearKeySource;
         public string LinearKeySource
         {
@@ -586,6 +601,7 @@ namespace Spyder.Client.Net.DrawingData
             this.IsMixer = copyFrom.IsMixer;
             this.IsMixing = copyFrom.IsMixing;
             this.IsSlave = copyFrom.IsSlave;
+            this.IsLocked = copyFrom.IsLocked;
             this.IsWithinPixelSpace = copyFrom.IsWithinPixelSpace;
             this.KeyFrame.CopyFrom(copyFrom.KeyFrame);
             this.LastCue = copyFrom.LastCue;
