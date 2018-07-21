@@ -32,7 +32,12 @@ namespace Spyder.Client.Net
         {
             get { return hardwareType; }
         }
-
+        
+        /// <summary>
+        /// Contains folder and file paths on the server hardware
+        /// </summary>
+        public ServerFilePaths ServerFilePaths => ServerFilePaths.FromHardwareType(hardwareType, Version);
+        
         /// <summary>
         /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
         /// </summary>
@@ -197,13 +202,8 @@ namespace Spyder.Client.Net
             MemoryStream scriptFile = null;
             try
             {
-                string configFilePath = this.hardwareType == HardwareType.SpyderX80 ?
-                    @"c:\SpyderData\V1\SystemConfiguration.xml" :
-                    @"c:\Spyder\SystemConfiguration.xml";
-
-                string scriptsFilePath = this.hardwareType == HardwareType.SpyderX80 ?
-                    @"c:\SpyderData\V1\Scripts.xml" :
-                    @"c:\Spyder\Scripts\Scripts.xml";
+                string configFilePath = this.ServerFilePaths.SystemConfigurationFilePath;
+                string scriptsFilePath = this.ServerFilePaths.ScriptsFilePath;
 
                 //Download system configuration file
                 configFile = new MemoryStream();
@@ -710,24 +710,14 @@ namespace Spyder.Client.Net
             //For debug purposes, we connect to local remoting servers.  We'll check here if the first check fails
             List<string> settingsFileLocations = new List<string>()
             {
-                //Versions prior to (4.0.6) keep the SystemSettings.xml file with the server executable
-                @"c:\Applications\SpyderServer\Version {0}.{1}.{2}\SystemSettings.xml",
-
-                //Newer versions (4.0.6 and later) keep the SystemSettings.xml in a global path
-                @"c:\Spyder\SystemSettings.xml",
+                ServerFilePaths.SystemSettingsFilePath,
                 
 #if DEBUG
-                //64-bit machines
+                //Local machine running Vista Advanced
                 @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2012 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
                 @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2009 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
                 @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2005 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
-                @"c:\Program Files (x86)\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml",
-
-                //32-bit Machines
-                @"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2012 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
-                @"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2009 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
-                @"c:\Program Files\Vista Systems, Corp\Spyder Control Suite 2005 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
-                @"c:\Program Files\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml"
+                @"c:\Program Files (x86)\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml"
 #endif
             };
 

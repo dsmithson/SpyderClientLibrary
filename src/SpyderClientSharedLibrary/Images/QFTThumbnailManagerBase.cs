@@ -11,10 +11,11 @@ using System.Xml.Linq;
 using System.Xml;
 using Knightware.Net.Sockets;
 using Spyder.Client.Net;
+using Knightware.Threading.Tasks;
 
 namespace Spyder.Client.Images
 {
-    public delegate void ProcessImageStreamHandler<K, T>(object sender, ProcessImageStreamEventArgs<K, T> e);
+    public delegate Task<string> GetRemoteImagePathHandler(string serverIP);
 
     public abstract class QFTThumbnailManagerBase<K, T, U> : ThumbnailManagerBase<K, T, U>
         where U : ThumbnailImageBase<K, T>, new()
@@ -22,25 +23,34 @@ namespace Spyder.Client.Images
         where K : QFTThumbnailIdentifier
     {
         private readonly string localImagesFolder;
-        private string remoteImagePath = @"c:\spyder\images";
+        private readonly AsyncLock qftClientsLock = new AsyncLock();
         private readonly Dictionary<string, QFTClient> qftClients;
+        private readonly GetRemoteImagePathHandler getRemoteImagePathHandler;
+        private readonly AsyncListProcessor<string> saveImageMetadataProcessor;
         private Dictionary<QFTThumbnailIdentifier, Size> knownResolutions = new Dictionary<QFTThumbnailIdentifier, Size>();
-
-        public string RemoteImagePath
-        {
-            get { return remoteImagePath; }
-            set { remoteImagePath = value; }
-        }
 
         /// <summary>
         /// Initiliazes a new instance of the QFTThumbnailManagerBase class
         /// </summary>
         /// <param name="localImagesFolder">root directory for storing downloaded images (cache).  Subfolders will be created for each sub-server IP.</param>
-        protected QFTThumbnailManagerBase(string localImagesFolder)
+        protected QFTThumbnailManagerBase(string localImagesFolder, GetRemoteImagePathHandler getRemoteImagePathHandler)
         {
             this.localImagesFolder = localImagesFolder;
-
+            this.getRemoteImagePathHandler = getRemoteImagePathHandler;
             this.qftClients = new Dictionary<string, QFTClient>();
+            this.saveImageMetadataProcessor = new AsyncListProcessor<string>(SaveImageMetadataWorker, () => IsRunning);
+        }
+
+        public override async Task<bool> StartupAsync()
+        {
+            bool response = await base.StartupAsync();
+
+            if (response)
+            {
+                await saveImageMetadataProcessor.StartupAsync();
+            }
+
+            return response;
         }
 
         public override async Task ShutdownAsync()
@@ -49,16 +59,21 @@ namespace Spyder.Client.Images
             await base.ShutdownAsync();
 
             //Clear out any existing QFT Clients
-            if (qftClients.Count > 0)
+            using (var releaser = await qftClientsLock.LockAsync())
             {
-                List<Task> tasks = new List<Task>();
-                foreach (var qftClient in qftClients.Values)
+                if (qftClients.Count > 0)
                 {
-                    tasks.Add(qftClient.ShutdownAsync());
+                    List<Task> tasks = new List<Task>();
+                    foreach (var qftClient in qftClients.Values)
+                    {
+                        tasks.Add(qftClient.ShutdownAsync());
+                    }
+                    await Task.WhenAll(tasks);
+                    this.qftClients.Clear();
                 }
-                await Task.WhenAll(tasks);
-                this.qftClients.Clear();
             }
+
+            await saveImageMetadataProcessor.ShutdownAsync();
         }
 
         protected override U CreateNewThumbnail(K identifier)
@@ -169,6 +184,7 @@ namespace Spyder.Client.Images
                     {
                         string newFile = Path.Combine(serverImagesFolder, identifier.FileName);
                         fileStream = File.Create(newFile);
+                        string remoteImagePath = await GetRemoteImagePath(qftClient.ServerIP);
                         string remoteFile = qftClient.ConvertAbsolutePathToRelative(Path.Combine(remoteImagePath, identifier.FileName));
                         if (await qftClient.ReceiveFile(remoteFile, fileStream, null))
                         {
@@ -180,7 +196,7 @@ namespace Spyder.Client.Images
                             //Download failed.  Delete our local cache file
                             fileStream.Dispose();
                             fileStream = null;
-                            
+
                             File.Delete(newFile);
                         }
                     }
@@ -201,7 +217,7 @@ namespace Spyder.Client.Images
                         //Store the native image size to our identifier
                         //NOTE:  I'm allowing the overridden class to actually set the native resolution to the ThumbnailImage, so it can do so in a thread-safe mannor
                         await OnNativeResolutionAvailable(identifier.ServerIP, identifier.FileName, imageResult.NativeSize);
-                        await SaveImageMetadata(identifier.ServerIP);
+                        saveImageMetadataProcessor.Add(identifier.ServerIP);
 
                         //Assign the scaled image result to our response strema, and seek it back to the beginning for the next use
                         fileStream = imageResult.ScaledStream;
@@ -296,7 +312,22 @@ namespace Spyder.Client.Images
 
             return Task.FromResult(true);
         }
-        
+
+        protected async Task<string> GetRemoteImagePath(string serverIP)
+        {
+            string response = null;
+            if (getRemoteImagePathHandler != null)
+            {
+                response = await getRemoteImagePathHandler(serverIP);
+            }
+            if (string.IsNullOrEmpty(response))
+            {
+                TraceQueue.Trace(this, TracingLevel.Warning, $"Failed to get remote image path for server {serverIP}");
+                response = @"c:\spyder\images";
+            }
+            return response;
+        }
+
         protected string GetFolder(string serverIP)
         {
             if (localImagesFolder == null)
@@ -312,20 +343,23 @@ namespace Spyder.Client.Images
         private async Task<QFTClient> GetQFTClient(string serverIP)
         {
             QFTClient response = null;
-            if (qftClients.ContainsKey(serverIP))
+            using (var releaser = await qftClientsLock.LockAsync())
             {
-                response = qftClients[serverIP];
-            }
-            else
-            {
-                response = new QFTClient(serverIP);
-                qftClients.Add(serverIP, response);
-            }
+                if (qftClients.ContainsKey(serverIP))
+                {
+                    response = qftClients[serverIP];
+                }
+                else
+                {
+                    response = new QFTClient(serverIP);
+                    qftClients.Add(serverIP, response);
+                }
 
-            if (!response.IsRunning)
-            {
-                if (!await response.StartupAsync())
-                    return null;
+                if (!response.IsRunning)
+                {
+                    if (!await response.StartupAsync())
+                        return null;
+                }
             }
 
             return response;
@@ -343,7 +377,7 @@ namespace Spyder.Client.Images
                 return Task.FromResult(false);
 
             string metadataFile = Path.Combine(serverImagesFolder, imageMetadataFileName);
-            if(File.Exists(metadataFile))
+            if (File.Exists(metadataFile))
             {
                 try
                 {
@@ -380,11 +414,11 @@ namespace Spyder.Client.Images
                 var thumbnailMetadataItems = metadata.Descendants("ThumbnailImages")
                     .SelectMany((item) => item.Descendants("ThumbnailImage"))
                     .Select((item) => new
-                        {
-                            FileName = item.Element("FileName").Value,
-                            Width = int.Parse(item.Element("Width").Value),
-                            Height = int.Parse(item.Element("Height").Value)
-                        });
+                    {
+                        FileName = item.Element("FileName").Value,
+                        Width = int.Parse(item.Element("Width").Value),
+                        Height = int.Parse(item.Element("Height").Value)
+                    });
 
                 //Now write the metadata into thumbnail objects
                 foreach (var thumbnailMetadataItem in thumbnailMetadataItems)
@@ -401,32 +435,11 @@ namespace Spyder.Client.Images
             }
         }
 
-        protected async Task<bool> SaveImageMetadata(string serverIP)
+        private async Task SaveImageMetadataWorker(AsyncListProcessorItemEventArgs<string> args)
         {
-            string serverImagesFolder = GetFolder(serverIP);
-            if (string.IsNullOrWhiteSpace(serverImagesFolder))
-                return false;
-
-            try
-            {
-                string metadataFile = Path.Combine(serverImagesFolder, imageMetadataFileName); 
-                using (Stream stream = File.Create(metadataFile))
-                {
-                    return await SaveImageMetadata(serverIP, stream);
-                }
-            }
-            catch (Exception ex)
-            {
-                TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while saving metadata file for {1}: {2}",
-                    ex.GetType().Name, serverIP, ex.Message);
-            }
-            return false;
-        }
-
-        protected async Task<bool> SaveImageMetadata(string serverIP, Stream metadataFileStream)
-        {
-            if (string.IsNullOrEmpty(serverIP) || metadataFileStream == null)
-                return false;
+            string serverIP = args.Item;
+            if (string.IsNullOrEmpty(serverIP))
+                return;
 
             try
             {
@@ -440,32 +453,46 @@ namespace Spyder.Client.Images
                             .ToList();
                     });
 
-                using (XmlWriter writer = XmlWriter.Create(metadataFileStream))
+                string serverImagesFolder = GetFolder(serverIP);
+                if (string.IsNullOrWhiteSpace(serverImagesFolder))
+                    return;
+
+                try
                 {
-                    //TODO:  Check .Net Reference source to figure out how to populate args for the async version of calls below
-                    await writer.WriteStartDocumentAsync();
-                    await writer.WriteStartElementAsync(string.Empty, "ThumbnailManagerMetadata", string.Empty);
-                    await writer.WriteStartElementAsync(string.Empty, "ThumbnailImages", string.Empty);
-
-                    foreach (var item in imageItems)
+                    string metadataFile = Path.Combine(serverImagesFolder, imageMetadataFileName);
+                    using (Stream stream = File.Create(metadataFile))
                     {
-                        await writer.WriteStartElementAsync(string.Empty, "ThumbnailImage", string.Empty);
-                        await writer.WriteElementStringAsync(String.Empty, "FileName", string.Empty, item.Item1);
-                        await writer.WriteElementStringAsync(string.Empty, "Width", string.Empty, item.Item2.ToString());
-                        await writer.WriteElementStringAsync(string.Empty, "Height", string.Empty, item.Item3.ToString());
-                    }
 
-                    await writer.WriteEndElementAsync();
-                    await writer.WriteEndElementAsync();
-                    await writer.WriteEndDocumentAsync();
-                    await writer.FlushAsync();
+                        using (XmlWriter writer = XmlWriter.Create(stream, new XmlWriterSettings() { Async = true, Indent = true }))
+                        {
+                            await writer.WriteStartDocumentAsync();
+                            await writer.WriteStartElementAsync(string.Empty, "ThumbnailManagerMetadata", string.Empty);
+                            await writer.WriteStartElementAsync(string.Empty, "ThumbnailImages", string.Empty);
+
+                            foreach (var item in imageItems)
+                            {
+                                await writer.WriteStartElementAsync(string.Empty, "ThumbnailImage", string.Empty);
+                                await writer.WriteElementStringAsync(String.Empty, "FileName", string.Empty, item.Item1);
+                                await writer.WriteElementStringAsync(string.Empty, "Width", string.Empty, item.Item2.ToString());
+                                await writer.WriteElementStringAsync(string.Empty, "Height", string.Empty, item.Item3.ToString());
+                            }
+
+                            await writer.WriteEndElementAsync();
+                            await writer.WriteEndElementAsync();
+                            await writer.WriteEndDocumentAsync();
+                            await writer.FlushAsync();
+                        }
+                    }
                 }
-                return true;
+                catch (Exception ex)
+                {
+                    TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while saving metadata file for {1}: {2}",
+                        ex.GetType().Name, serverIP, ex.Message);
+                }
             }
             catch (Exception ex)
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while saving thumbnail metadata: {1}", ex.GetType().Name, ex.Message);
-                return false;
             }
         }
 

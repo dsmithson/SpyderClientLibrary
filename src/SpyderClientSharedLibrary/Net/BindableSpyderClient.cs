@@ -35,6 +35,11 @@ namespace Spyder.Client.Net
         }
 
         /// <summary>
+        /// Contains path information to access files on the Spyder server
+        /// </summary>
+        public ServerFilePaths ServerFilePaths => client?.ServerFilePaths;
+
+        /// <summary>
         /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
         /// </summary>
         public TimeSpan DrawingDataThrottleInterval

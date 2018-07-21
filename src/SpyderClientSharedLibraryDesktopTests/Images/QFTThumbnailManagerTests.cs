@@ -76,8 +76,7 @@ namespace Spyder.Client.Images
             //Reset image process event awaiters
             imageProcessedEvents = new Dictionary<string, ManualResetEvent>();
 
-            thumbnailManager = new MockQFTThumbnailManager(localImagePath);
-            thumbnailManager.RemoteImagePath = remoteImagePath;
+            thumbnailManager = new MockQFTThumbnailManager(localImagePath, (serverIP) => Task.FromResult(@"c:\spyder\images"));
             thumbnailManager.ProcessImageStreamRequested += thumbnailManager_ProcessImageStreamRequested;
             Assert.IsTrue(thumbnailManager.StartupAsync().Result, "Failed to initialize thumbnail manager");
         }

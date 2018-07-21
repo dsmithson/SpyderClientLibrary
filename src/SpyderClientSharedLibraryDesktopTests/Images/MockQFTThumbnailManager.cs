@@ -9,10 +9,12 @@ using Spyder.Client.Net;
 
 namespace Spyder.Client.Images
 {
+    public delegate void ProcessImageStreamHandler<K, T>(object sender, ProcessImageStreamEventArgs<K, T> e);
+
     public class MockQFTThumbnailManager : QFTThumbnailManagerBase<QFTThumbnailIdentifier, string, MockThumbnailImage<QFTThumbnailIdentifier>>
     {
-        public MockQFTThumbnailManager(string imageFolderRoot)
-            : base(imageFolderRoot)
+        public MockQFTThumbnailManager(string imageFolderRoot, GetRemoteImagePathHandler getRemoteImagePathHandler)
+            : base(imageFolderRoot, getRemoteImagePathHandler)
         {
         }
 

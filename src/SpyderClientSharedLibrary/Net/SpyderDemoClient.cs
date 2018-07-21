@@ -18,7 +18,12 @@ namespace Spyder.Client.Net
     {
         private SpyderDemoServer server;
         private SystemData data;
-        public HardwareType HardwareType { get; }
+        public HardwareType HardwareType { get; } = HardwareType.SpyderX80;
+
+        /// <summary>
+        /// Contains folder and file paths on the server hardware
+        /// </summary>
+        public ServerFilePaths ServerFilePaths => ServerFilePaths.FromHardwareType(this.HardwareType, this.Version);
 
         private string serverIP = "Demo";
         public string ServerIP
@@ -26,6 +31,8 @@ namespace Spyder.Client.Net
             get { return serverIP; }
             set { serverIP = value; }
         }
+
+        public VersionInfo Version => new VersionInfo(0, 0, 0);
 
         private string hostName;
         public string HostName

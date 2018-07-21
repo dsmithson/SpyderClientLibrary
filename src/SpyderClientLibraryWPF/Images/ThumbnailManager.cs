@@ -38,8 +38,8 @@ namespace Spyder.Client.Images
             ImageStreamGetRequested?.Invoke(this, e);
         }
 
-        public ThumbnailManager(string localImagesFolder)
-            : base(localImagesFolder)
+        public ThumbnailManager(string localImagesFolder, GetRemoteImagePathHandler getRemoteImagePathHandler)
+            : base(localImagesFolder, getRemoteImagePathHandler)
         {
         }
         

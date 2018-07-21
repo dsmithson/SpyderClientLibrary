@@ -13,6 +13,8 @@ namespace Spyder.Client.Common
 {
     public class ServerSettings
     {
+        public BitDepth BitDepth { get; set; }
+
         public int MarshallingPort { get; set; }
         public int UdpEventPort { get; set; }
         public int UdpControlPort { get; set; }
