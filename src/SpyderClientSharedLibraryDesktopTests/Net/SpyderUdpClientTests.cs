@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Spyder.Client.Net
 {
     [TestClass]
-    public class SpyderUdpClientTests : ISpyderClientTestBase
+    public class SpyderUdpClientTests : SpyderClientTestBase
     {
         public SpyderUdpClientTests()
         : base((hardwareType, address) =>

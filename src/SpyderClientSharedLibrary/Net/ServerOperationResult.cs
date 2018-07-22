@@ -20,14 +20,9 @@ namespace Spyder.Client.Net
         /// </summary>
         public CommandExecutionPriority ExecutionPriorityLevel { get; set; }
         
-        public List<string> ResponseData { get; set; }
+        public List<string> ResponseData { get; set; } = new List<string>();
 
-        public ServerOperationResult()
-        {
-            ResponseData = new List<string>();
-        }
-
-        public ServerOperationResult(ServerOperationResultCode result) : this()
+        public ServerOperationResult(ServerOperationResultCode result = ServerOperationResultCode.Success)
         {
             this.Result = result;
         }

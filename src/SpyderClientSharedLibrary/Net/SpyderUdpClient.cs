@@ -1661,8 +1661,7 @@ namespace Spyder.Client.Net
                 List<string> responseParts = ParseResponse(responseData);
 
                 //Server result code should be available as an integer in the first response argument
-                int resultCode;
-                if (!int.TryParse(responseParts[0], out resultCode))
+                if (!int.TryParse(responseParts[0], out int resultCode))
                     return new ServerOperationResult(ServerOperationResultCode.BadResponseFromServer);
 
                 responseParts.RemoveAt(0);

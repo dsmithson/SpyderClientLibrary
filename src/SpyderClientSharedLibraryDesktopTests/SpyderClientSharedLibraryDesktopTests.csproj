@@ -128,7 +128,8 @@
     <Compile Include="Models\MockRenderSceneDataProvider.cs" />
     <Compile Include="Models\RenderSceneTests.cs" />
     <Compile Include="Net\DrawingData\Deserializers\DrawingDataDeserializerTests.cs" />
-    <Compile Include="Net\ISpyderClientTestBase.cs" />
+    <Compile Include="Net\SpyderClientTestBase.cs" />
+    <Compile Include="Net\TestUdpServer.cs" />
     <Compile Include="Net\QFTTests.cs" />
     <Compile Include="Net\SpyderClientTests.cs" />
     <Compile Include="Net\SpyderUdpClientTests.cs" />

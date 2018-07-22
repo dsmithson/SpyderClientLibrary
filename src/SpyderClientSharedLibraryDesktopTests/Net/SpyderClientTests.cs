@@ -9,7 +9,7 @@ using System.IO;
 
 namespace Spyder.Client.Net
 {
-    public class SpyderClientTests : ISpyderClientTestBase
+    public class SpyderClientTests : SpyderClientTestBase
     {
         public SpyderClientTests()
             : base((hardwareType, address) =>

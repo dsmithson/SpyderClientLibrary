@@ -3,20 +3,26 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Spyder.Client.Common;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Vista.SystemManager;
 
 namespace Spyder.Client.Net
 {
-    public abstract class ISpyderClientTestBase
+    public abstract class SpyderClientTestBase
     {
-        public const string serverIP = "192.168.86.85";
+        public const string serverIP = "127.0.0.1";
 
         private static ISpyderClient udp;
+        private static TestUdpServer server;
         private readonly Func<HardwareType, string, Task<ISpyderClient>> getClient;
-        
-        protected ISpyderClientTestBase(Func<HardwareType, string, Task<ISpyderClient>> getClient)
+                
+        protected SpyderClientTestBase(Func<HardwareType, string, Task<ISpyderClient>> getClient)
         {
             this.getClient = getClient;
         }
@@ -24,6 +30,10 @@ namespace Spyder.Client.Net
         [TestInitialize]
         public void ClassInitialize()
         {
+            //Startup a local test server
+            if (serverIP == IPAddress.Loopback.ToString() && server == null)
+                server = new TestUdpServer();
+
             if (udp == null)
             {
                 udp = getClient(HardwareType.SpyderX80, serverIP).Result;
@@ -34,7 +44,7 @@ namespace Spyder.Client.Net
                 }
             }
         }
-
+        
         [ClassCleanup]
         public static void ClassCleanup()
         {
@@ -42,6 +52,12 @@ namespace Spyder.Client.Net
             {
                 udp.ShutdownAsync().Wait();
                 udp = null;
+            }
+
+            if(server != null)
+            {
+                server.Dispose();
+                server = null;
             }
         }
         
@@ -63,7 +79,7 @@ namespace Spyder.Client.Net
             //Task<Source> GetSource(int sourceRegisterID);
             //Task<Source> GetSource(IRegister sourceRegister);
             //Task<Source> GetSource(string sourceName);
-
+            
             var sources = await GetDataTest(() => udp.GetSources());
             foreach (var expected in sources)
             {
