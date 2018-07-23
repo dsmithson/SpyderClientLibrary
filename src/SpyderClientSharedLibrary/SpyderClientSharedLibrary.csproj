@@ -21,6 +21,7 @@
     <WarningsAsErrors />
     <OutputPath>bin\Debug</OutputPath>
     <NoWarn />
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

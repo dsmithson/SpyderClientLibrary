@@ -76,12 +76,12 @@ namespace Spyder.Client.Common
                 //Get XDocument instances
                 var configDocument = deserializer.GetXDocument(systemConfigurationFile);
                 var scriptDocument = deserializer.GetXDocument(scriptsFile);
-                if(configDocument == null)
+                if (configDocument == null)
                 {
                     TraceQueue.Trace(this, TracingLevel.Warning, "Configuration XML missing.  Unable to parse system configuration.");
                     return false;
                 }
-                if(scriptDocument == null)
+                if (scriptDocument == null)
                 {
                     TraceQueue.Trace(this, TracingLevel.Warning, "Script XML missing.  Unable to parse system configuration.");
                     return false;
@@ -201,16 +201,16 @@ namespace Spyder.Client.Common
                 () => document.Descendants("Sources")
                         .SelectDescendantsByValueResult()
                         .Select((item) => new Source()
-                                {
-                                    Name = deserializer.Read(item, "Name", string.Empty),
-                                    Thumbnail = deserializer.Read(item, "Thumbnail", string.Empty),
-                                    InputConfigID = deserializer.Read(item, "InputConfigID", -1),
-                                    RouterID = deserializer.Read(item, "RouterID", -1),
-                                    RouterInput = deserializer.Read(item, "RouterInput", -1),
-                                    PreferredLayerID = deserializer.Read(item, "PreferredLayer", -1),
-                                    PreferredTreatmentID = deserializer.Read(item, "PreferredTreatment", -1),
-                                    LinearKeySource = deserializer.Read(item, "LinearKeySource", string.Empty),
-                                }),
+                        {
+                            Name = deserializer.Read(item, "Name", string.Empty),
+                            Thumbnail = deserializer.Read(item, "Thumbnail", string.Empty),
+                            InputConfigID = deserializer.Read(item, "InputConfigID", -1),
+                            RouterID = deserializer.Read(item, "RouterID", -1),
+                            RouterInput = deserializer.Read(item, "RouterInput", -1),
+                            PreferredLayerID = deserializer.Read(item, "PreferredLayer", -1),
+                            PreferredTreatmentID = deserializer.Read(item, "PreferredTreatment", -1),
+                            LinearKeySource = deserializer.Read(item, "LinearKeySource", string.Empty),
+                        }),
 
                 //Register Item Lookup
                 (itemList, register) => itemList.FirstOrDefault(s => string.Compare(s.Name, register.Name, StringComparison.CurrentCultureIgnoreCase) == 0));
@@ -303,13 +303,13 @@ namespace Spyder.Client.Common
                                         Salvo = ParseRouterSalvo(item.Element("Salvo"))
                                     };
                                 }
-                                else if(type.Contains("BackupSourcePresetKey"))
+                                else if (type.Contains("BackupSourcePresetKey"))
                                 {
                                     functionKey = new BackupSourceFunctionKey()
                                     {
                                         SourceName = item.Element("SourceName").Value,
                                         SourceLookupID = int.Parse(item.Element("SourceLookupId").Value),
-                                        BackupSourceName =  item.Element("BackupSourceName").Value,
+                                        BackupSourceName = item.Element("BackupSourceName").Value,
                                         BackupType = (SourceBackupType)Enum.Parse(typeof(SourceBackupType), item.Element("BackupType").Value)
                                     };
                                 }
@@ -350,30 +350,34 @@ namespace Spyder.Client.Common
                     .SelectDescendantsByValueResult()
                     .Select((item) =>
                     {
+                        var commandKey = new CommandKey()
+                        {
+                            LookupID = int.Parse(item.Element("ID").Value),
+                            ScriptID = int.Parse(item.Element("ScriptID").Value),
+                            Name = item.Element("DisplayText").Value,
+                            RegisterID = (int.Parse(item.Element("Page").Value) * 1000 + int.Parse(item.Element("KeyID").Value))
+                        };
+
                         //Spyder studio (5.0+) refers to absolute as IsAbsolute - Advanced (4.x and below) refer to this as Absolute
-                        bool isRelative;
                         var absoluteNode = item.Element("Absolute");
                         if (absoluteNode != null)
                         {
-                            isRelative = !bool.Parse(absoluteNode.Value);
+                            //V4 style
+                            commandKey.IsRelative = !bool.Parse(absoluteNode.Value);
                         }
-                        else if((absoluteNode = item.Element("ScriptType")) != null)
+                        else if ((absoluteNode = item.Element("ScriptType")) != null)
                         {
-                            isRelative = absoluteNode.Value.Contains("Relative");
+                            //V5 style
+                            commandKey.IsRelative = absoluteNode.Value.Contains("Relative");
+                            commandKey.RegisterColorDefined = bool.Parse(item.Element("HasCustomColor").Value);
+                            commandKey.RegisterColor = Color.FromHexString(item.Element("CustomColor").Value);
                         }
                         else
                         {
                             throw new InvalidDataException("Unable to find relative/absolute status for command key");
                         }
 
-                        return new CommandKey()
-                        {
-                            LookupID = int.Parse(item.Element("ID").Value),
-                            ScriptID = int.Parse(item.Element("ScriptID").Value),
-                            IsRelative = isRelative,
-                            Name = item.Element("DisplayText").Value,
-                            RegisterID = (int.Parse(item.Element("Page").Value) * 1000 + int.Parse(item.Element("KeyID").Value))
-                        };
+                        return commandKey;
                     }),
 
                 //Register Item Lookup
@@ -391,7 +395,8 @@ namespace Spyder.Client.Common
                     if (script != null)
                     {
                         cmdKey.CueCount = script.Cues.Count;
-                        cmdKey.IsRelative = script.IsRelative;
+                        cmdKey.IsRelative = (cmdKey.IsRelative || script.IsRelative); //V5 will store isRelative on the cmdKey, V4 will store it on the script
+                        script.IsRelative = (cmdKey.IsRelative || script.IsRelative);
                         //cmdKey.Name = script.Name;
                         index++;
                     }
@@ -476,23 +481,23 @@ namespace Spyder.Client.Common
                     .Elements("Item")
                     .Select(item => item.Element("Value") ?? item)
                     .Select(item => new Router()
-                {
-                    ID = deserializer.Read(item, "ID", -1),
-                    Name = deserializer.Read(item, "Name", string.Empty),
-                    RouterType = deserializer.Read(item, "RouterType", string.Empty),
-                    ConnectorType = deserializer.ReadEnum(item, "ConnectorType", InputConnector.HD15).ToConnectorType(),
-                    InputCount = deserializer.Read(item, "Inputs", -1),
-                    OutputCount = deserializer.Read(item, "Outputs", -1),
-                    Port = deserializer.Read(item, "Port", -1),
-                    SerialRouter = deserializer.Read(item, "SerialRouter", false),
-                    LevelControlledRouter = deserializer.Read(item, "LevelControlledRouter", false),
-                    ControlLevel = deserializer.Read(item, "ControlLevel", 0),
-                    LevelCount = deserializer.Read(item, "LevelCount", 0),
-                    TransportType = deserializer.Read(item, "TransportType", string.Empty),
-                    IPAddress = deserializer.Read(item, "IPAddress", string.Empty),
-                    IPRouter = deserializer.Read(item, "IPRouter", false),
+                    {
+                        ID = deserializer.Read(item, "ID", -1),
+                        Name = deserializer.Read(item, "Name", string.Empty),
+                        RouterType = deserializer.Read(item, "RouterType", string.Empty),
+                        ConnectorType = deserializer.ReadEnum(item, "ConnectorType", InputConnector.HD15).ToConnectorType(),
+                        InputCount = deserializer.Read(item, "Inputs", -1),
+                        OutputCount = deserializer.Read(item, "Outputs", -1),
+                        Port = deserializer.Read(item, "Port", -1),
+                        SerialRouter = deserializer.Read(item, "SerialRouter", false),
+                        LevelControlledRouter = deserializer.Read(item, "LevelControlledRouter", false),
+                        ControlLevel = deserializer.Read(item, "ControlLevel", 0),
+                        LevelCount = deserializer.Read(item, "LevelCount", 0),
+                        TransportType = deserializer.Read(item, "TransportType", string.Empty),
+                        IPAddress = deserializer.Read(item, "IPAddress", string.Empty),
+                        IPRouter = deserializer.Read(item, "IPRouter", false),
 
-                    Patch = new Dictionary<int, RouterPatch>(
+                        Patch = new Dictionary<int, RouterPatch>(
                         item.Element("Patch")
                                 .Descendants("Item")
                                 .ToDictionary(
@@ -507,7 +512,7 @@ namespace Spyder.Client.Common
                                         RouterOutput = deserializer.Read(value, "RouterOutput", -1)
                                     };
                                 }))
-                }));
+                    }));
         }
 
         protected List<InputConfig> ParseInputConfigs(XDocument document)
@@ -758,11 +763,19 @@ namespace Spyder.Client.Common
             List<T> responseItems = ParseList(processor);
             List<Register> registers = ParseRegisterList(document, type);
             List<T> response = new List<T>();
+            
             foreach (Register register in registers)
             {
                 T responseItem = itemLookup(responseItems, register);
                 if (responseItem != null)
                 {
+                    //HACK:  Spyder Studio file format is different for command keys, which store their own register color
+                    if (responseItem.RegisterColorDefined)
+                    {
+                        register.RegisterColorDefined = responseItem.RegisterColorDefined;
+                        register.RegisterColor = responseItem.RegisterColor;
+                    }
+
                     responseItem.CopyFrom(register);
                     response.Add(responseItem);
                     responseItems.Remove(responseItem);
@@ -808,7 +821,7 @@ namespace Spyder.Client.Common
         {
             //Depending on the vintange of the call, there may be a value sub-element where the attribute lives
             var valueElement = node?.Element("Value");
-            if(valueElement != null)
+            if (valueElement != null)
             {
                 string response = GetAttributeFromTypeAttribute(valueElement);
                 if (response != null)
