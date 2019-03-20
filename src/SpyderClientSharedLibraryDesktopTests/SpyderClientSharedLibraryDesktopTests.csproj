@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Spyder.Client</RootNamespace>
     <AssemblyName>SpyderClientSharedLibraryDesktopTests</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -84,7 +84,8 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net" />
     <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Threading.Tasks.Dataflow.4.9.0\lib\netstandard2.0\System.Threading.Tasks.Dataflow.dll</HintPath>
+      <HintPath>..\..\..\SpyderClient\src\packages\System.Threading.Tasks.Dataflow.4.9.0\lib\netstandard2.0\System.Threading.Tasks.Dataflow.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="System.Xaml" />
     <Reference Include="System.XML" />
@@ -113,6 +114,7 @@
     <Compile Include="Common\ServerSettingsV4Tests.cs" />
     <Compile Include="Common\ServerSettingsTestBase.cs" />
     <Compile Include="Common\SystemDataTestBase.cs" />
+    <Compile Include="Common\SystemDataV5_2Tests.cs" />
     <Compile Include="Common\SystemDataV5Tests.cs" />
     <Compile Include="Common\SystemDataV4Tests.cs" />
     <Compile Include="Drawing\BitmapHelperTests.cs" />
@@ -162,6 +164,8 @@
     <EmbeddedResource Include="Resources\TestConfigs\Version5\FrameConfiguration.xml" />
     <EmbeddedResource Include="Resources\TestConfigs\Version5\Scripts.xml" />
     <EmbeddedResource Include="Resources\TestConfigs\Version5\SystemConfiguration.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version5_2\Scripts.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version5_2\SystemConfiguration.xml" />
     <Content Include="Resources\Vista.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
