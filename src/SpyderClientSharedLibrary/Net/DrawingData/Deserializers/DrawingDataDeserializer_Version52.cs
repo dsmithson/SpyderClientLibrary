@@ -14,8 +14,8 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// </summary>
     public class DrawingDataDeserializer_Version52 : IDrawingDataDeserializer
     {
-        private string serverVersion;
-
+        private readonly string serverVersion;
+        private readonly bool serverVersionIs50x;
 
         [Flags]
         private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
@@ -23,6 +23,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         public DrawingDataDeserializer_Version52(string serverVersion)
         {
             this.serverVersion = serverVersion;
+            this.serverVersionIs50x = serverVersion.StartsWith("5.0");
         }
 
         public DrawingData Deserialize(byte[] stream)
@@ -129,7 +130,13 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 //Fill the new pixelspace
                 newPS.Rect = stream.GetRectangle(ref index);
                 //newPS.Scale = stream.GetFloat(ref index);
-                newPS.RenewMasterFrameID = stream.GetInt(ref index);
+
+                //Versions above 5.0.x (5.1.x / 5.2.x / etc) no longer have a RenewalMasterFrameID
+                if (serverVersionIs50x)
+                {
+                    newPS.RenewMasterFrameID = stream.GetInt(ref index);
+                }
+
                 newPS.ID = stream.GetShort(ref index);
                 MixerBus bus = (MixerBus)stream[index++]; //X80 no longer has PS scale
                 newPS.Name = stream.GetString(ref index);
@@ -213,6 +220,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 //Layer flags (block 3)
                 flags = stream[index++];
                 l.IsLocked = (flags & 0x01) > 0;
+                //l.IsVisible = (flags & 0x02) > 0;
 
                 kf.BorderThickness = stream.GetShort(ref index);	//border thickness
                 kf.Width = stream.GetShort(ref index);			//HSize
