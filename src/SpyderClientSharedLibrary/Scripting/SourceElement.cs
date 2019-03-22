@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spyder.Client.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,15 +9,20 @@ namespace Spyder.Client.Scripting
 {
     public class SourceElement : ScriptElement
     {
-        public string SourceName
+        public Content Content
         {
             get
             {
-                if (SourceNames == null || SourceNames.Count < 1)
+                if (Contents == null || Contents.Count < 1)
                     return null;
                 else
-                    return SourceNames[0];
+                    return Contents[0];
             }
+        }
+
+        public string SourceName
+        {
+            get { return Content?.Name; }
         }
 
         public SourceElement()

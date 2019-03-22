@@ -798,9 +798,9 @@ namespace Spyder.Client.Net
                 //Set type specific properties
                 if (element is SourceElement || element is MixerElement)
                 {
-                    dkf.Source = element.GetDrivingSource(cueIndex, ElementIndexRelativeTo.ParentScript);
+                    dkf.Source = element.GetDrivingContent(cueIndex, ElementIndexRelativeTo.ParentScript)?.Name;
                     dkf.LoadedStill = string.Empty;
-                    dkf.WindowLabel = (element.SourceNames.Count > 0 ? element.SourceNames.Values.First() : element.Name);
+                    dkf.WindowLabel = (element.Contents.Count > 0 ? element.Contents.Values.First().Name : element.Name);
 
                     var source = GetSource(dkf.Source);
                     if (source != null)

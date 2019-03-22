@@ -48,7 +48,8 @@ namespace Spyder.Client.Models
             await RelativeScriptMixerElementTest(mixerElement =>
                 {
                     //Create a different source at cue 2
-                    mixerElement.SourceNames.Add(2, mixerElement.SourceNames[0] + " - Copy");
+                    var c = mixerElement.Contents[0];
+                    mixerElement.Contents.Add(2, new Content() { Type = c.Type, Name = c.Name + " - Copy" });
                 });
         }
 
@@ -81,7 +82,7 @@ namespace Spyder.Client.Models
 
             //Mirror the source and keyframe for the onscreen layer.  This should cause nothing to happen when we
             //recall cue 1, since everything matches
-            mixerElement.SourceNames.Add(0, onscreenLayer.Source);
+            mixerElement.Contents.Add(0, new Content() { Type = ContentType.Source, Name = onscreenLayer.Source });
             mixerElement.KeyFrames.Add(0, new KeyFrame(onscreenLayer.KeyFrame));
 
             //Make some change(s) to cue index 2 that should cause a mixer transition

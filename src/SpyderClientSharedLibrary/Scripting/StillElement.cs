@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spyder.Client.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,18 +9,20 @@ namespace Spyder.Client.Scripting
 {
     public class StillElement : ScriptElement
     {
-        private string fileName;
+        public Content Content
+        {
+            get
+            {
+                if (Contents == null || Contents.Count < 1)
+                    return null;
+                else
+                    return Contents[0];
+            }
+        }
+
         public string FileName
         {
-            get { return fileName; }
-            set
-            {
-                if (fileName != value)
-                {
-                    fileName = value;
-                    OnPropertyChanged();
-                }
-            }
+            get { return Content?.Name; }
         }
     }
 }

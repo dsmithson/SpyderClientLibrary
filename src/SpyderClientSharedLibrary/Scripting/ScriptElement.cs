@@ -224,18 +224,24 @@ namespace Spyder.Client.Scripting
             }
         }
 
-        private Dictionary<int, string> sourceNames = new Dictionary<int,string>();
-        public Dictionary<int, string> SourceNames
+        private Dictionary<int, Content> contents = new Dictionary<int, Content>();
+        public Dictionary<int, Content> Contents
         {
-            get { return sourceNames; }
+            get { return contents; }
             set
             {
-                if (sourceNames != value)
+                if(contents != value)
                 {
-                    sourceNames = value;
+                    contents = value;
                     OnPropertyChanged();
                 }
             }
+        }
+        
+        [Obsolete("Please migrate code consuming this property to use the Contents property instead")]
+        public Dictionary<int, string> SourceNames
+        {
+            get { return contents.ToDictionary(c => c.Key, c => c.Value.Name); }
         }
 
         public virtual KeyFrame GetDrivingKeyFrame(int cueIndex, ElementIndexRelativeTo relativeTo)
@@ -253,19 +259,25 @@ namespace Spyder.Client.Scripting
             return null;
         }
 
-        public virtual string GetDrivingSource(int cueIndex, ElementIndexRelativeTo relativeTo)
+        public virtual Content GetDrivingContent(int cueIndex, ElementIndexRelativeTo relativeTo)
         {
             if (relativeTo == ElementIndexRelativeTo.ParentScript)
                 cueIndex -= (this.startCue - 1);
 
             while (cueIndex >= 0)
             {
-                if (sourceNames.ContainsKey(cueIndex))
-                    return sourceNames[cueIndex];
+                if (contents.ContainsKey(cueIndex))
+                    return contents[cueIndex];
 
                 cueIndex--;
             }
             return null;
+        }
+
+        [Obsolete("Please migrate code consuming this property to use the GetDrivingContent method instead")]
+        public virtual string GetDrivingSource(int cueIndex, ElementIndexRelativeTo relativeTo)
+        {
+            return GetDrivingContent(cueIndex, relativeTo)?.Name;
         }
     }
 }

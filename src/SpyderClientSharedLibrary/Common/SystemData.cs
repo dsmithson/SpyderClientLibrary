@@ -878,7 +878,16 @@ namespace Spyder.Client.Common
             {
                 return ParseScriptElement(node, (StillElement e) =>
                     {
-                        e.FileName = Path.GetFileName(deserializer.Read(node, "FileName", string.Empty));
+                        //Versions below 5.2 will have a statically assigned filename instead of content on a still element
+                        if(node.Element("FileName") != null && e.Contents.Count == 0)
+                        {
+                            //Create a dummy content item for this still
+                            e.Contents.Add(0, new Content()
+                            {
+                                Type = ContentType.Still,
+                                Name = deserializer.Read(node, "FileName", string.Empty)
+                            });
+                        }
                     });
             }
             else if (elementType.Contains("ElementOff"))
@@ -912,12 +921,36 @@ namespace Spyder.Client.Common
                 IsDisabled = deserializer.Read(node, "Disabled", false),
                 KeyFrames = node.Element("KeyFrames").Descendants("Item").ToDictionary(
                     (item => deserializer.Read(item, "Key", -1)),
-                    (item => ParseKeyFrame(item.Element("Value") ?? item))),
-
-                SourceNames = node.Element("Sources").Descendants("Item").ToDictionary(
-                    (item => deserializer.Read(item, "Key", -1)),
-                    (item => deserializer.Read(item, "Value", string.Empty)))
+                    (item => ParseKeyFrame(item.Element("Value") ?? item)))
             };
+
+            //Spyder studio (5.2+) refers to content more generically as content, where older versions maintain a string source list
+            if (node.Element("Sources") != null)
+            {
+                //V4 style
+                response.Contents = node.Element("Sources").Descendants("Item").ToDictionary(
+                    (item => deserializer.Read(item, "Key", -1)),
+                    (item => new Content() { Type = ContentType.Source, Name = deserializer.Read(item, "Value", string.Empty) }));
+            }
+            else if (node.Element("Contents") != null)
+            {
+                //V5 style
+                response.Contents = node.Element("Contents").Descendants("Item").ToDictionary(
+                    (item => deserializer.Read(item, "Key", -1)),
+                    (item) =>
+                    {
+                        var val = item.Element("Value");
+                        return new Content()
+                        {
+                            Type = (ContentType)Enum.Parse(typeof(ContentType), deserializer.Read(val, "Type", "Source")),
+                            Name = deserializer.Read(val, "Name", string.Empty)
+                        };
+                    });
+            }
+            else
+            {
+                throw new InvalidDataException("Unable to find element content");
+            }
 
             //Let the passed in handler parse the rest of this object
             if (parser != null)

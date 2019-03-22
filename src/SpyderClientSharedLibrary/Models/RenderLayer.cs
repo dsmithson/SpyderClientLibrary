@@ -488,7 +488,7 @@ namespace Spyder.Client.Models
                 if (element is StillElement)
                 {
                     //Generate layer properties for a still
-                    layer.Thumbnail = layerProperties.Item3;
+                    layer.Thumbnail = layerProperties.Item3?.Name;
 
                     if (dataProvider != null)
                     {
@@ -506,7 +506,7 @@ namespace Spyder.Client.Models
                 else
                 {
                     //Generate layer properties for a source
-                    string sourceName = layerProperties.Item3;
+                    string sourceName = layerProperties.Item3?.Name;
                     if (!string.IsNullOrEmpty(sourceName))
                     {
                         Source source = await dataProvider.GetSource(sourceName);
@@ -564,9 +564,9 @@ namespace Spyder.Client.Models
             return response;
         }
 
-        private static Tuple<double, KeyFrame, string> GetRenderLayerProperties(DrawingData currentDrawingData, ScriptElement element, int layerOffset, int elementCueOffset)
+        private static Tuple<double, KeyFrame, Content> GetRenderLayerProperties(DrawingData currentDrawingData, ScriptElement element, int layerOffset, int elementCueOffset)
         {
-            string sourceName = string.Empty;
+            Content content = null;
             double opacity = 0;
             KeyFrame keyFrame = null;
 
@@ -578,7 +578,7 @@ namespace Spyder.Client.Models
             {
                 if (layerOffset == 0)
                 {
-                    sourceName = ((SourceElement)element).SourceName;
+                    content = ((SourceElement)element).Content;
                     opacity = 1;
                     keyFrame = element.GetDrivingKeyFrame(elementCueOffset, ElementIndexRelativeTo.Element);
                 }
@@ -587,17 +587,17 @@ namespace Spyder.Client.Models
             {
                 if (layerOffset == 0)
                 {
-                    sourceName = ((StillElement)element).FileName;
+                    content = ((StillElement)element).Content;
                     opacity = 1;
                     keyFrame = element.GetDrivingKeyFrame(elementCueOffset, ElementIndexRelativeTo.Element);
                 }
             }
             else if (element is MixerElement)
             {
-                string drivingSource = element.GetDrivingSource(elementCueOffset, ElementIndexRelativeTo.Element);
+                var drivingContent = element.GetDrivingContent(elementCueOffset, ElementIndexRelativeTo.Element);
                 KeyFrame drivingKf = element.GetDrivingKeyFrame(elementCueOffset, ElementIndexRelativeTo.Element);
 
-                if (!string.IsNullOrEmpty(drivingSource) && drivingKf != null)
+                if (drivingContent != null && drivingKf != null)
                 {
                     int pgmLayerID = element.StartLayer;
 
@@ -610,11 +610,11 @@ namespace Spyder.Client.Models
                         if (layerA != null && layerB != null)
                         {
                             DrawingKeyFrame pgmLayer, pvwLayer;
-                            GetMixerTopAndBottomLayers(layerA, layerB, element.PixelSpaceID, drivingSource, drivingKf, out pgmLayer, out pvwLayer);
+                            GetMixerTopAndBottomLayers(layerA, layerB, element.PixelSpaceID, drivingContent, drivingKf, out pgmLayer, out pvwLayer);
                             pgmLayerID = pgmLayer.LayerID;
 
                             //If PGM does not match the target KF and source, then a mixer transition will occur
-                            if (drivingKf.Equals(pgmLayer.KeyFrame) && string.Compare(drivingSource, pgmLayer.Source, StringComparison.CurrentCultureIgnoreCase) == 0)
+                            if (drivingKf.Equals(pgmLayer.KeyFrame) && ContentMatches(pgmLayer, drivingContent))
                                 pgmLayerID = pgmLayer.LayerID;
                             else
                                 pgmLayerID = pvwLayer.LayerID;
@@ -627,7 +627,7 @@ namespace Spyder.Client.Models
                     {
                         opacity = 1;
                         keyFrame = new KeyFrame(drivingKf);
-                        sourceName = drivingSource;
+                        content = drivingContent;
                     }
                     else
                     {
@@ -637,27 +637,37 @@ namespace Spyder.Client.Models
             }
             else if (element is InputArrayElement)
             {
-                if (element.KeyFrames.ContainsKey(layerOffset) && element.SourceNames.ContainsKey(layerOffset))
+                if (element.KeyFrames.ContainsKey(layerOffset) && element.Contents.ContainsKey(layerOffset))
                 {
                     opacity = 1;
                     keyFrame = new KeyFrame(element.KeyFrames[layerOffset]);
-                    sourceName = element.SourceNames[layerOffset];
+                    content = element.Contents[layerOffset];
                 }
             }
 
-            return new Tuple<double, KeyFrame, string>(opacity, keyFrame, sourceName);
+            return new Tuple<double, KeyFrame, Content>(opacity, keyFrame, content);
         }
 
-        protected static void GetMixerTopAndBottomLayers(DrawingKeyFrame layerA, DrawingKeyFrame layerB, int targetPixelSpaceID, string targetSource, KeyFrame targetKeyFrame, out DrawingKeyFrame pgmLayer, out DrawingKeyFrame pvwLayer)
+        protected static bool ContentMatches(DrawingKeyFrame layer, Content targetContent)
+        {
+            if (targetContent.Type == ContentType.Source && layer.Source == targetContent.Name)
+                return true;
+            else if (targetContent.Type == ContentType.Still && layer.LoadedStill == targetContent.Name)
+                return true;
+            else
+                return false;
+        }
+
+        protected static void GetMixerTopAndBottomLayers(DrawingKeyFrame layerA, DrawingKeyFrame layerB, int targetPixelSpaceID, Content targetContent, KeyFrame targetKeyFrame, out DrawingKeyFrame pgmLayer, out DrawingKeyFrame pvwLayer)
         {
             //Run through a number of possible scenarios, following system logic, to determine layer pgm/pvw states
-            if (layerA.PixelSpaceID == targetPixelSpaceID && layerA.IsVisible && layerA.Source == targetSource && layerA.KeyFrame.Equals(targetKeyFrame))
+            if (layerA.PixelSpaceID == targetPixelSpaceID && layerA.IsVisible && ContentMatches(layerA, targetContent) && layerA.KeyFrame.Equals(targetKeyFrame))
             {
                 //Layer A is already matches the target pixelspace, keyframe, and source
                 pgmLayer = layerA;
                 pvwLayer = layerB;
             }
-            else if (layerA.PixelSpaceID == targetPixelSpaceID && layerA.IsVisible && layerB.Source == targetSource && layerB.KeyFrame.Equals(targetKeyFrame))
+            else if (layerA.PixelSpaceID == targetPixelSpaceID && layerA.IsVisible && ContentMatches(layerB, targetContent) && layerB.KeyFrame.Equals(targetKeyFrame))
             {
                 //Layer B is already matches the target pixelspace, keyframe, and source
                 pgmLayer = layerB;
