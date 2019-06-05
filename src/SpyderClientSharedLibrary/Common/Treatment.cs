@@ -170,6 +170,20 @@ namespace Spyder.Client.Common
             }
         }
 
+        private bool isTransparencyEnabled;
+        public bool IsTransparencyEnabled
+        {
+            get { return isTransparencyEnabled; }
+            set
+            {
+                if (isTransparencyEnabled != value)
+                {
+                    isTransparencyEnabled = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public Treatment()
         {
         }
@@ -238,6 +252,7 @@ namespace Spyder.Client.Common
                 this.IsVPositionEnabled = copyFrom.IsVPositionEnabled;
                 this.IsShadowEnabled = copyFrom.IsShadowEnabled;
                 this.IsSizeEnabled = copyFrom.IsSizeEnabled;
+                this.IsTransparencyEnabled = copyFrom.IsTransparencyEnabled;
             }
 
             //Update register properties
@@ -344,27 +359,29 @@ namespace Spyder.Client.Common
         
         public bool Equals(Treatment other)
         {
-            if(other == null)
+            if (other == null)
                 return false;
-            else if(this.id != other.id)
+            else if (this.id != other.id)
                 return false;
-            else if(this.isAspectRatioOffsetEnabled != other.isAspectRatioOffsetEnabled)
+            else if (this.isAspectRatioOffsetEnabled != other.isAspectRatioOffsetEnabled)
                 return false;
-            else if(this.isBorderEnabled != other.isBorderEnabled)
+            else if (this.isBorderEnabled != other.isBorderEnabled)
                 return false;
-            else if(this.isCloneEnabled != other.isCloneEnabled)
+            else if (this.isCloneEnabled != other.isCloneEnabled)
                 return false;
-            else if(this.isDurationEnabled != other.isDurationEnabled)
+            else if (this.isDurationEnabled != other.isDurationEnabled)
                 return false;
-            else if(this.isPanZoomEnabled != other.isPanZoomEnabled)
+            else if (this.isPanZoomEnabled != other.isPanZoomEnabled)
                 return false;
-            else if(this.isHPositionEnabled != other.isHPositionEnabled)
+            else if (this.isHPositionEnabled != other.isHPositionEnabled)
                 return false;
-            else if(this.isVPositionEnabled != other.isVPositionEnabled)
+            else if (this.isVPositionEnabled != other.isVPositionEnabled)
                 return false;
-            else if(this.isShadowEnabled != other.isShadowEnabled)
+            else if (this.isShadowEnabled != other.isShadowEnabled)
                 return false;
-            else if(this.isSizeEnabled != other.isSizeEnabled)
+            else if (this.isSizeEnabled != other.isSizeEnabled)
+                return false;
+            else if (this.isTransparencyEnabled != other.isTransparencyEnabled)
                 return false;
             else
                 return base.Equals(other);

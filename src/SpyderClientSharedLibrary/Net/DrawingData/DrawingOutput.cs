@@ -195,6 +195,48 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
+        private MSTMode mst = MSTMode.Off;
+        public MSTMode MST
+        {
+            get { return mst; }
+            set
+            {
+                if(mst != value)
+                {
+                    mst = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string auxSource;
+        public string AuxSource
+        {
+            get { return auxSource; }
+            set
+            {
+                if(auxSource != value)
+                {
+                    auxSource = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private int auxInput;
+        public int AuxInput
+        {
+            get { return auxInput; }
+            set
+            {
+                if(auxInput != value)
+                {
+                    auxInput = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        
         private OutputModuleType outputType;
         public OutputModuleType OutputType
         {

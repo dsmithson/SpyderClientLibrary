@@ -668,6 +668,34 @@ namespace Spyder.Client.Common
             }
         }
 
+        private BorderStretchMode borderShapeStretch = BorderStretchMode.Fill;
+        public BorderStretchMode BorderShapeStretch
+        {
+            get { return borderShapeStretch; }
+            set
+            {
+                if(borderShapeStretch != value)
+                {
+                    borderShapeStretch = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private float borderShapeStretchAspectRatio = 1.777f;
+        public float BorderShapeStretchAspectRatio
+        {
+            get { return borderShapeStretchAspectRatio; }
+            set
+            {
+                if(borderShapeStretchAspectRatio != value)
+                {
+                    borderShapeStretchAspectRatio = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private float aspectRatioOffset;
         public float AspectRatioOffset
         {
@@ -749,6 +777,8 @@ namespace Spyder.Client.Common
             BorderShapeSource = copyFrom.BorderShapeSource;
             BorderShape = copyFrom.BorderShape;
             BorderShapeFile = copyFrom.BorderShapeFile;
+            BorderShapeStretch = copyFrom.BorderShapeStretch;
+            BorderShapeStretchAspectRatio = copyFrom.BorderShapeStretchAspectRatio;
         }
 
         public override int GetHashCode()
@@ -809,6 +839,8 @@ namespace Spyder.Client.Common
             if (this.BorderShapeSource != compare.BorderShapeSource) return false;
             if (this.BorderShape != compare.BorderShape) return false;
             if (this.BorderShapeFile != compare.BorderShapeFile) return false;
+            if (this.BorderShapeStretch != compare.BorderShapeStretch) return false;
+            if (this.BorderShapeStretchAspectRatio != compare.BorderShapeStretchAspectRatio) return false;
             if (this.AspectRatioOffset != compare.AspectRatioOffset) return false;
 
             return true;
