@@ -6,24 +6,23 @@ using System.Text;
 using System.Threading.Tasks;
 using Spyder.Client.IO;
 using Knightware.Primitives;
+using Knightware.Diagnostics;
 
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
     /// <summary>
-    /// Deserializes DrawingData messages in the version 52 serialization format - Spyder Studio / X80
+    /// Deserializes DrawingData messages in the version 53 serialization format - Spyder Studio / X80
     /// </summary>
-    public class DrawingDataDeserializer_Version52 : IDrawingDataDeserializer
+    public class DrawingDataDeserializer_Version53 : IDrawingDataDeserializer
     {
         private readonly string serverVersion;
-        private readonly bool serverVersionIs50x;
 
         [Flags]
         private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
 
-        public DrawingDataDeserializer_Version52(string serverVersion)
+        public DrawingDataDeserializer_Version53(string serverVersion)
         {
             this.serverVersion = serverVersion;
-            this.serverVersionIs50x = serverVersion.StartsWith("5.0");
         }
 
         public DrawingData Deserialize(byte[] stream)
@@ -77,6 +76,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             response.IsLiveUpdateEnabled = (flags & 0x80) > 0;
             flags = stream[index++];
             response.LiveUpdatesTemporarilyDisabled = (flags & 0x01) > 0;
+            response.IsHdcpEnabled = (flags & 0x02) > 0;
 
             //System Frame Rate
             response.SystemFrameRate = (FieldRate)stream[index++];
@@ -89,7 +89,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 {
                     FrameID = frameID,
                     FrameAOR = stream.GetRectangle(ref index),
-                    Model = (SpyderModels)stream[index++],
+                    Model = SpyderModelFromByte(stream[index++], response.HardwareType),
                     RenewalMasterFrameID = stream[index++]
                 };
                 frame.ProgramAOR = frame.FrameAOR; //X80 doesn't require PGM/PVW AORs
@@ -132,10 +132,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 //newPS.Scale = stream.GetFloat(ref index);
 
                 //Versions above 5.0.x (5.1.x / 5.2.x / etc) no longer have a RenewalMasterFrameID
-                if (serverVersionIs50x)
-                {
-                    newPS.RenewMasterFrameID = stream.GetInt(ref index);
-                }
+                newPS.RenewMasterFrameID = -1;
 
                 newPS.ID = stream.GetShort(ref index);
                 MixerBus bus = (MixerBus)stream[index++]; //X80 no longer has PS scale
@@ -188,7 +185,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 l.AspectRatio = stream.GetFloat(ref index);	//aspect ratio
                 l.LayerRect = stream.GetRectangle(ref index);
                 l.AOIRect = stream.GetRectangle(ref index);
-                
+
                 //Not storing element type
                 //l.ElementType = (ElementType)stream[index++];	//Element Type
                 index++;
@@ -225,14 +222,13 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.BorderThickness = stream.GetShort(ref index);	//border thickness
                 kf.Width = stream.GetShort(ref index);			//HSize
                 kf.BorderInsideSoftness = stream.GetShort(ref index);	//Border inside softness
-                kf.BorderOutsideSoftness = stream.GetShort(ref index);	//Border outside softness
-                
+                kf.BorderOutsideSoftness = stream.GetShort(ref index);  //Border outside softness
+
                 kf.ShadowHOffset = stream.GetShort(ref index);	//Shadow H Offset
                 kf.ShadowVOffset = stream.GetShort(ref index);	//Shadow V Offset
                 kf.ShadowHSize = stream.GetShort(ref index);		//Shadow H Size
                 kf.ShadowVSize = kf.ShadowHSize;
-                //kf.ShadowVSize = stream.GetShort(ref index);		//Shadow V Size
-                
+
                 kf.ShadowSoftness = stream.GetShort(ref index);	//Shadow softness
                 kf.ShadowTransparency = stream.GetShort(ref index);	//Shadow Transparency
                 kf.BorderLumaOffsetBottom = stream.GetShort(ref index);
@@ -275,7 +271,9 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.BorderShapeSource = (ShapeSource)stream[index++];
                 kf.BorderShape = (ShapeType)stream[index++];
                 kf.BorderShapeFile = stream.GetString(ref index);
-
+                kf.BorderShapeStretch = (BorderStretchMode)stream[index++];
+                kf.BorderShapeStretchAspectRatio = stream.GetFloat(ref index);
+                
                 kf.BorderFillSource = (TextureFillSource)stream[index++];
                 kf.BorderTextureType = (TextureType)stream[index++];
                 kf.BorderTileMode = (TextureTileMode)stream[index++];
@@ -287,7 +285,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     X = l.LayerRect.X + cloneHOffset,
                     Y = l.LayerRect.Y,
                     Width = l.LayerRect.Width,
-                    Height= l.LayerRect.Height
+                    Height = l.LayerRect.Height
                 };
 
                 //Scale (coerced from parent pixelspace)
@@ -306,13 +304,13 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
             //Compatibility fix - if any of the PGM layers are not visible but the preview layers are, promote the preview layers to PGM layers
             //This is needed for Spyder X80 V5.0.3 and above, where PGM and PVW layers have become discrete operating objects
-            for(int i=0; i<newDkCount; i++)
+            for (int i = 0; i < newDkCount; i++)
             {
                 var pgmLayer = response.DrawingKeyFrames[i];
-                if(pgmLayer != null && !pgmLayer.IsVisible && !pgmLayer.IsBackground)
+                if (pgmLayer != null && !pgmLayer.IsVisible && !pgmLayer.IsBackground)
                 {
                     var pvwLayer = response.PreviewDrawingKeyFrames[i];
-                    if(pvwLayer.IsVisible)
+                    if (pvwLayer.IsVisible)
                     {
                         response.DrawingKeyFrames.Remove(i);
                         response.PreviewDrawingKeyFrames.Remove(i);
@@ -450,7 +448,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             {
                 DrawingOutput output = new DrawingOutput();
 
-                output.OutputType = (OutputModuleType)stream[index++];
+                output.OutputType = OutputModuleTypeFromByte(stream[index++], response.HardwareType);
                 output.ID = stream.GetShort(ref index);
                 output.FrameID = stream.GetShort(ref index);
                 output.RenewalMasterFrameID = stream.GetShort(ref index);
@@ -464,13 +462,16 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 var outputFlags = (OutputFlags)stream[index++];
                 output.Interlaced = outputFlags.HasFlag(OutputFlags.Interlaced);
                 output.IsFrameLocked = outputFlags.HasFlag(OutputFlags.IsFrameLocked);
-                
+
                 output.VerticalRefresh = stream.GetFloat(ref index);
                 output.Name = stream.GetString(ref index);
                 output.HdcpStatus = (HdcpLinkStatus)stream[index++];
 
-                output.OutputMode = (OutputMode)stream[index++];
+                output.OutputMode = OutputModeFromByte(stream[index++], response.HardwareType);
                 output.Rotation = (RotationMode)stream[index++];
+                output.MST = (MSTMode)stream[index++];
+                output.AuxSource = stream.GetString(ref index);
+                output.AuxInput = stream[index++];
 
                 output.OpMonProgramSource = stream.GetRectangle(ref index);
                 output.OpMonProgramDest = stream.GetRectangle(ref index);
@@ -478,7 +479,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 output.OpMonPreviewDest = stream.GetRectangle(ref index);
                 output.ScaledSource = stream.GetRectangle(ref index);
                 output.ScaledDest = stream.GetRectangle(ref index);
-                output.SourceName = stream.GetString(ref index);
 
                 int rectCount = stream[index++];
                 for (int j = 0; j < rectCount; j++)
@@ -496,6 +496,98 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             }
 
             return response;
+        }
+
+        /// <summary>
+        /// Serialization between output mode and integers are different between SpyderX20 and X80.  Call this method to get a hardware-specific OutputMode value from an integer.
+        /// </summary>
+        /// <returns></returns>
+        protected SpyderModels SpyderModelFromByte(byte modelByte, HardwareType halType)
+        {
+            //X80 added a new enum before custom, which can throw off serialization in X20 frames with a SpyderModel value of custom
+            SpyderModels response = (SpyderModels)modelByte;
+            if(halType != HardwareType.SpyderX80 && response == SpyderModels.X80)
+                return SpyderModels.Custom;
+
+            return response;
+        }
+
+        protected OutputModuleType OutputModuleTypeFromByte(byte modelByte, HardwareType halType)
+        {
+            if(halType == HardwareType.SpyderX80)
+            {
+                switch (modelByte)
+                {
+                    case 0: return OutputModuleType.SpyderDX4;
+                    case 1: return OutputModuleType.SpyderUniversal;
+                    case 2: return OutputModuleType.X20;
+                    case 3: return OutputModuleType.X80;
+                    case 4: return OutputModuleType.URS;
+                    case 5: return OutputModuleType.OutputBase;
+                }
+            }
+            else
+            {
+                switch (modelByte)
+                {
+                    case 0: return OutputModuleType.SpyderDX4;
+                    case 1: return OutputModuleType.SpyderUniversal;
+                    case 2: return OutputModuleType.X20;
+                    case 3: return OutputModuleType.URS;
+                    case 4: return OutputModuleType.OutputBase;
+                }
+            }
+
+            //Default
+            return OutputModuleType.OutputBase;
+        }
+
+        /// <summary>
+        /// Serialization between output mode and integers are different between SpyderX20 and X80.  Call this method to get a hardware-specific OutputMode value from an integer.
+        /// </summary>
+        /// <returns></returns>
+        protected OutputMode OutputModeFromByte(byte modeByte, HardwareType halType)
+        {
+            if (halType == HardwareType.SpyderX80)
+            {
+                switch(modeByte)
+                {
+                    case 0: return OutputMode.Normal;
+                    case 1: return OutputMode.Multiviewer;
+                    case 2: return OutputMode.Scaled;
+                    case 3: return OutputMode.Aux;
+                    case 4: return OutputMode.UnscaledAux;
+                    case 5: return OutputMode.OpMon;
+                    case 6: return OutputMode.SourceMon;
+                    case 7: return OutputMode.PassiveLeft;
+                    case 8: return OutputMode.PassiveRight;
+                    case 9: return OutputMode.ActiveStereo;
+                    default:
+                        {
+                            TraceQueue.Trace(this, TracingLevel.Warning, $"Unknown value for output mode in drawing data deserialization: " + modeByte);
+                            return OutputMode.Normal;
+                        }
+                }
+            }
+            else
+            {
+                switch (modeByte)
+                {
+                    case 0: return OutputMode.Normal;
+                    case 1: return OutputMode.Scaled;
+                    case 2: return OutputMode.OpMon;
+                    case 3: return OutputMode.SourceConfig;
+                    case 4: return OutputMode.PassiveLeft;
+                    case 5: return OutputMode.PassiveRight;
+                    case 6: return OutputMode.ActiveStereo;
+                    case 7: return OutputMode.SourceMon;
+                    default:
+                        {
+                            TraceQueue.Trace(this, TracingLevel.Warning, $"Unknown value for output mode in drawing data deserialization: " + modeByte);
+                            return OutputMode.Normal;
+                        }
+                }
+            }
         }
     }
 }

@@ -18,6 +18,7 @@ namespace Spyder.Client.Common
         DataConnection, 
         StatusRefresh, 
         FrameRate, 
-        Power
+        Power,
+        Fan
     }
 }

@@ -152,6 +152,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 case 50: return new DrawingDataDeserializer_Version50(serverVersion);
                 case 51: return new DrawingDataDeserializer_Version51(serverVersion);
                 case 52: return new DrawingDataDeserializer_Version52(serverVersion);
+                case 53: return new DrawingDataDeserializer_Version53(serverVersion);
                 default: return null;
             }
         }

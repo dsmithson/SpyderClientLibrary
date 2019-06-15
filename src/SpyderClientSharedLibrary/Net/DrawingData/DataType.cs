@@ -27,7 +27,12 @@ namespace Spyder.Client.Net.DrawingData
         DDRs = 0x4000,
         Devices = 0x8000,
 
+        //Added in Spyder Studio (>5.0)
+        Multiviewers = 0x10000,
+        Edids = 0x20000,
+        FrontPanel = 0x40000,
+
         RegisterListTypes = (DataType.Sources | DataType.Stills | DataType.Devices | DataType.PlayItems | DataType.CommandKeys | DataType.FunctionKeys | DataType.ConsoleLayouts | DataType.Treatments),
-        All = 0xFFFF
+        All = 0xFFFFFF
     }
 }

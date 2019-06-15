@@ -335,6 +335,20 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
+        private bool? isHdcpEnabled;
+        public bool? IsHdcpEnabled
+        {
+            get { return isHdcpEnabled; }
+            set
+            {
+                if (isHdcpEnabled != value)
+                {
+                    isHdcpEnabled = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private bool isPreviewOnlyScriptingEnabled;
         public bool IsPreviewOnlyScriptingEnabled
         {

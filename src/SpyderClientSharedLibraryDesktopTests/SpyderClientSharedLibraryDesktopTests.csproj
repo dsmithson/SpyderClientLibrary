@@ -113,6 +113,7 @@
     <Compile Include="Common\ServerSettingsV4Tests.cs" />
     <Compile Include="Common\ServerSettingsTestBase.cs" />
     <Compile Include="Common\SystemDataTestBase.cs" />
+    <Compile Include="Common\SystemDataV5_3Tests.cs" />
     <Compile Include="Common\SystemDataV5_2Tests.cs" />
     <Compile Include="Common\SystemDataV5Tests.cs" />
     <Compile Include="Common\SystemDataV4Tests.cs" />
@@ -165,6 +166,8 @@
     <EmbeddedResource Include="Resources\TestConfigs\Version5\SystemConfiguration.xml" />
     <EmbeddedResource Include="Resources\TestConfigs\Version5_2\Scripts.xml" />
     <EmbeddedResource Include="Resources\TestConfigs\Version5_2\SystemConfiguration.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version5_3\Scripts.xml" />
+    <EmbeddedResource Include="Resources\TestConfigs\Version5_3\SystemConfiguration.xml" />
     <Content Include="Resources\Vista.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

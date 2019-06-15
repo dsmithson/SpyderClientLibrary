@@ -466,7 +466,8 @@ namespace Spyder.Client.Common
                         IsBorderEnabled = deserializer.Read(item, "BorderActive", false),
                         IsShadowEnabled = deserializer.Read(item, "ShadowActive", false),
                         IsAspectRatioOffsetEnabled = deserializer.Read(item, "AspectRatioActive", false),
-                        IsPanZoomEnabled = deserializer.Read(item, "ZoomPanActive", false)
+                        IsPanZoomEnabled = deserializer.Read(item, "ZoomPanActive", false),
+                        IsTransparencyEnabled = deserializer.Read(item, "TransparencyActive", false)
                     }),
 
                     //Register Item Lookup
@@ -610,6 +611,7 @@ namespace Spyder.Client.Common
                 VPosition = deserializer.Read(keyFrameRoot, "VPos", 0),
                 Width = deserializer.Read(keyFrameRoot, "HSize", 0),
                 AspectRatioOffset = deserializer.Read(keyFrameRoot, "AspectRatioOffset", 0),
+                Transparency = (byte)deserializer.Read(keyFrameRoot, "Transparency", 0),
 
                 BorderColor = new Color(
                     (byte)deserializer.Read(keyFrameRoot, "BorderRed", 0),
@@ -657,6 +659,8 @@ namespace Spyder.Client.Common
                 BorderTileMode = deserializer.ReadEnum(keyFrameRoot, "BorderTileMode", TextureTileMode.Stretch),
                 BorderTextureType = deserializer.ReadEnum(keyFrameRoot, "BorderTextureType", TextureType.Brick_01),
                 BorderTextureFile = deserializer.Read(keyFrameRoot, "BorderTextureFile", string.Empty),
+                BorderShapeStretch = deserializer.ReadEnum(keyFrameRoot, "BorderShapeStretch", BorderStretchMode.Fill),
+                BorderShapeStretchAspectRatio = deserializer.Read(keyFrameRoot, "BorderShapeStretchAR", 1f),
 
                 BorderShapeSource = deserializer.ReadEnum(keyFrameRoot, "BorderShapeSource", ShapeSource.Rectangle),
                 BorderShape = deserializer.ReadEnum(keyFrameRoot, "BorderShape", ShapeType.Callout_Fine),
