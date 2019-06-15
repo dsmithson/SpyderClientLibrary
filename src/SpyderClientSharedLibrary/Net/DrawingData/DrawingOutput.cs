@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 
 namespace Spyder.Client.Net.DrawingData
 {
-    public enum OutputModuleType { SpyderDX4, SpyderUniversal, X20, URS, OutputBase };
-
     public class DrawingOutput : PropertyChangedBase
     {
         private int id;

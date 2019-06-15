@@ -17,7 +17,7 @@ namespace Spyder.Client.Common
         ActiveStereo, 
         SourceMon,
 
-        //Added in X20.  
+        //Added in X80.  
         //Note these are not in the enum order of X80, and explicit serialization/deserialization is required.  
         //Enum formats in correct byte order for X20 and X80 are below
         Multiviewer,

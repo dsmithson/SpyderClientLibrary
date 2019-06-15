@@ -97,6 +97,15 @@ namespace Spyder.Client.Images
 
         protected abstract Task<T> ProcessImageAsync(K identifier, Stream fileStream);
 
+
+        protected virtual async Task<T> ProcessImageAsync(K identifier, Color color)
+        {
+            using (var stream = Knightware.Drawing.BitmapHelper.GenerateSolidColorBitmap(color))
+            {
+                return await ProcessImageAsync(identifier, stream);
+            }
+        }
+
         public virtual async Task<Stream> GetImageStreamAsync(K identifier, ImageSize targetSize)
         {
             //If we have no local backing store, we can't get an image stream.
@@ -257,17 +266,28 @@ namespace Spyder.Client.Images
                     await LoadImageMetadata(identifier.ServerIP);
                 }
 
-                fileStream = await GetImageStreamAsync(identifier, targetSize);
-
-                //We should have a file stream now that we can use to generate our image.  Send the stream up for processing
-                if (fileStream != null)
+                //Image may be a solid color denoted as a hex value.  This is used mostly for PixelSpace background colors
+                if (identifier.FileName.StartsWith("#"))
                 {
-                    return await ProcessImageAsync(identifier, fileStream);
+                    //Attempt to load an image from a color
+                    Color color = Color.FromHexString(identifier.FileName);
+                    return await ProcessImageAsync(identifier, color);
                 }
                 else
                 {
-                    //Failed to load image.  Return null;
-                    return default(T);
+                    //Attempt to load a filestream
+                    fileStream = await GetImageStreamAsync(identifier, targetSize);
+
+                    //We should have a file stream now that we can use to generate our image.  Send the stream up for processing
+                    if (fileStream != null)
+                    {
+                        return await ProcessImageAsync(identifier, fileStream);
+                    }
+                    else
+                    {
+                        //Failed to load image.  Return null;
+                        return default(T);
+                    }
                 }
             }
             finally

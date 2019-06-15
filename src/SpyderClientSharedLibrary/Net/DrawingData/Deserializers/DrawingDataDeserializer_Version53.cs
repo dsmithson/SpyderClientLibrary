@@ -76,6 +76,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             response.IsLiveUpdateEnabled = (flags & 0x80) > 0;
             flags = stream[index++];
             response.LiveUpdatesTemporarilyDisabled = (flags & 0x01) > 0;
+            response.IsHdcpEnabled = (flags & 0x02) > 0;
 
             //System Frame Rate
             response.SystemFrameRate = (FieldRate)stream[index++];
@@ -88,7 +89,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 {
                     FrameID = frameID,
                     FrameAOR = stream.GetRectangle(ref index),
-                    Model = (SpyderModels)stream[index++],
+                    Model = SpyderModelFromByte(stream[index++], response.HardwareType),
                     RenewalMasterFrameID = stream[index++]
                 };
                 frame.ProgramAOR = frame.FrameAOR; //X80 doesn't require PGM/PVW AORs
@@ -131,7 +132,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 //newPS.Scale = stream.GetFloat(ref index);
 
                 //Versions above 5.0.x (5.1.x / 5.2.x / etc) no longer have a RenewalMasterFrameID
-                newPS.RenewMasterFrameID = stream.GetInt(ref index);
+                newPS.RenewMasterFrameID = -1;
 
                 newPS.ID = stream.GetShort(ref index);
                 MixerBus bus = (MixerBus)stream[index++]; //X80 no longer has PS scale
@@ -227,7 +228,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.ShadowVOffset = stream.GetShort(ref index);	//Shadow V Offset
                 kf.ShadowHSize = stream.GetShort(ref index);		//Shadow H Size
                 kf.ShadowVSize = kf.ShadowHSize;
-                //kf.ShadowVSize = stream.GetShort(ref index);		//Shadow V Size
 
                 kf.ShadowSoftness = stream.GetShort(ref index);	//Shadow softness
                 kf.ShadowTransparency = stream.GetShort(ref index);	//Shadow Transparency
@@ -273,8 +273,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.BorderShapeFile = stream.GetString(ref index);
                 kf.BorderShapeStretch = (BorderStretchMode)stream[index++];
                 kf.BorderShapeStretchAspectRatio = stream.GetFloat(ref index);
-
-
+                
                 kf.BorderFillSource = (TextureFillSource)stream[index++];
                 kf.BorderTextureType = (TextureType)stream[index++];
                 kf.BorderTileMode = (TextureTileMode)stream[index++];
@@ -449,7 +448,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             {
                 DrawingOutput output = new DrawingOutput();
 
-                output.OutputType = (OutputModuleType)stream[index++];
+                output.OutputType = OutputModuleTypeFromByte(stream[index++], response.HardwareType);
                 output.ID = stream.GetShort(ref index);
                 output.FrameID = stream.GetShort(ref index);
                 output.RenewalMasterFrameID = stream.GetShort(ref index);
@@ -480,7 +479,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 output.OpMonPreviewDest = stream.GetRectangle(ref index);
                 output.ScaledSource = stream.GetRectangle(ref index);
                 output.ScaledDest = stream.GetRectangle(ref index);
-                output.SourceName = stream.GetString(ref index);
 
                 int rectCount = stream[index++];
                 for (int j = 0; j < rectCount; j++)
@@ -498,6 +496,50 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             }
 
             return response;
+        }
+
+        /// <summary>
+        /// Serialization between output mode and integers are different between SpyderX20 and X80.  Call this method to get a hardware-specific OutputMode value from an integer.
+        /// </summary>
+        /// <returns></returns>
+        protected SpyderModels SpyderModelFromByte(byte modelByte, HardwareType halType)
+        {
+            //X80 added a new enum before custom, which can throw off serialization in X20 frames with a SpyderModel value of custom
+            SpyderModels response = (SpyderModels)modelByte;
+            if(halType != HardwareType.SpyderX80 && response == SpyderModels.X80)
+                return SpyderModels.Custom;
+
+            return response;
+        }
+
+        protected OutputModuleType OutputModuleTypeFromByte(byte modelByte, HardwareType halType)
+        {
+            if(halType == HardwareType.SpyderX80)
+            {
+                switch (modelByte)
+                {
+                    case 0: return OutputModuleType.SpyderDX4;
+                    case 1: return OutputModuleType.SpyderUniversal;
+                    case 2: return OutputModuleType.X20;
+                    case 3: return OutputModuleType.X80;
+                    case 4: return OutputModuleType.URS;
+                    case 5: return OutputModuleType.OutputBase;
+                }
+            }
+            else
+            {
+                switch (modelByte)
+                {
+                    case 0: return OutputModuleType.SpyderDX4;
+                    case 1: return OutputModuleType.SpyderUniversal;
+                    case 2: return OutputModuleType.X20;
+                    case 3: return OutputModuleType.URS;
+                    case 4: return OutputModuleType.OutputBase;
+                }
+            }
+
+            //Default
+            return OutputModuleType.OutputBase;
         }
 
         /// <summary>
