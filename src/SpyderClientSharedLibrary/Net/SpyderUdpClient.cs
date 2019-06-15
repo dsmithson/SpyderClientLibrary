@@ -389,6 +389,65 @@ namespace Spyder.Client.Net
             return cue;
         }
 
+        public virtual Task<bool> ClearTestPatternOnPixelSpace(int pixelSpaceID)
+        {
+            return ClearTestPattern(0, pixelSpaceID);
+        }
+
+        public virtual Task<bool> ClearTestPatternOnLayer(int layerID)
+        {
+            return ClearTestPattern(1, layerID);
+        }
+
+        public virtual Task<bool> ClearTestPatternOnOutput(int outputIndex)
+        {
+            return ClearTestPattern(2, outputIndex);
+        }
+
+        private async Task<bool> ClearTestPattern(int targetType, int targetID)
+        {
+            ServerOperationResult result = await RetrieveAsync("TPC {0} {1}", targetType, targetID);
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
+        public virtual Task<bool> LoadTestPatternToPixelSpace(int pixelSpaceID, TestPatternSettings settings)
+        {
+            return LoadTestPattern(0, pixelSpaceID, settings);
+        }
+
+        public virtual Task<bool> LoadTestPatternToLayer(int layerID, TestPatternSettings settings)
+        {
+            return LoadTestPattern(1, layerID, settings);
+        }
+
+        public virtual Task<bool> LoadTestPatternToOutput(int outputIndex, TestPatternSettings settings)
+        {
+            return LoadTestPattern(2, outputIndex, settings);
+        }
+
+        private async Task<bool> LoadTestPattern(int targetType, int targetID, TestPatternSettings settings)
+        {
+            if (settings == null)
+                return false;
+
+            ServerOperationResult result = await RetrieveAsync("TPL {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12}",
+                targetType,
+                targetID,
+                (int)settings.PatternType,
+                settings.IsOutlineEnabled ? 1 : 0,
+                settings.IsCenterCircleEnabled ? 1 : 0,
+                settings.IsCenterXEnabled ? 1 : 0,
+                settings.IsGridEnabled ? 1 : 0,
+                settings.BackgroundColor.R,
+                settings.BackgroundColor.G,
+                settings.BackgroundColor.B,
+                settings.ForegroundColor.R,
+                settings.ForegroundColor.G,
+                settings.ForegroundColor.B);
+
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
         public virtual Task<bool> Save()
         {
             return Save(TimeSpan.FromSeconds(60));
