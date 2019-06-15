@@ -332,6 +332,10 @@ namespace Spyder.Client
             {
                 return new MemoryStream(new byte[] { 0xF2, 0xE1 });
             }
+            else if(valueType == typeof(bool?))
+            {
+                return currentValue == null ? true : (bool?)null;
+            }
             else if (valueType.IsInterface)
             {
                 //Look for an implementation of this interface with a default constructor, and then randomize and return it
