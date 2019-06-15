@@ -16,6 +16,7 @@ using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
 using Knightware.Primitives;
 using Knightware.Net.Sockets;
+using System.Globalization;
 
 namespace Spyder.Client.Net
 {
@@ -445,6 +446,51 @@ namespace Spyder.Client.Net
                 settings.ForegroundColor.G,
                 settings.ForegroundColor.B);
 
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
+        public virtual async Task<bool> SlideLayoutRecall(int pixelSpaceID, bool clearLayers, List<int> reservedLayers, List<SlideLayoutEntry> slideEntries)
+        {
+            if (slideEntries == null || slideEntries.Count == 0)
+                return false;
+            
+            //Build the slide layout command
+            StringBuilder builder = new StringBuilder();
+            builder.AppendFormat("SLR {0} {1} {2}",
+                pixelSpaceID,
+                clearLayers ? 1 : 0,
+                reservedLayers == null ? 0 : reservedLayers.Count);
+
+            //Add reserved layers
+            if(reservedLayers != null)
+            {
+                foreach (int reservedLayer in reservedLayers)
+                    builder.AppendFormat(" {0}", reservedLayer);
+            }
+
+            //Add slide layout entries
+            foreach(var entry in slideEntries)
+            {
+                builder.AppendFormat(CultureInfo.InvariantCulture, " {0}~{1}~{2}~{3}~{4}~{5}~{6}~{7}~{8}~{9}~{10}~{11}~{12}~{13}~{14}",
+                    entry.SourceName.Replace(" ", "%20").Replace("~", "%21"),
+                    entry.ZOrder,
+                    entry.Position.X,
+                    entry.Position.Y,
+                    entry.Size.Width,
+                    entry.Size.Height,
+                    entry.ShadowTransparency,
+                    entry.ShadowOffset.X,
+                    entry.ShadowOffset.Y,
+                    entry.BorderColor.R,
+                    entry.BorderColor.G,
+                    entry.BorderColor.B,
+                    entry.BorderThickness,
+                    (int)entry.TransitionType,
+                    entry.TransitionDuration);
+            }
+
+            //Send command
+            ServerOperationResult result = await RetrieveAsync(builder.ToString());
             return result.Result == ServerOperationResultCode.Success;
         }
 
@@ -1574,22 +1620,22 @@ namespace Spyder.Client.Net
         private Queue<CommandQueueItem> immediateCommandQueue;
         private Queue<CommandQueueItem> backgroundCommandQueue;
 
-        protected Task<ServerOperationResult> RetrieveAsync(string command, params object[] args)
+        public Task<ServerOperationResult> RetrieveAsync(string command, params object[] args)
         {
             return RetrieveAsync(false, TimeSpan.FromSeconds(DefaultTimeoutSeconds), command, args);
         }
 
-        protected Task<ServerOperationResult> RetrieveAsync(TimeSpan timeout, string command, params object[] args)
+        public Task<ServerOperationResult> RetrieveAsync(TimeSpan timeout, string command, params object[] args)
         {
             return RetrieveAsync(false, timeout, command, args);
         }
 
-        protected Task<ServerOperationResult> RetrieveInBackgroundAsync(string command, params object[] args)
+        public Task<ServerOperationResult> RetrieveInBackgroundAsync(string command, params object[] args)
         {
             return RetrieveAsync(true, TimeSpan.FromSeconds(DefaultTimeoutSeconds), command, args);
         }
 
-        protected Task<ServerOperationResult> RetrieveInBackgroundAsync(TimeSpan timeout, string command, params object[] args)
+        public Task<ServerOperationResult> RetrieveInBackgroundAsync(TimeSpan timeout, string command, params object[] args)
         {
             return RetrieveAsync(true, timeout, command, args);
         }
