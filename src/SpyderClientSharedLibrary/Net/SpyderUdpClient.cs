@@ -64,24 +64,33 @@ namespace Spyder.Client.Net
 
             return Task.FromResult(true);
         }
-
-        public virtual Task<Stream> GetImageFileStream(string fileName)
+        
+        public virtual async Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight = null)
         {
-            return GetImageFileStream(fileName, 2048);
+            var stream = new MemoryStream();
+            if (await GetImageFileStream(fileName, stream, maxWidthOrHeight))
+                return stream;
+            else
+            {
+                stream.Dispose();
+                return null;
+            }
         }
 
-        public virtual async Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight)
+        public virtual async Task<bool> GetImageFileStream(string fileName, Stream targetStream, int? maxWidthOrHeight = null)
         {
             ServerOperationResult result;
             if (maxWidthOrHeight == null)
-                result = await RetrieveAsync("RIF {0}", EncodeSpyderParameter(fileName));
+                result = await RetrieveInBackgroundAsync("RIF {0}", EncodeSpyderParameter(fileName));
             else
-                result = await RetrieveAsync("RIF {0} {1}", EncodeSpyderParameter(fileName), maxWidthOrHeight.Value);
+                result = await RetrieveInBackgroundAsync("RIF {0} {1}", EncodeSpyderParameter(fileName), maxWidthOrHeight.Value);
 
             if (result.Result != ServerOperationResultCode.Success)
-                return null;
+                return false;
 
-            return new MemoryStream(HexUtil.GetBytes(result.ResponseData[0]));
+            byte[] bytes = HexUtil.GetBytes(result.ResponseData[0]);
+            await targetStream.WriteAsync(bytes, 0, bytes.Length);
+            return true;
         }
 
         public virtual async Task<List<RegisterPage>> GetRegisterPages(RegisterType type)
@@ -390,6 +399,8 @@ namespace Spyder.Client.Net
             return cue;
         }
 
+        #region Test Pattern Control
+
         public virtual Task<bool> ClearTestPatternOnPixelSpace(int pixelSpaceID)
         {
             return ClearTestPattern(0, pixelSpaceID);
@@ -449,6 +460,8 @@ namespace Spyder.Client.Net
             return result.Result == ServerOperationResultCode.Success;
         }
 
+        #endregion
+
         public virtual async Task<bool> SlideLayoutRecall(int pixelSpaceID, bool clearLayers, List<int> reservedLayers, List<SlideLayoutEntry> slideEntries)
         {
             if (slideEntries == null || slideEntries.Count == 0)
@@ -493,6 +506,73 @@ namespace Spyder.Client.Net
             ServerOperationResult result = await RetrieveAsync(builder.ToString());
             return result.Result == ServerOperationResultCode.Success;
         }
+
+        #region Image Capture
+
+        public virtual async Task<Stream> CaptureImageFromOutput(int outputIndex, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            MemoryStream stream = new MemoryStream();
+            if (!await CaptureImageFromOutput(outputIndex, stream, format, maxWidthOrHeight))
+            {
+                stream.Dispose();
+                stream = null;
+            }
+            return stream;
+        }
+
+        public virtual Task<bool> CaptureImageFromOutput(int outputIndex, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            string fileName = $"Output-{outputIndex}.{format}";
+            return CaptureImageHandler(fileName, targetStream, maxWidthOrHeight, "COI {0} {1}", outputIndex, fileName);
+        }
+
+        public virtual async Task<Stream> CaptureImageFromLayer(int layerID, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            MemoryStream stream = new MemoryStream();
+            if (!await CaptureImageFromLayer(layerID, stream, format, maxWidthOrHeight))
+            {
+                stream.Dispose();
+                stream = null;
+            }
+            return stream;
+        }
+
+        public virtual Task<bool> CaptureImageFromLayer(int layerID, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            string fileName = $"Layer-{layerID}.{format}";
+            return CaptureImageHandler(fileName, targetStream, maxWidthOrHeight, "CLI {0} {1}", layerID, fileName);
+        }
+
+        public virtual async Task<Stream> CaptureImageFromInput(int inputIndex, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            MemoryStream stream = new MemoryStream();
+            if (!await CaptureImageFromInput(inputIndex, stream, format, maxWidthOrHeight))
+            {
+                stream.Dispose();
+                stream = null;
+            }
+            return stream;
+        }
+
+        public virtual Task<bool> CaptureImageFromInput(int inputIndex, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            string fileName = $"Input-{inputIndex}.{format}";
+            return CaptureImageHandler(fileName, targetStream, maxWidthOrHeight, "CII {0} {1}", inputIndex, fileName);
+        }
+
+        private async Task<bool> CaptureImageHandler(string serverFileNameToCreate, Stream targetStream, int? maxWidthOrHeight, string captureImageCommand, params object[] captureImageCommandArgs)
+        {
+            //Execute capture image
+            var captureResult = await RetrieveInBackgroundAsync(captureImageCommand, captureImageCommandArgs);
+            if (captureResult.Result != ServerOperationResultCode.Success)
+                return false;
+
+            //Transfer image locally
+            return await GetImageFileStream(serverFileNameToCreate, targetStream, maxWidthOrHeight);
+        }
+
+        #endregion
+
 
         public virtual Task<bool> Save()
         {

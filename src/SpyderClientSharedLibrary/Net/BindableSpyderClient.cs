@@ -526,9 +526,14 @@ namespace Spyder.Client.Net
             }
         }
 
-        public Task<Stream> GetImageFileStream(string fileName)
+        public Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight = 2048)
         {
             return client.GetImageFileStream(fileName);
+        }
+
+        public Task<bool> GetImageFileStream(string fileName, Stream targetStream, int? maxWidthOrHeight = 2048)
+        {
+            return client.GetImageFileStream(fileName, targetStream, maxWidthOrHeight);
         }
 
         public Task<bool> SetImageFileStream(string fileName, Stream fileStream)
@@ -1062,6 +1067,69 @@ namespace Spyder.Client.Net
         }
 
         #endregion
+
+        #region Test Pattern Control
+
+        public Task<bool> ClearTestPatternOnPixelSpace(int pixelSpaceID)
+        {
+            return client.ClearTestPatternOnPixelSpace(pixelSpaceID);
+        }
+        public Task<bool> ClearTestPatternOnLayer(int layerID)
+        {
+            return client.ClearTestPatternOnLayer(layerID);
+        }
+        public Task<bool> ClearTestPatternOnOutput(int outputIndex)
+        {
+            return client.ClearTestPatternOnOutput(outputIndex);
+        }
+        public Task<bool> LoadTestPatternToPixelSpace(int pixelSpaceID, TestPatternSettings settings)
+        {
+            return client.LoadTestPatternToPixelSpace(pixelSpaceID, settings);
+        }
+        public Task<bool> LoadTestPatternToLayer(int layerID, TestPatternSettings settings)
+        {
+            return client.LoadTestPatternToLayer(layerID, settings);
+        }
+        public Task<bool> LoadTestPatternToOutput(int outputIndex, TestPatternSettings settings)
+        {
+            return client.LoadTestPatternToOutput(outputIndex, settings);
+        }
+
+        #endregion
+
+        #region Image Capture
+
+        public Task<Stream> CaptureImageFromOutput(int outputIndex, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            return client.CaptureImageFromOutput(outputIndex, format, maxWidthOrHeight);
+        }
+        public Task<bool> CaptureImageFromOutput(int outputIndex, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            return client.CaptureImageFromOutput(outputIndex, targetStream, format, maxWidthOrHeight);
+        }
+        public Task<Stream> CaptureImageFromLayer(int layerID, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            return client.CaptureImageFromLayer(layerID, format, maxWidthOrHeight);
+        }
+        public Task<bool> CaptureImageFromLayer(int layerID, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            return client.CaptureImageFromLayer(layerID, targetStream, format, maxWidthOrHeight);
+        }
+        public Task<Stream> CaptureImageFromInput(int inputIndex, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            return client.CaptureImageFromInput(inputIndex, format, maxWidthOrHeight);
+        }
+        public Task<bool> CaptureImageFromInput(int inputIndex, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            return client.CaptureImageFromInput(inputIndex, targetStream, format, maxWidthOrHeight);
+        }
+
+        #endregion
+
+        public Task<bool> SlideLayoutRecall(int pixelSpaceID, bool clearLayers, List<int> reservedLayers, List<SlideLayoutEntry> slideEntries)
+        {
+            return client.SlideLayoutRecall(pixelSpaceID, clearLayers, reservedLayers, slideEntries);
+        }
 
         public int CompareTo(object obj)
         {
