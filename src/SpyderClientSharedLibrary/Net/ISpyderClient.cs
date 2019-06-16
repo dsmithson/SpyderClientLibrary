@@ -12,6 +12,8 @@ using Knightware.Primitives;
 
 namespace Spyder.Client.Net
 {
+    public enum ImageFileFormat { Bmp, Png, Jpg, tif }
+
     public interface ISpyderClient
     {
         bool IsRunning { get; }
@@ -22,8 +24,9 @@ namespace Spyder.Client.Net
 
         #region Server Filesystem Access
 
-        Task<Stream> GetImageFileStream(string fileName);
-        
+        Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight = null);
+        Task<bool> GetImageFileStream(string fileName, Stream targetStream, int? maxWidthOrHeight = null);
+
         #endregion
 
         #region Register List Data Access
@@ -60,11 +63,15 @@ namespace Spyder.Client.Net
         #endregion
 
         #region Layer Interaction
-        
+
+        Task<List<KeyframePropertyValue>> KeyframePropertiesGet(int layerID);
+        Task<bool> KeyframePropertiesSet(int layerID, string propertyName, object value);
+        Task<bool> KeyframePropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues);
+
         Task<int> GetLayerCount();
 
         Task<int> GetFirstAvailableLayerID();
-                
+
         Task<bool> ApplyRegisterToLayer(RegisterType type, int registerID, params int[] layerIDs);
 
         Task<bool> FreezeLayer(params int[] layerIDs);
@@ -230,7 +237,19 @@ namespace Spyder.Client.Net
 
         #endregion
 
+        #region Input Configuration
+
+        Task<List<InputPropertyValue>> InputConfigPropertiesGet(int layerID);
+        Task<bool> InputConfigPropertiesSet(int layerID, string propertyName, object value);
+        Task<bool> InputConfigPropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues);
+
+        #endregion
+
         #region Output Configuration
+
+        Task<List<OutputPropertyValue>> OutputConfigPropertiesGet(int outputIndex);
+        Task<bool> OutputConfigPropertiesSet(int outputIndex, string propertyName, object value);
+        Task<bool> OutputConfigPropertiesSet(int outputIndex, Dictionary<string, object> propertiesAndValues);
 
         Task<bool> FreezeOutput(params int[] outputIDs);
 
@@ -282,6 +301,30 @@ namespace Spyder.Client.Net
         Task<bool> DeleteCommandKey(params int[] commandKeyRegisterIDs);
 
         #endregion
+
+        #region Test Pattern Control
+
+        Task<bool> ClearTestPatternOnPixelSpace(int pixelSpaceID);
+        Task<bool> ClearTestPatternOnLayer(int layerID);
+        Task<bool> ClearTestPatternOnOutput(int outputIndex);
+        Task<bool> LoadTestPatternToPixelSpace(int pixelSpaceID, TestPatternSettings settings);
+        Task<bool> LoadTestPatternToLayer(int layerID, TestPatternSettings settings);
+        Task<bool> LoadTestPatternToOutput(int outputIndex, TestPatternSettings settings);
+
+        #endregion
+
+        #region Image Capture
+
+        Task<Stream> CaptureImageFromOutput(int outputIndex, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null);
+        Task<bool> CaptureImageFromOutput(int outputIndex, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null);
+        Task<Stream> CaptureImageFromLayer(int layerID, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null);
+        Task<bool> CaptureImageFromLayer(int layerID, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null);
+        Task<Stream> CaptureImageFromInput(int inputIndex, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null);
+        Task<bool> CaptureImageFromInput(int inputIndex, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null);
+
+        #endregion
+
+        Task<bool> SlideLayoutRecall(int pixelSpaceID, bool clearLayers, List<int> reservedLayers, List<SlideLayoutEntry> slideEntries);
 
         Task<bool> Save();
 

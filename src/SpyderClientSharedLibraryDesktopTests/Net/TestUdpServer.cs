@@ -22,19 +22,19 @@ namespace Spyder.Client.Net
         public TestUdpResponse(string response, ServerOperationResultCode result = ServerOperationResultCode.Success)
         {
             this.Result = result;
-            this.ResponseData = response.Split(' ').ToList();
+            this.ResponseRaw = response;
         }
 
         public TestUdpResponse(List<string> responseParts, ServerOperationResultCode result = ServerOperationResultCode.Success)
         {
             this.Result = result;
-            this.ResponseData = responseParts.Select(r => r.Replace(" ", "%20")).ToList();
+            this.ResponseRaw = string.Join(" ", responseParts.Select(r => r.Replace(" ", "%20")).ToList());
         }
 
         public TestUdpResponse(params object[] responseParts)
         {
             this.Result = ServerOperationResultCode.Success;
-            this.ResponseData = responseParts?.Select(part => part.ToString().Replace(" ", "%20")).ToList();
+            this.ResponseRaw = string.Join(" ", responseParts?.Select(part => part.ToString().Replace(" ", "%20")).ToList());
         }
     }
 
@@ -43,6 +43,8 @@ namespace Spyder.Client.Net
         private Socket udpServer;
         private static SystemMgr sys;
         private static StringCommandProcessor stringProcessor;
+
+        public SystemMgr Sys {  get { return sys; } }
 
         public Func<TestUdpCommand, TestUdpResponse> ProcessCommand { get; set; }
 

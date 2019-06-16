@@ -16,6 +16,7 @@ using Spyder.Client.Scripting;
 using Spyder.Client.FunctionKeys;
 using Knightware.Primitives;
 using Knightware.Net.Sockets;
+using System.Globalization;
 
 namespace Spyder.Client.Net
 {
@@ -63,24 +64,33 @@ namespace Spyder.Client.Net
 
             return Task.FromResult(true);
         }
-
-        public virtual Task<Stream> GetImageFileStream(string fileName)
+        
+        public virtual async Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight = null)
         {
-            return GetImageFileStream(fileName, 2048);
+            var stream = new MemoryStream();
+            if (await GetImageFileStream(fileName, stream, maxWidthOrHeight))
+                return stream;
+            else
+            {
+                stream.Dispose();
+                return null;
+            }
         }
 
-        public virtual async Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight)
+        public virtual async Task<bool> GetImageFileStream(string fileName, Stream targetStream, int? maxWidthOrHeight = null)
         {
             ServerOperationResult result;
             if (maxWidthOrHeight == null)
-                result = await RetrieveAsync("RIF {0}", EncodeSpyderParameter(fileName));
+                result = await RetrieveInBackgroundAsync("RIF {0}", EncodeSpyderParameter(fileName));
             else
-                result = await RetrieveAsync("RIF {0} {1}", EncodeSpyderParameter(fileName), maxWidthOrHeight.Value);
+                result = await RetrieveInBackgroundAsync("RIF {0} {1}", EncodeSpyderParameter(fileName), maxWidthOrHeight.Value);
 
             if (result.Result != ServerOperationResultCode.Success)
-                return null;
+                return false;
 
-            return new MemoryStream(HexUtil.GetBytes(result.ResponseData[0]));
+            byte[] bytes = HexUtil.GetBytes(result.ResponseData[0]);
+            await targetStream.WriteAsync(bytes, 0, bytes.Length);
+            return true;
         }
 
         public virtual async Task<List<RegisterPage>> GetRegisterPages(RegisterType type)
@@ -389,6 +399,219 @@ namespace Spyder.Client.Net
             return cue;
         }
 
+        #region Input Control
+
+        /// <summary>
+        /// Gets all input config properties and values associated with a specified layer ID
+        /// </summary>
+        public async Task<List<InputPropertyValue>> InputConfigPropertiesGet(int layerID)
+        {
+            var result = await RetrieveAsync("IGP {0}", layerID);
+            if (result.Result != ServerOperationResultCode.Success)
+                return null;
+
+            //Parse our response object(s)
+            return ParseObjectProperties<InputPropertyValue>(result.ResponseData);
+        }
+
+        public Task<bool> InputConfigPropertiesSet(int layerID, string propertyName, object value)
+        {
+            return InputConfigPropertiesSet(layerID, new Dictionary<string, object>()
+            {
+                { propertyName, value }
+            });
+        }
+
+        public async Task<bool> InputConfigPropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues)
+        {
+            var builder = new StringBuilder();
+            builder.AppendFormat("ISP {0}", layerID);
+            foreach (var pair in propertiesAndValues)
+            {
+                builder.AppendFormat(" {0} {1}", pair.Key, pair.Value?.ToString().Replace(" ", "%20"));
+            }
+
+            var result = await RetrieveAsync(builder.ToString());
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
+        #endregion
+
+        #region Test Pattern Control
+
+        public virtual Task<bool> ClearTestPatternOnPixelSpace(int pixelSpaceID)
+        {
+            return ClearTestPattern(0, pixelSpaceID);
+        }
+
+        public virtual Task<bool> ClearTestPatternOnLayer(int layerID)
+        {
+            return ClearTestPattern(1, layerID);
+        }
+
+        public virtual Task<bool> ClearTestPatternOnOutput(int outputIndex)
+        {
+            return ClearTestPattern(2, outputIndex);
+        }
+
+        private async Task<bool> ClearTestPattern(int targetType, int targetID)
+        {
+            ServerOperationResult result = await RetrieveAsync("TPC {0} {1}", targetType, targetID);
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
+        public virtual Task<bool> LoadTestPatternToPixelSpace(int pixelSpaceID, TestPatternSettings settings)
+        {
+            return LoadTestPattern(0, pixelSpaceID, settings);
+        }
+
+        public virtual Task<bool> LoadTestPatternToLayer(int layerID, TestPatternSettings settings)
+        {
+            return LoadTestPattern(1, layerID, settings);
+        }
+
+        public virtual Task<bool> LoadTestPatternToOutput(int outputIndex, TestPatternSettings settings)
+        {
+            return LoadTestPattern(2, outputIndex, settings);
+        }
+
+        private async Task<bool> LoadTestPattern(int targetType, int targetID, TestPatternSettings settings)
+        {
+            if (settings == null)
+                return false;
+
+            ServerOperationResult result = await RetrieveAsync("TPL {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12}",
+                targetType,
+                targetID,
+                (int)settings.PatternType,
+                settings.IsOutlineEnabled ? 1 : 0,
+                settings.IsCenterCircleEnabled ? 1 : 0,
+                settings.IsCenterXEnabled ? 1 : 0,
+                settings.IsGridEnabled ? 1 : 0,
+                settings.BackgroundColor.R,
+                settings.BackgroundColor.G,
+                settings.BackgroundColor.B,
+                settings.ForegroundColor.R,
+                settings.ForegroundColor.G,
+                settings.ForegroundColor.B);
+
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
+        #endregion
+
+        public virtual async Task<bool> SlideLayoutRecall(int pixelSpaceID, bool clearLayers, List<int> reservedLayers, List<SlideLayoutEntry> slideEntries)
+        {
+            if (slideEntries == null || slideEntries.Count == 0)
+                return false;
+            
+            //Build the slide layout command
+            StringBuilder builder = new StringBuilder();
+            builder.AppendFormat("SLR {0} {1} {2}",
+                pixelSpaceID,
+                clearLayers ? 1 : 0,
+                reservedLayers == null ? 0 : reservedLayers.Count);
+
+            //Add reserved layers
+            if(reservedLayers != null)
+            {
+                foreach (int reservedLayer in reservedLayers)
+                    builder.AppendFormat(" {0}", reservedLayer);
+            }
+
+            //Add slide layout entries
+            foreach(var entry in slideEntries)
+            {
+                builder.AppendFormat(CultureInfo.InvariantCulture, " {0}~{1}~{2}~{3}~{4}~{5}~{6}~{7}~{8}~{9}~{10}~{11}~{12}~{13}~{14}",
+                    entry.SourceName.Replace(" ", "%20").Replace("~", "%21"),
+                    entry.ZOrder,
+                    entry.Position.X,
+                    entry.Position.Y,
+                    entry.Size.Width,
+                    entry.Size.Height,
+                    entry.ShadowTransparency,
+                    entry.ShadowOffset.X,
+                    entry.ShadowOffset.Y,
+                    entry.BorderColor.R,
+                    entry.BorderColor.G,
+                    entry.BorderColor.B,
+                    entry.BorderThickness,
+                    (int)entry.TransitionType,
+                    entry.TransitionDuration);
+            }
+
+            //Send command
+            ServerOperationResult result = await RetrieveAsync(builder.ToString());
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
+        #region Image Capture
+
+        public virtual async Task<Stream> CaptureImageFromOutput(int outputIndex, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            MemoryStream stream = new MemoryStream();
+            if (!await CaptureImageFromOutput(outputIndex, stream, format, maxWidthOrHeight))
+            {
+                stream.Dispose();
+                stream = null;
+            }
+            return stream;
+        }
+
+        public virtual Task<bool> CaptureImageFromOutput(int outputIndex, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            string fileName = $"Output-{outputIndex}.{format}";
+            return CaptureImageHandler(fileName, targetStream, maxWidthOrHeight, "COI {0} {1}", outputIndex, fileName);
+        }
+
+        public virtual async Task<Stream> CaptureImageFromLayer(int layerID, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            MemoryStream stream = new MemoryStream();
+            if (!await CaptureImageFromLayer(layerID, stream, format, maxWidthOrHeight))
+            {
+                stream.Dispose();
+                stream = null;
+            }
+            return stream;
+        }
+
+        public virtual Task<bool> CaptureImageFromLayer(int layerID, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            string fileName = $"Layer-{layerID}.{format}";
+            return CaptureImageHandler(fileName, targetStream, maxWidthOrHeight, "CLI {0} {1}", layerID, fileName);
+        }
+
+        public virtual async Task<Stream> CaptureImageFromInput(int inputIndex, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            MemoryStream stream = new MemoryStream();
+            if (!await CaptureImageFromInput(inputIndex, stream, format, maxWidthOrHeight))
+            {
+                stream.Dispose();
+                stream = null;
+            }
+            return stream;
+        }
+
+        public virtual Task<bool> CaptureImageFromInput(int inputIndex, Stream targetStream, ImageFileFormat format = ImageFileFormat.Bmp, int? maxWidthOrHeight = null)
+        {
+            string fileName = $"Input-{inputIndex}.{format}";
+            return CaptureImageHandler(fileName, targetStream, maxWidthOrHeight, "CII {0} {1}", inputIndex, fileName);
+        }
+
+        private async Task<bool> CaptureImageHandler(string serverFileNameToCreate, Stream targetStream, int? maxWidthOrHeight, string captureImageCommand, params object[] captureImageCommandArgs)
+        {
+            //Execute capture image
+            var captureResult = await RetrieveInBackgroundAsync(captureImageCommand, captureImageCommandArgs);
+            if (captureResult.Result != ServerOperationResultCode.Success)
+                return false;
+
+            //Transfer image locally
+            return await GetImageFileStream(serverFileNameToCreate, targetStream, maxWidthOrHeight);
+        }
+
+        #endregion
+
+
         public virtual Task<bool> Save()
         {
             return Save(TimeSpan.FromSeconds(60));
@@ -435,6 +658,37 @@ namespace Spyder.Client.Net
         }
 
         #region Layer Interaction
+
+        public async Task<List<KeyframePropertyValue>> KeyframePropertiesGet(int layerID)
+        {
+            var result = await RetrieveAsync("KGP {0}", layerID);
+            if (result.Result != ServerOperationResultCode.Success)
+                return null;
+
+            //Parse our response object(s)
+            return ParseObjectProperties<KeyframePropertyValue>(result.ResponseData);
+        }
+
+        public Task<bool> KeyframePropertiesSet(int layerID, string propertyName, object value)
+        {
+            return KeyframePropertiesSet(layerID, new Dictionary<string, object>()
+            {
+                { propertyName, value }
+            });
+        }
+
+        public async Task<bool> KeyframePropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues)
+        {
+            var builder = new StringBuilder();
+            builder.AppendFormat("KSP {0}", layerID);
+            foreach (var pair in propertiesAndValues)
+            {
+                builder.AppendFormat(" {0} {1}", pair.Key, pair.Value?.ToString().Replace(" ", "%20"));
+            }
+
+            var result = await RetrieveAsync(builder.ToString());
+            return result.Result == ServerOperationResultCode.Success;
+        }
 
         public async Task<int> GetLayerCount()
         {
@@ -1218,6 +1472,37 @@ namespace Spyder.Client.Net
 
         #region Output Configuration
 
+        public async Task<List<OutputPropertyValue>> OutputConfigPropertiesGet(int outputIndex)
+        {
+            var result = await RetrieveAsync("OGP {0}", outputIndex);
+            if (result.Result != ServerOperationResultCode.Success)
+                return null;
+
+            //Parse our response object(s)
+            return ParseObjectProperties<OutputPropertyValue>(result.ResponseData);
+        }
+
+        public Task<bool> OutputConfigPropertiesSet(int outputIndex, string propertyName, object value)
+        {
+            return OutputConfigPropertiesSet(outputIndex, new Dictionary<string, object>()
+            {
+                { propertyName, value }
+            });
+        }
+
+        public async Task<bool> OutputConfigPropertiesSet(int outputIndex, Dictionary<string, object> propertiesAndValues)
+        {
+            var builder = new StringBuilder();
+            builder.AppendFormat("OSP {0}", outputIndex);
+            foreach(var pair in propertiesAndValues)
+            {
+                builder.AppendFormat(" {0} {1}", pair.Key, pair.Value?.ToString().Replace(" ", "%20"));
+            }
+
+            var result = await RetrieveAsync(builder.ToString());
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
         public Task<bool> FreezeOutput(params int[] outputIDs)
         {
             return SetOutputFreeze(true, outputIDs);
@@ -1354,8 +1639,7 @@ namespace Spyder.Client.Net
         }
 
         #endregion
-
-
+        
         #region PixelSpace Interaction
 
         public async Task<bool> MixBackground(int duration)
@@ -1498,6 +1782,11 @@ namespace Spyder.Client.Net
             public Task<ServerOperationResult> Task { get { return tcs.Task; } }
             public TaskCompletionSource<ServerOperationResult> TaskCompletionSource { get { return tcs; } }
 
+            /// <summary>
+            /// If multiple commands are required to obtain a full server response, this field can be initialized and used to store data
+            /// </summary>
+            public StringBuilder ContinuationData { get; set; }
+
             public CommandQueueItem(string command)
                 : this(command, TimeSpan.FromSeconds(DefaultTimeoutSeconds))
             {
@@ -1515,22 +1804,22 @@ namespace Spyder.Client.Net
         private Queue<CommandQueueItem> immediateCommandQueue;
         private Queue<CommandQueueItem> backgroundCommandQueue;
 
-        protected Task<ServerOperationResult> RetrieveAsync(string command, params object[] args)
+        public Task<ServerOperationResult> RetrieveAsync(string command, params object[] args)
         {
             return RetrieveAsync(false, TimeSpan.FromSeconds(DefaultTimeoutSeconds), command, args);
         }
 
-        protected Task<ServerOperationResult> RetrieveAsync(TimeSpan timeout, string command, params object[] args)
+        public Task<ServerOperationResult> RetrieveAsync(TimeSpan timeout, string command, params object[] args)
         {
             return RetrieveAsync(false, timeout, command, args);
         }
 
-        protected Task<ServerOperationResult> RetrieveInBackgroundAsync(string command, params object[] args)
+        public Task<ServerOperationResult> RetrieveInBackgroundAsync(string command, params object[] args)
         {
             return RetrieveAsync(true, TimeSpan.FromSeconds(DefaultTimeoutSeconds), command, args);
         }
 
-        protected Task<ServerOperationResult> RetrieveInBackgroundAsync(TimeSpan timeout, string command, params object[] args)
+        public Task<ServerOperationResult> RetrieveInBackgroundAsync(TimeSpan timeout, string command, params object[] args)
         {
             return RetrieveAsync(true, timeout, command, args);
         }
@@ -1592,8 +1881,45 @@ namespace Spyder.Client.Net
 
                 //Process this current command
                 ServerOperationResult result = await CommandQueueWorkerProcessSingleCommandAsync(currentOperation.Command, currentOperation.Timeout);
-                result.ExecutionPriorityLevel = commandQueue;
-                currentOperation.TaskCompletionSource.TrySetResult(result);
+
+                //If the command completed with a continueation, we need to re-enqueue to get the remainder response data
+                if (result.Result == ServerOperationResultCode.SuccessWithContinuation)
+                {
+                    //In continuation data, the first parameter back will be a token used to request the next block of data.  The remainder
+                    //of the data will be the data received in this block, which we'll need to store for later
+                    string[] split = result.ResponseRaw.Split(new char[] { ' ' }, 2);
+                    string continuationToken = split[0];
+                    if (currentOperation.ContinuationData == null)
+                    {
+                        currentOperation.ContinuationData = new StringBuilder();
+                    }
+                    currentOperation.ContinuationData.Append(split[1]);
+
+                    //Enqueue a next request, onto the same queue that we're on now, to get our missing continuation data.  Note this may
+                    //happen several times for large responses such as files
+                    currentOperation.Command = "RCM " + continuationToken;
+                    var targetQueue = (commandQueue == CommandExecutionPriority.Background ? backgroundCommandQueue : immediateCommandQueue);
+                    lock (targetQueue)
+                    {
+                        targetQueue.Enqueue(currentOperation);
+                        retrieveEvent.Set();
+                    }
+                }
+                else
+                {
+                    //If our response has prior continuation data, add it to our final response now
+                    if(currentOperation.ContinuationData != null)
+                    {
+                        currentOperation.ContinuationData.Append(result.ResponseRaw);
+                        result.ResponseRaw = currentOperation.ContinuationData.ToString();
+                    }
+
+                    //Build out the string response data now to avoid taking hits on caller threads
+                    result.UpdateResponseData();
+
+                    result.ExecutionPriorityLevel = commandQueue;
+                    currentOperation.TaskCompletionSource.TrySetResult(result);
+                }
             }
 
             isCommandProcessorRunning = false;
@@ -1657,15 +1983,17 @@ namespace Spyder.Client.Net
                 if (responseData == null || responseData.Length == 0)
                     return new ServerOperationResult(ServerOperationResultCode.NoResponseFromServer);
 
-                //Parse out our response
-                List<string> responseParts = ParseResponse(responseData);
+                //Parse out our response code from the result body
+                var responseParts = UTF8Encoding.UTF8.GetString(responseData).Split(new char[] { ' ' }, 2);
 
                 //Server result code should be available as an integer in the first response argument
                 if (!int.TryParse(responseParts[0], out int resultCode))
                     return new ServerOperationResult(ServerOperationResultCode.BadResponseFromServer);
 
-                responseParts.RemoveAt(0);
-                return new ServerOperationResult((ServerOperationResultCode)resultCode) { ResponseData = responseParts };
+                return new ServerOperationResult((ServerOperationResultCode)resultCode)
+                {
+                    ResponseRaw = responseParts.Length > 1 ? responseParts[1] : null
+                };
             }
             catch (Exception ex)
             {
@@ -1680,42 +2008,6 @@ namespace Spyder.Client.Net
                     socket = null;
                 }
             }
-        }
-
-        private List<string> ParseResponse(byte[] responseData)
-        {
-            List<string> response = new List<string>();
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < responseData.Length; i++)
-            {
-                char c = (char)responseData[i];
-                if (c == ' ')
-                {
-                    //Separator encountered.  Add current StringBuilder contents to response list and reset state
-                    //Note: it's likely normal for us to encounter an empty value, for cases where a string value like a background is passed back from the server but the value is null
-                    response.Add(builder.ToString());
-                    builder.Clear();
-                }
-                else
-                {
-                    //Add character to the current response string
-                    builder.Append(c);
-                }
-            }
-
-            //if we have anything left in the builder's buffer, flush it now
-            if (builder.Length > 0)
-            {
-                response.Add(builder.ToString());
-            }
-
-            //Decode any embedded '%20' characters used to represent a space
-            for (int i = 0; i < response.Count; i++)
-            {
-                response[i] = DecodeSpyderParameter(response[i]);
-            }
-
-            return response;
         }
 
         #endregion
@@ -1746,7 +2038,7 @@ namespace Spyder.Client.Net
             }
         }
 
-        private string EncodeSpyderParameter(object parameter)
+        public static string EncodeSpyderParameter(object parameter)
         {
             if (parameter == null)
                 return null;
@@ -1758,7 +2050,7 @@ namespace Spyder.Client.Net
                 return stringToEncode.Replace(" ", "%20");
         }
 
-        private string DecodeSpyderParameter(string encodedString)
+        public static string DecodeSpyderParameter(string encodedString)
         {
             if (string.IsNullOrEmpty(encodedString) || !encodedString.Contains("%20"))
                 return encodedString;
@@ -1767,5 +2059,22 @@ namespace Spyder.Client.Net
         }
 
         #endregion
+
+        private List<T> ParseObjectProperties<T>(List<string> parts) where T : ObjectPropertyValue, new()
+        {
+            var response = new List<T>();
+            int count = parts.Count / 3;
+            int index = 0;
+            for (int i = 0; i < count; i++)
+            {
+                response.Add(new T()
+                {
+                    PropertyName = parts[index++],
+                    PropertyType = parts[index++].Replace("%20", " "),
+                    ValueString = parts[index++].Replace("%20", " ")
+                });
+            }
+            return response;
+        }
     }
 }

@@ -503,10 +503,81 @@ namespace Spyder.Client.Net
 
         #endregion
 
-        public override async Task<Stream> GetImageFileStream(string fileName)
+        public override async Task<bool> GetImageFileStream(string fileName, Stream targetStream, int? maxWidthOrHeight = null)
+        {
+            if (!IsRunning || qftClient == null || !qftClient.IsRunning || string.IsNullOrEmpty(fileName))
+                return false;
+
+            //If custom scaling is requested, call the base to allow for server-side scaling
+            if (maxWidthOrHeight != null)
+            {
+                return await base.GetImageFileStream(fileName, targetStream, maxWidthOrHeight);
+            }
+
+            try
+            {
+                //First lets look in our cache for the file
+                if (localCacheFolder != null)
+                {
+                    string imageCacheFolder = Path.Combine(localCacheFolder, "Images");
+                    string file = Path.Combine(imageCacheFolder, fileName);
+                    if (File.Exists(file))
+                    {
+                        using (Stream fileStream = File.OpenRead(file))
+                        {
+                            await fileStream.CopyToAsync(targetStream);
+                            return true;
+                        }
+                    }
+                }
+
+                //Not found in cache; try to get file from server
+                using (MemoryStream response = new MemoryStream())
+                {
+                    string absolutePath = Path.Combine(@"c:\spyder\images", Path.GetFileName(fileName));
+                    string relativePath = qftClient.ConvertAbsolutePathToRelative(absolutePath);
+                    if (await qftClient.ReceiveFile(relativePath, response, null))
+                    {
+                        //Success.  Save file to local cache
+                        if (localCacheFolder != null)
+                        {
+                            string imageCacheFolder = Path.Combine(localCacheFolder, "Images");
+                            string file = Path.Combine(imageCacheFolder, fileName);
+                            using (Stream fileStream = File.Create(file))
+                            {
+                                response.Seek(0, SeekOrigin.Begin);
+                                await response.CopyToAsync(fileStream);
+                            }
+                        }
+
+                        //Rewind our memory stream and return it now
+                        response.Seek(0, SeekOrigin.Begin);
+                        await response.CopyToAsync(targetStream);
+                        return true;
+                    }
+                    else
+                    {
+                        return await base.GetImageFileStream(fileName, targetStream, maxWidthOrHeight);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while getting image file {1} from server: {2}", ex.GetType().Name, fileName, ex.Message);
+                return false;
+            }
+        }
+        
+        public override async Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight = null)
         {
             if (!IsRunning || qftClient == null || !qftClient.IsRunning || string.IsNullOrEmpty(fileName))
                 return null;
+
+            //If custom scaling is requested, call the base to allow for server-side scaling
+            if (maxWidthOrHeight != null)
+            {
+                return await base.GetImageFileStream(fileName, maxWidthOrHeight);
+            }
 
             try
             {
