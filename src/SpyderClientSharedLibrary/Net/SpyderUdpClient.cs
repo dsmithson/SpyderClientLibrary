@@ -414,15 +414,15 @@ namespace Spyder.Client.Net
             return ParseObjectProperties<InputPropertyValue>(result.ResponseData);
         }
 
-        public Task<bool> InputConfigPropertySet(int layerID, string propertyName, object value)
+        public Task<bool> InputConfigPropertiesSet(int layerID, string propertyName, object value)
         {
-            return InputConfigPropertySet(layerID, new Dictionary<string, object>()
+            return InputConfigPropertiesSet(layerID, new Dictionary<string, object>()
             {
                 { propertyName, value }
             });
         }
 
-        public async Task<bool> InputConfigPropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        public async Task<bool> InputConfigPropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues)
         {
             var builder = new StringBuilder();
             builder.AppendFormat("ISP {0}", layerID);
@@ -669,15 +669,15 @@ namespace Spyder.Client.Net
             return ParseObjectProperties<KeyframePropertyValue>(result.ResponseData);
         }
 
-        public Task<bool> KeyframePropertySet(int layerID, string propertyName, object value)
+        public Task<bool> KeyframePropertiesSet(int layerID, string propertyName, object value)
         {
-            return KeyframePropertySet(layerID, new Dictionary<string, object>()
+            return KeyframePropertiesSet(layerID, new Dictionary<string, object>()
             {
                 { propertyName, value }
             });
         }
 
-        public async Task<bool> KeyframePropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        public async Task<bool> KeyframePropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues)
         {
             var builder = new StringBuilder();
             builder.AppendFormat("KSP {0}", layerID);
@@ -1482,15 +1482,15 @@ namespace Spyder.Client.Net
             return ParseObjectProperties<OutputPropertyValue>(result.ResponseData);
         }
 
-        public Task<bool> OutputConfigPropertySet(int outputIndex, string propertyName, object value)
+        public Task<bool> OutputConfigPropertiesSet(int outputIndex, string propertyName, object value)
         {
-            return OutputConfigPropertySet(outputIndex, new Dictionary<string, object>()
+            return OutputConfigPropertiesSet(outputIndex, new Dictionary<string, object>()
             {
                 { propertyName, value }
             });
         }
 
-        public async Task<bool> OutputConfigPropertySet(int outputIndex, Dictionary<string, object> propertiesAndValues)
+        public async Task<bool> OutputConfigPropertiesSet(int outputIndex, Dictionary<string, object> propertiesAndValues)
         {
             var builder = new StringBuilder();
             builder.AppendFormat("OSP {0}", outputIndex);

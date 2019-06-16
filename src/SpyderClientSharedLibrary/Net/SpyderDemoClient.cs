@@ -333,12 +333,12 @@ namespace Spyder.Client.Net
             return Task.FromResult(new List<KeyframePropertyValue>());
         }
 
-        public Task<bool> KeyframePropertySet(int layerID, string propertyName, object value)
+        public Task<bool> KeyframePropertiesSet(int layerID, string propertyName, object value)
         {
             return Task.FromResult(true);
         }
 
-        public Task<bool> KeyframePropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        public Task<bool> KeyframePropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues)
         {
             return Task.FromResult(true);
         }
@@ -551,12 +551,12 @@ namespace Spyder.Client.Net
             return Task.FromResult(new List<InputPropertyValue>());
         }
 
-        public Task<bool> InputConfigPropertySet(int layerID, string propertyName, object value)
+        public Task<bool> InputConfigPropertiesSet(int layerID, string propertyName, object value)
         {
             return Task.FromResult(true);
         }
 
-        public Task<bool> InputConfigPropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        public Task<bool> InputConfigPropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues)
         {
             return Task.FromResult(true);
         }
@@ -569,12 +569,12 @@ namespace Spyder.Client.Net
         {
             return Task.FromResult(new List<OutputPropertyValue>());
         }
-        public Task<bool> OutputConfigPropertySet(int outputIndex, string propertyName, object value)
+        public Task<bool> OutputConfigPropertiesSet(int outputIndex, string propertyName, object value)
         {
             return Task.FromResult(true);
         }
 
-        public Task<bool> OutputConfigPropertySet(int outputIndex, Dictionary<string, object> propertiesAndValues)
+        public Task<bool> OutputConfigPropertiesSet(int outputIndex, Dictionary<string, object> propertiesAndValues)
         {
             return Task.FromResult(true);
         }

@@ -789,14 +789,14 @@ namespace Spyder.Client.Net
             return client.KeyframePropertiesGet(layerID);
         }
 
-        public Task<bool> KeyframePropertySet(int layerID, string propertyName, object value)
+        public Task<bool> KeyframePropertiesSet(int layerID, string propertyName, object value)
         {
-            return client.KeyframePropertySet(layerID, propertyName, value);
+            return client.KeyframePropertiesSet(layerID, propertyName, value);
         }
 
-        public Task<bool> KeyframePropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        public Task<bool> KeyframePropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues)
         {
-            return client.KeyframePropertySet(layerID, propertiesAndValues);
+            return client.KeyframePropertiesSet(layerID, propertiesAndValues);
         }
 
         public Task<int> GetLayerCount()
@@ -1007,14 +1007,14 @@ namespace Spyder.Client.Net
             return client.InputConfigPropertiesGet(layerID);
         }
 
-        public Task<bool> InputConfigPropertySet(int layerID, string propertyName, object value)
+        public Task<bool> InputConfigPropertiesSet(int layerID, string propertyName, object value)
         {
-            return client.InputConfigPropertySet(layerID, propertyName, value);
+            return client.InputConfigPropertiesSet(layerID, propertyName, value);
         }
 
-        public Task<bool> InputConfigPropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        public Task<bool> InputConfigPropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues)
         {
-            return client.InputConfigPropertySet(layerID, propertiesAndValues);
+            return client.InputConfigPropertiesSet(layerID, propertiesAndValues);
         }
 
         #endregion
@@ -1026,14 +1026,14 @@ namespace Spyder.Client.Net
             return client.OutputConfigPropertiesGet(outputIndex);
         }
 
-        public Task<bool> OutputConfigPropertySet(int outputIndex, string propertyName, object value)
+        public Task<bool> OutputConfigPropertiesSet(int outputIndex, string propertyName, object value)
         {
-            return client.OutputConfigPropertySet(outputIndex, propertyName, value);
+            return client.OutputConfigPropertiesSet(outputIndex, propertyName, value);
         }
 
-        public Task<bool> OutputConfigPropertySet(int outputIndex, Dictionary<string, object> propertiesAndValues)
+        public Task<bool> OutputConfigPropertiesSet(int outputIndex, Dictionary<string, object> propertiesAndValues)
         {
-            return client.OutputConfigPropertySet(outputIndex, propertiesAndValues);
+            return client.OutputConfigPropertiesSet(outputIndex, propertiesAndValues);
         }
 
 
