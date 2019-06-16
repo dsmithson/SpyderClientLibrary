@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Spyder.Client.Common;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -60,7 +61,7 @@ namespace Spyder.Client.Net
                 server = null;
             }
         }
-        
+                
         [TestMethod]
         public async Task GetPixelSpacesTest()
         {

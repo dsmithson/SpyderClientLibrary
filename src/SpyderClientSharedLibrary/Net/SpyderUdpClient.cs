@@ -1683,6 +1683,11 @@ namespace Spyder.Client.Net
             public Task<ServerOperationResult> Task { get { return tcs.Task; } }
             public TaskCompletionSource<ServerOperationResult> TaskCompletionSource { get { return tcs; } }
 
+            /// <summary>
+            /// If multiple commands are required to obtain a full server response, this field can be initialized and used to store data
+            /// </summary>
+            public StringBuilder ContinuationData { get; set; }
+
             public CommandQueueItem(string command)
                 : this(command, TimeSpan.FromSeconds(DefaultTimeoutSeconds))
             {
@@ -1777,8 +1782,45 @@ namespace Spyder.Client.Net
 
                 //Process this current command
                 ServerOperationResult result = await CommandQueueWorkerProcessSingleCommandAsync(currentOperation.Command, currentOperation.Timeout);
-                result.ExecutionPriorityLevel = commandQueue;
-                currentOperation.TaskCompletionSource.TrySetResult(result);
+
+                //If the command completed with a continueation, we need to re-enqueue to get the remainder response data
+                if (result.Result == ServerOperationResultCode.SuccessWithContinuation)
+                {
+                    //In continuation data, the first parameter back will be a token used to request the next block of data.  The remainder
+                    //of the data will be the data received in this block, which we'll need to store for later
+                    string[] split = result.ResponseRaw.Split(new char[] { ' ' }, 2);
+                    string continuationToken = split[0];
+                    if (currentOperation.ContinuationData == null)
+                    {
+                        currentOperation.ContinuationData = new StringBuilder();
+                    }
+                    currentOperation.ContinuationData.Append(split[1]);
+
+                    //Enqueue a next request, onto the same queue that we're on now, to get our missing continuation data.  Note this may
+                    //happen several times for large responses such as files
+                    currentOperation.Command = "RCM " + continuationToken;
+                    var targetQueue = (commandQueue == CommandExecutionPriority.Background ? backgroundCommandQueue : immediateCommandQueue);
+                    lock (targetQueue)
+                    {
+                        targetQueue.Enqueue(currentOperation);
+                        retrieveEvent.Set();
+                    }
+                }
+                else
+                {
+                    //If our response has prior continuation data, add it to our final response now
+                    if(currentOperation.ContinuationData != null)
+                    {
+                        currentOperation.ContinuationData.Append(result.ResponseRaw);
+                        result.ResponseRaw = currentOperation.ContinuationData.ToString();
+                    }
+
+                    //Build out the string response data now to avoid taking hits on caller threads
+                    result.UpdateResponseData();
+
+                    result.ExecutionPriorityLevel = commandQueue;
+                    currentOperation.TaskCompletionSource.TrySetResult(result);
+                }
             }
 
             isCommandProcessorRunning = false;
@@ -1842,15 +1884,17 @@ namespace Spyder.Client.Net
                 if (responseData == null || responseData.Length == 0)
                     return new ServerOperationResult(ServerOperationResultCode.NoResponseFromServer);
 
-                //Parse out our response
-                List<string> responseParts = ParseResponse(responseData);
+                //Parse out our response code from the result body
+                var responseParts = UTF8Encoding.UTF8.GetString(responseData).Split(new char[] { ' ' }, 2);
 
                 //Server result code should be available as an integer in the first response argument
                 if (!int.TryParse(responseParts[0], out int resultCode))
                     return new ServerOperationResult(ServerOperationResultCode.BadResponseFromServer);
 
-                responseParts.RemoveAt(0);
-                return new ServerOperationResult((ServerOperationResultCode)resultCode) { ResponseData = responseParts };
+                return new ServerOperationResult((ServerOperationResultCode)resultCode)
+                {
+                    ResponseRaw = responseParts.Length > 1 ? responseParts[1] : null
+                };
             }
             catch (Exception ex)
             {
@@ -1865,42 +1909,6 @@ namespace Spyder.Client.Net
                     socket = null;
                 }
             }
-        }
-
-        private List<string> ParseResponse(byte[] responseData)
-        {
-            List<string> response = new List<string>();
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < responseData.Length; i++)
-            {
-                char c = (char)responseData[i];
-                if (c == ' ')
-                {
-                    //Separator encountered.  Add current StringBuilder contents to response list and reset state
-                    //Note: it's likely normal for us to encounter an empty value, for cases where a string value like a background is passed back from the server but the value is null
-                    response.Add(builder.ToString());
-                    builder.Clear();
-                }
-                else
-                {
-                    //Add character to the current response string
-                    builder.Append(c);
-                }
-            }
-
-            //if we have anything left in the builder's buffer, flush it now
-            if (builder.Length > 0)
-            {
-                response.Add(builder.ToString());
-            }
-
-            //Decode any embedded '%20' characters used to represent a space
-            for (int i = 0; i < response.Count; i++)
-            {
-                response[i] = DecodeSpyderParameter(response[i]);
-            }
-
-            return response;
         }
 
         #endregion
@@ -1931,7 +1939,7 @@ namespace Spyder.Client.Net
             }
         }
 
-        private string EncodeSpyderParameter(object parameter)
+        public static string EncodeSpyderParameter(object parameter)
         {
             if (parameter == null)
                 return null;
@@ -1943,7 +1951,7 @@ namespace Spyder.Client.Net
                 return stringToEncode.Replace(" ", "%20");
         }
 
-        private string DecodeSpyderParameter(string encodedString)
+        public static string DecodeSpyderParameter(string encodedString)
         {
             if (string.IsNullOrEmpty(encodedString) || !encodedString.Contains("%20"))
                 return encodedString;
