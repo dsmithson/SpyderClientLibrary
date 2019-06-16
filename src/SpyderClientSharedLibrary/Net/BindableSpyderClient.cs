@@ -784,6 +784,21 @@ namespace Spyder.Client.Net
 
         #region Layer Interaction
 
+        public Task<List<KeyframePropertyValue>> KeyframePropertiesGet(int layerID)
+        {
+            return client.KeyframePropertiesGet(layerID);
+        }
+
+        public Task<bool> KeyframePropertySet(int layerID, string propertyName, object value)
+        {
+            return client.KeyframePropertySet(layerID, propertyName, value);
+        }
+
+        public Task<bool> KeyframePropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        {
+            return client.KeyframePropertySet(layerID, propertiesAndValues);
+        }
+
         public Task<int> GetLayerCount()
         {
             return client.GetLayerCount();
@@ -985,7 +1000,42 @@ namespace Spyder.Client.Net
 
         #endregion
 
+        #region Input Configuration
+
+        public Task<List<InputPropertyValue>> InputConfigPropertiesGet(int layerID)
+        {
+            return client.InputConfigPropertiesGet(layerID);
+        }
+
+        public Task<bool> InputConfigPropertySet(int layerID, string propertyName, object value)
+        {
+            return client.InputConfigPropertySet(layerID, propertyName, value);
+        }
+
+        public Task<bool> InputConfigPropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        {
+            return client.InputConfigPropertySet(layerID, propertiesAndValues);
+        }
+
+        #endregion
+
         #region Output Configuration
+
+        public Task<List<OutputPropertyValue>> OutputConfigPropertiesGet(int outputIndex)
+        {
+            return client.OutputConfigPropertiesGet(outputIndex);
+        }
+
+        public Task<bool> OutputConfigPropertySet(int outputIndex, string propertyName, object value)
+        {
+            return client.OutputConfigPropertySet(outputIndex, propertyName, value);
+        }
+
+        public Task<bool> OutputConfigPropertySet(int outputIndex, Dictionary<string, object> propertiesAndValues)
+        {
+            return client.OutputConfigPropertySet(outputIndex, propertiesAndValues);
+        }
+
 
         public Task<bool> FreezeOutput(params int[] outputIDs)
         {

@@ -64,6 +64,10 @@ namespace Spyder.Client.Net
 
         #region Layer Interaction
 
+        Task<List<KeyframePropertyValue>> KeyframePropertiesGet(int layerID);
+        Task<bool> KeyframePropertySet(int layerID, string propertyName, object value);
+        Task<bool> KeyframePropertySet(int layerID, Dictionary<string, object> propertiesAndValues);
+
         Task<int> GetLayerCount();
 
         Task<int> GetFirstAvailableLayerID();
@@ -233,7 +237,19 @@ namespace Spyder.Client.Net
 
         #endregion
 
+        #region Input Configuration
+
+        Task<List<InputPropertyValue>> InputConfigPropertiesGet(int layerID);
+        Task<bool> InputConfigPropertySet(int layerID, string propertyName, object value);
+        Task<bool> InputConfigPropertySet(int layerID, Dictionary<string, object> propertiesAndValues);
+
+        #endregion
+
         #region Output Configuration
+
+        Task<List<OutputPropertyValue>> OutputConfigPropertiesGet(int outputIndex);
+        Task<bool> OutputConfigPropertySet(int outputIndex, string propertyName, object value);
+        Task<bool> OutputConfigPropertySet(int outputIndex, Dictionary<string, object> propertiesAndValues);
 
         Task<bool> FreezeOutput(params int[] outputIDs);
 

@@ -399,6 +399,44 @@ namespace Spyder.Client.Net
             return cue;
         }
 
+        #region Input Control
+
+        /// <summary>
+        /// Gets all input config properties and values associated with a specified layer ID
+        /// </summary>
+        public async Task<List<InputPropertyValue>> InputConfigPropertiesGet(int layerID)
+        {
+            var result = await RetrieveAsync("IGP {0}", layerID);
+            if (result.Result != ServerOperationResultCode.Success)
+                return null;
+
+            //Parse our response object(s)
+            return ParseObjectProperties<InputPropertyValue>(result.ResponseData);
+        }
+
+        public Task<bool> InputConfigPropertySet(int layerID, string propertyName, object value)
+        {
+            return InputConfigPropertySet(layerID, new Dictionary<string, object>()
+            {
+                { propertyName, value }
+            });
+        }
+
+        public async Task<bool> InputConfigPropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        {
+            var builder = new StringBuilder();
+            builder.AppendFormat("ISP {0}", layerID);
+            foreach (var pair in propertiesAndValues)
+            {
+                builder.AppendFormat(" {0} {1}", pair.Key, pair.Value?.ToString().Replace(" ", "%20"));
+            }
+
+            var result = await RetrieveAsync(builder.ToString());
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
+        #endregion
+
         #region Test Pattern Control
 
         public virtual Task<bool> ClearTestPatternOnPixelSpace(int pixelSpaceID)
@@ -620,6 +658,37 @@ namespace Spyder.Client.Net
         }
 
         #region Layer Interaction
+
+        public async Task<List<KeyframePropertyValue>> KeyframePropertiesGet(int layerID)
+        {
+            var result = await RetrieveAsync("KGP {0}", layerID);
+            if (result.Result != ServerOperationResultCode.Success)
+                return null;
+
+            //Parse our response object(s)
+            return ParseObjectProperties<KeyframePropertyValue>(result.ResponseData);
+        }
+
+        public Task<bool> KeyframePropertySet(int layerID, string propertyName, object value)
+        {
+            return KeyframePropertySet(layerID, new Dictionary<string, object>()
+            {
+                { propertyName, value }
+            });
+        }
+
+        public async Task<bool> KeyframePropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        {
+            var builder = new StringBuilder();
+            builder.AppendFormat("KSP {0}", layerID);
+            foreach (var pair in propertiesAndValues)
+            {
+                builder.AppendFormat(" {0} {1}", pair.Key, pair.Value?.ToString().Replace(" ", "%20"));
+            }
+
+            var result = await RetrieveAsync(builder.ToString());
+            return result.Result == ServerOperationResultCode.Success;
+        }
 
         public async Task<int> GetLayerCount()
         {
@@ -1403,6 +1472,37 @@ namespace Spyder.Client.Net
 
         #region Output Configuration
 
+        public async Task<List<OutputPropertyValue>> OutputConfigPropertiesGet(int outputIndex)
+        {
+            var result = await RetrieveAsync("OGP {0}", outputIndex);
+            if (result.Result != ServerOperationResultCode.Success)
+                return null;
+
+            //Parse our response object(s)
+            return ParseObjectProperties<OutputPropertyValue>(result.ResponseData);
+        }
+
+        public Task<bool> OutputConfigPropertySet(int outputIndex, string propertyName, object value)
+        {
+            return OutputConfigPropertySet(outputIndex, new Dictionary<string, object>()
+            {
+                { propertyName, value }
+            });
+        }
+
+        public async Task<bool> OutputConfigPropertySet(int outputIndex, Dictionary<string, object> propertiesAndValues)
+        {
+            var builder = new StringBuilder();
+            builder.AppendFormat("OSP {0}", outputIndex);
+            foreach(var pair in propertiesAndValues)
+            {
+                builder.AppendFormat(" {0} {1}", pair.Key, pair.Value?.ToString().Replace(" ", "%20"));
+            }
+
+            var result = await RetrieveAsync(builder.ToString());
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
         public Task<bool> FreezeOutput(params int[] outputIDs)
         {
             return SetOutputFreeze(true, outputIDs);
@@ -1539,8 +1639,7 @@ namespace Spyder.Client.Net
         }
 
         #endregion
-
-
+        
         #region PixelSpace Interaction
 
         public async Task<bool> MixBackground(int duration)
@@ -1960,5 +2059,22 @@ namespace Spyder.Client.Net
         }
 
         #endregion
+
+        private List<T> ParseObjectProperties<T>(List<string> parts) where T : ObjectPropertyValue, new()
+        {
+            var response = new List<T>();
+            int count = parts.Count / 3;
+            int index = 0;
+            for (int i = 0; i < count; i++)
+            {
+                response.Add(new T()
+                {
+                    PropertyName = parts[index++],
+                    PropertyType = parts[index++].Replace("%20", " "),
+                    ValueString = parts[index++].Replace("%20", " ")
+                });
+            }
+            return response;
+        }
     }
 }

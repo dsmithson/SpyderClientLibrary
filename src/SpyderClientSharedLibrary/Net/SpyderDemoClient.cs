@@ -325,8 +325,23 @@ namespace Spyder.Client.Net
         {
             return Task.FromResult(server.GetServerSettings());
         }
-        
+
         #region Layer Interaction
+
+        public Task<List<KeyframePropertyValue>> KeyframePropertiesGet(int layerID)
+        {
+            return Task.FromResult(new List<KeyframePropertyValue>());
+        }
+
+        public Task<bool> KeyframePropertySet(int layerID, string propertyName, object value)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> KeyframePropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        {
+            return Task.FromResult(true);
+        }
 
         public Task<int> GetLayerCount()
         {
@@ -529,8 +544,40 @@ namespace Spyder.Client.Net
 
         #endregion
 
+        #region Input Configuration
+
+        public Task<List<InputPropertyValue>> InputConfigPropertiesGet(int layerID)
+        {
+            return Task.FromResult(new List<InputPropertyValue>());
+        }
+
+        public Task<bool> InputConfigPropertySet(int layerID, string propertyName, object value)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> InputConfigPropertySet(int layerID, Dictionary<string, object> propertiesAndValues)
+        {
+            return Task.FromResult(true);
+        }
+
+        #endregion
 
         #region Output Configuration
+
+        public Task<List<OutputPropertyValue>> OutputConfigPropertiesGet(int outputIndex)
+        {
+            return Task.FromResult(new List<OutputPropertyValue>());
+        }
+        public Task<bool> OutputConfigPropertySet(int outputIndex, string propertyName, object value)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> OutputConfigPropertySet(int outputIndex, Dictionary<string, object> propertiesAndValues)
+        {
+            return Task.FromResult(true);
+        }
 
         public Task<bool> FreezeOutput(params int[] outputIDs)
         {
