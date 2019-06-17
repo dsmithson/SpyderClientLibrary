@@ -2,6 +2,8 @@
 
 ![Build Status](https://ci.appveyor.com/api/projects/status/5xhce5xxfpphcsv8/branch/master?svg=true)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=dsmithson_SpyderClientLibrary&metric=alert_status)](https://sonarcloud.io/dashboard?id=dsmithson_SpyderClientLibrary)
+
 Provides a modern, fully async compatible .Net Core based library for creating applications and utilities targeting the 
 [Spyder video processor](http://www.vistasystems.net/video-processors-and-matrix-switchers/video-processors/pages/default.aspx) 
 from Desktop (.Net 4.6.2 or later) or Windows UWP applications (Windows 10).
