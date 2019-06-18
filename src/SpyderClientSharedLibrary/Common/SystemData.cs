@@ -823,8 +823,11 @@ namespace Spyder.Client.Common
         string typeAttributeName;
         private string GetAttributeFromTypeAttribute(XElement node)
         {
+            if (node == null)
+                return null;
+
             //Depending on the vintange of the call, there may be a value sub-element where the attribute lives
-            var valueElement = node?.Element("Value");
+            var valueElement = node.Element("Value");
             if (valueElement != null)
             {
                 string response = GetAttributeFromTypeAttribute(valueElement);

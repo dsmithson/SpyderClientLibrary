@@ -44,7 +44,7 @@ namespace Spyder.Client.Net
             retrieveEvent = new AsyncAutoResetEvent();
             immediateCommandQueue = new Queue<CommandQueueItem>();
             backgroundCommandQueue = new Queue<CommandQueueItem>();
-            RunCommandQueueWorkerAsync();
+            Task t = RunCommandQueueWorkerAsync();
             return true;
         }
 
@@ -1863,7 +1863,7 @@ namespace Spyder.Client.Net
         /// <summary>
         /// Worker that processes the retrieve queue while the client is started
         /// </summary>
-        private async void RunCommandQueueWorkerAsync()
+        private async Task RunCommandQueueWorkerAsync()
         {
             isCommandProcessorRunning = true;
 

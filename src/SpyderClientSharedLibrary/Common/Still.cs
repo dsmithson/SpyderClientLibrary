@@ -124,14 +124,7 @@ namespace Spyder.Client.Common
 
         public override bool Equals(object obj)
         {
-            if (obj != null)
-                return false;
-
-            Still still = obj as Still;
-            if (still == null)
-                return false;
-            else
-                return this.Equals(still);
+            return this.Equals(obj as Still);
         }
 
         public override int GetHashCode()

@@ -122,19 +122,17 @@ namespace Spyder.Client.Common
         public void Set(long frames)
         {
             long total = frames;
-            long f = (long)FramesPerSecond();
+            long f = FramesPerSecond();
 
             Hours = (int)(total / 60L / 60L / f);
-            total -= (long)(hours * 60 * 60 * f);
+            total -= (hours * 60 * 60 * f);
 
             Minutes = (int)(total / 60L / f);
-            total -= (long)(minutes * 60 * f);
+            total -= (minutes * 60 * f);
 
             Seconds = (int)(total / f);
-            total -= (long)(seconds * f);
 
             Frames = (int)(frames % f);
-            total -= frames;
         }
         public void Set(FieldRate rate, long frames)
         {
@@ -162,14 +160,7 @@ namespace Spyder.Client.Common
 
         public override bool Equals(object obj)
         {
-            if (obj != null)
-                return false;
-
-            var timeCode = obj as TimeCode;
-            if (timeCode == null)
-                return false;
-            else
-                return this.Equals(timeCode);
+            return this.Equals(obj as TimeCode);
         }
 
         public override int GetHashCode()

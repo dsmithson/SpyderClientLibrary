@@ -26,31 +26,31 @@ namespace Spyder.Client.Common
             else
             {
                 // pixel space half width
-                float psHW = (float)parentPixelSpaceRect.Width / 2f;
+                float psHW = parentPixelSpaceRect.Width / 2f;
                 // ps horiz center
-                float psHC = (float)parentPixelSpaceRect.X + psHW;
+                float psHC = parentPixelSpaceRect.X + psHW;
                 // ps half height
-                float psHH = (float)parentPixelSpaceRect.Height / 2f;
+                float psHH = parentPixelSpaceRect.Height / 2f;
                 // ps vert center
-                float psVC = (float)parentPixelSpaceRect.Y + psHH;
+                float psVC = parentPixelSpaceRect.Y + psHH;
                 // window horizontal size before crop
                 float w;
                 if (parentPixelSpaceScale == 1.0F)
                 {
-                    w = (float)layerKeyFrame.Width;
+                    w = layerKeyFrame.Width;
                 }
                 else
                 {
-                    w = (float)layerKeyFrame.Width * parentPixelSpaceScale;
+                    w = layerKeyFrame.Width * parentPixelSpaceScale;
                 }
                 // vertical size before crop
-                float v = (float)w / (layerAspectRatio + layerKeyFrame.AspectRatioOffset);
+                float v = w / (layerAspectRatio + layerKeyFrame.AspectRatioOffset);
 
                 // crops in pixels
-                float topCrop = (float)v * layerKeyFrame.TopCrop;
-                float leftCrop = (float)w * layerKeyFrame.LeftCrop;
-                float botCrop = (float)v * layerKeyFrame.BottomCrop;
-                float rightCrop = (float)w * layerKeyFrame.RightCrop;
+                float topCrop = v * layerKeyFrame.TopCrop;
+                float leftCrop = w * layerKeyFrame.LeftCrop;
+                float botCrop = v * layerKeyFrame.BottomCrop;
+                float rightCrop = w * layerKeyFrame.RightCrop;
 
                 // window horizontal center before crop
                 float hc = psHC + (layerKeyFrame.HPosition * psHW);

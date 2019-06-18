@@ -814,10 +814,10 @@ namespace Spyder.Client.Net
                         }
                     }
                 }
-                else if (element is StillElement)
+                else if (element is StillElement stillElement)
                 {
                     dkf.Source = string.Empty;
-                    dkf.LoadedStill = ((StillElement)element).FileName;
+                    dkf.LoadedStill = stillElement.FileName;
                     dkf.WindowLabel = dkf.LoadedStill;
                     dkf.Thumbnail = dkf.LoadedStill;
                 }

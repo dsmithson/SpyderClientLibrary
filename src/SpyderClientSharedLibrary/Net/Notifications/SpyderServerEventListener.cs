@@ -54,7 +54,6 @@ namespace Spyder.Client.Net.Notifications
         public const string multicastIP = "239.192.25.25";
         public const int multicastPort = 11118;
         private readonly IMulticastListener listener;
-        private readonly GZipStreamDecompressor drawingDataDecompressor;
         private Dictionary<string, SpyderServerListenerState> serverInfoCache;
 
         /// <summary>
@@ -67,7 +66,6 @@ namespace Spyder.Client.Net.Notifications
         public SpyderServerEventListener()
         {
             this.listener = new UDPMulticastListener();
-            this.drawingDataDecompressor = new GZipStreamDecompressor();
         }
 
         public async Task<bool> StartupAsync()
@@ -263,29 +261,13 @@ namespace Spyder.Client.Net.Notifications
                 return null;
 
             //Spyder studio (v5 and above) changes the spyder header to mantis, so we need to check both
-            var expectedHeaders = new byte[][]
+            if((data[0] == (byte)'s' && data[1] == (byte)'p' && data[2] == (byte)'y' && data[3] == (byte)'d' && data[4] == (byte)'e' && data[5] == (byte)'r') ||
+               (data[0] == (byte)'m' && data[1] == (byte)'a' && data[2] == (byte)'n' && data[3] == (byte)'t' && data[4] == (byte)'i' && data[5] == (byte)'s'))
             {
-                new byte[] { (byte)'s', (byte)'p', (byte)'y', (byte)'d', (byte)'e', (byte)'r', 0x00 },
-                new byte[] { (byte)'m', (byte)'a', (byte)'n', (byte)'t', (byte)'i', (byte)'s', 0x00 }
-            };
-
-            bool matched = false;
-            foreach (byte[] expected in expectedHeaders)
-            {
-                for (int i = 0; i < expected.Length; i++)
-                {
-                    if (expected[i] != data[i])
-                        break;
-                }
-                matched = true;
-                break;
+                ServerEventType eventType = (ServerEventType)(data[10] | (data[11] << 8));
+                return eventType;
             }
-
-            if (!matched)
-                return null;
-
-            ServerEventType eventType = (ServerEventType)(data[10] | (data[11] << 8));
-            return eventType;
+            return null;
         }
 
         /// <summary>

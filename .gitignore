@@ -20,6 +20,9 @@ bld/
 DesignTimeBuild/
 .vs/
 
+# Sonar Qube
+.sonarqube/
+
 # Roslyn cache directories
 *.ide/
 

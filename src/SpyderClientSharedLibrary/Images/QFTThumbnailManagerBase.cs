@@ -531,7 +531,9 @@ namespace Spyder.Client.Images
                 if (client == null)
                     return false;
 
-                string remoteFile = QFTClient.ConvertToRelativePath(Path.Combine(@"c:\spyder\images", identifier.FileName));
+                string remotePath = Path.Combine(await GetRemoteImagePath(identifier.ServerIP), identifier.FileName);
+                string remoteFile = QFTClient.ConvertToRelativePath(remotePath);
+
                 stream.Seek(0, SeekOrigin.Begin);
                 if (!await client.SendFile(stream, remoteFile, progress))
                     return false;

@@ -220,14 +220,7 @@ namespace Spyder.Client.Common
 
         public override bool Equals(object obj)
         {
-            if (obj != null)
-                return false;
-
-            var playItem = obj as PlayItem;
-            if (playItem == null)
-                return false;
-            else
-                return this.Equals(playItem);
+            return this.Equals(obj as PlayItem);
         }
 
         public override int GetHashCode()

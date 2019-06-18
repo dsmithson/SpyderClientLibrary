@@ -94,14 +94,7 @@ namespace Spyder.Client.Common
 
         public override bool Equals(object obj)
         {
-            if (obj != null)
-                return false;
-
-            var cmdKey = obj as CommandKey;
-            if (cmdKey == null)
-                return false;
-            else
-                return this.Equals(cmdKey);
+            return Equals(obj as CommandKey);
         }
 
         public override int GetHashCode()

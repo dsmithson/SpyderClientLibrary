@@ -18,28 +18,18 @@ namespace Spyder.Client.Net
     {
         private SpyderDemoServer server;
         private SystemData data;
-        public HardwareType HardwareType { get; } = HardwareType.SpyderX80;
+        public HardwareType HardwareType { get; }
 
         /// <summary>
         /// Contains folder and file paths on the server hardware
         /// </summary>
         public ServerFilePaths ServerFilePaths => ServerFilePaths.FromHardwareType(this.HardwareType, this.Version);
 
-        private string serverIP = "Demo";
-        public string ServerIP
-        {
-            get { return serverIP; }
-            set { serverIP = value; }
-        }
+        public string ServerIP { get; set; } = "Demo";
 
         public VersionInfo Version => new VersionInfo(0, 0, 0);
 
-        private string hostName;
-        public string HostName
-        {
-            get { return hostName; }
-            set { hostName = value; }
-        }
+        public string HostName { get; set; }
 
         /// <summary>
         /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.

@@ -21,9 +21,9 @@ namespace Spyder.Client.IO
 
         public static short GetShort(this byte[] Source, ref int Index)
         {
-            byte low = (byte)Source[Index++];
-            short val = (short)(((short)Source[Index++] << 8) | ((byte)low));
-            return (short)val;
+            byte low = Source[Index++];
+            short val = (short)((Source[Index++] << 8) | low);
+            return val;
         }
 
         public static void AddFloat(this byte[] destination, ref int index, params float[] values)
@@ -50,7 +50,7 @@ namespace Spyder.Client.IO
             if (rects != null && rects.Length > 0)
             {
                 foreach (Rectangle rect in rects)
-                    AddInt(destination, ref index, (int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
+                    AddInt(destination, ref index, rect.X, rect.Y, rect.Width, rect.Height);
             }
         }
 
