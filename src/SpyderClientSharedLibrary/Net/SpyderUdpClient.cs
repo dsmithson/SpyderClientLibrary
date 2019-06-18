@@ -44,7 +44,7 @@ namespace Spyder.Client.Net
             retrieveEvent = new AsyncAutoResetEvent();
             immediateCommandQueue = new Queue<CommandQueueItem>();
             backgroundCommandQueue = new Queue<CommandQueueItem>();
-            RunCommandQueueWorkerAsync();
+            Task t = RunCommandQueueWorkerAsync();
             return true;
         }
 

@@ -43,10 +43,10 @@ namespace Spyder.Client.Common
             get { return new Rectangle(x, y, width, height); }
             set
             {
-                X = (int)value.X;
-                Y = (int)value.Y;
-                Width = (int)value.Width;
-                height = (int)value.Height;
+                X = value.X;
+                Y = value.Y;
+                Width = value.Width;
+                height = value.Height;
             }
         }
 

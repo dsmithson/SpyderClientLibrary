@@ -305,7 +305,7 @@ namespace Spyder.Client.Models
                     opacity = value;
                     OnPropertyChanged();
 
-                    if (wasVisible != IsVisible)
+                    if (wasVisible != isVisible)
                         OnPropertyChanged("IsVisible");
                 }
             }
@@ -574,20 +574,20 @@ namespace Spyder.Client.Models
             {
                 opacity = 0;
             }
-            else if (element is SourceElement)
+            else if (element is SourceElement sourceElement)
             {
                 if (layerOffset == 0)
                 {
-                    content = ((SourceElement)element).Content;
+                    content = sourceElement.Content;
                     opacity = 1;
                     keyFrame = element.GetDrivingKeyFrame(elementCueOffset, ElementIndexRelativeTo.Element);
                 }
             }
-            else if (element is StillElement)
+            else if (element is StillElement stillElement)
             {
                 if (layerOffset == 0)
                 {
-                    content = ((StillElement)element).Content;
+                    content = stillElement.Content;
                     opacity = 1;
                     keyFrame = element.GetDrivingKeyFrame(elementCueOffset, ElementIndexRelativeTo.Element);
                 }

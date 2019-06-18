@@ -45,12 +45,7 @@ namespace Spyder.Client.Images
         /// <summary>
         /// Key field used to uniquely identify this resource.  Could be a string 
         /// </summary>
-        public virtual K Key
-        {
-            get { return key; }
-            set { key = value; }
-        }
-        private K key;
+        public virtual K Key { get; set; }
 
         private Size nativeResolution;
         public virtual Size NativeResolution
@@ -229,7 +224,7 @@ namespace Spyder.Client.Images
                 //won't hang indefinately
                 if (!nativeResolutionTcs.Task.IsCompleted)
                 {
-                    TraceQueue.Trace(this, TracingLevel.Warning, "Native resolution for Thumbnail '{0}' was not set before image was set.", this.key);
+                    TraceQueue.Trace(this, TracingLevel.Warning, "Native resolution for Thumbnail '{0}' was not set before image was set.", this.Key);
                     nativeResolutionTcs.TrySetResult(false);
                 }
             }
@@ -249,7 +244,7 @@ namespace Spyder.Client.Images
             if (!isLoadingLargeImage && !isLoadingMediumImage && !isLoadingSmallImage && !isLoadingExtraSmallImage)
             {
                 //Force a small image pull
-                var extraSmallImage = this.ExtraSmallImage;
+                this.ExtraSmallImage?.ToString();
             }
 
             //Return our task handle to our caller, so they can wait for the image

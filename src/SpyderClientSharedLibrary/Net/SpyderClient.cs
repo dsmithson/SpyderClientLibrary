@@ -315,7 +315,7 @@ namespace Spyder.Client.Net
             if (systemData == null || systemData.Scripts == null)
                 return Task.FromResult<List<Script>>(null);
 
-            return Task.FromResult((List<Script>)systemData.Scripts);
+            return Task.FromResult(systemData.Scripts);
         }
         public virtual Task<Script> GetScript(int scriptID)
         {
@@ -330,7 +330,7 @@ namespace Spyder.Client.Net
             if (systemData == null || systemData.InputConfigs == null)
                 return Task.FromResult<List<InputConfig>>(null);
 
-            return Task.FromResult((List<InputConfig>)systemData.InputConfigs);
+            return Task.FromResult(systemData.InputConfigs);
         }
         public virtual Task<InputConfig> GetInputConfig(int InputConfigID)
         {
@@ -351,7 +351,7 @@ namespace Spyder.Client.Net
             if (systemData == null || systemData.PixelSpaces == null)
                 return Task.FromResult<List<PixelSpace>>(null);
 
-            return Task.FromResult((List<PixelSpace>)systemData.PixelSpaces);
+            return Task.FromResult(systemData.PixelSpaces);
         }
         public override Task<PixelSpace> GetPixelSpace(int PixelSpaceID)
         {
@@ -534,7 +534,7 @@ namespace Spyder.Client.Net
                 //Not found in cache; try to get file from server
                 using (MemoryStream response = new MemoryStream())
                 {
-                    string absolutePath = Path.Combine(@"c:\spyder\images", Path.GetFileName(fileName));
+                    string absolutePath = Path.Combine(ServerFilePaths.ImageRoot, Path.GetFileName(fileName));
                     string relativePath = qftClient.ConvertAbsolutePathToRelative(absolutePath);
                     if (await qftClient.ReceiveFile(relativePath, response, null))
                     {
@@ -595,7 +595,7 @@ namespace Spyder.Client.Net
 
                 //Not found in cache; try to get file from server
                 MemoryStream response = new MemoryStream();
-                string absolutePath = Path.Combine(@"c:\spyder\images", Path.GetFileName(fileName));
+                string absolutePath = Path.Combine(ServerFilePaths.ImageRoot, Path.GetFileName(fileName));
                 string relativePath = qftClient.ConvertAbsolutePathToRelative(absolutePath);
                 if (await qftClient.ReceiveFile(relativePath, response, null))
                 {
@@ -646,7 +646,7 @@ namespace Spyder.Client.Net
                     fileStream.Seek(0, SeekOrigin.Begin);
 
                 //Write file to the server
-                string absolutePath = Path.Combine(@"c:\spyder\images", Path.GetFileName(fileName));
+                string absolutePath = Path.Combine(ServerFilePaths.ImageRoot, Path.GetFileName(fileName));
                 string relativePath = qftClient.ConvertAbsolutePathToRelative(absolutePath);
                 if (!await qftClient.SendFile(fileStream, relativePath, null))
                 {
@@ -691,7 +691,7 @@ namespace Spyder.Client.Net
             if (!IsRunning || qftClient == null || !qftClient.IsRunning)
                 return null;
 
-            string absolutePath = @"c:\spyder\images";
+            string absolutePath = ServerFilePaths.ImageRoot;
             string relativePath = qftClient.ConvertAbsolutePathToRelative(absolutePath);
             var files = await qftClient.GetFiles(relativePath);
             if (files == null || files.Length == 0)

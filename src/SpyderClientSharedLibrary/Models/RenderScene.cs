@@ -11,6 +11,7 @@ using Spyder.Client.Common;
 using Knightware.Primitives;
 using Spyder.Client.Models.StackupProviders;
 using Knightware.Net;
+using System.Collections.Specialized;
 
 namespace Spyder.Client.Models
 {
@@ -20,11 +21,8 @@ namespace Spyder.Client.Models
     public class RenderScene : PropertyChangedBase
     {
         private readonly AggregateRenderLayerProvider layerProvider = new AggregateRenderLayerProvider();
-
         private readonly ObservableCollection<RenderLayer> lastDrawingLayers = new ObservableCollection<RenderLayer>();
         private readonly ObservableCollection<RenderLayer> lastScriptLayers = new ObservableCollection<RenderLayer>();
-
-        private bool collectionChangedInUpdate;
         private readonly ObservableCollection<RenderObject> allRenderSceneObjects;
 
         private Size displaySize;
@@ -99,7 +97,6 @@ namespace Spyder.Client.Models
             this.renderSceneDataProvider = renderSceneDataProvider;
 
             this.allRenderSceneObjects = new ObservableCollection<RenderObject>();
-            this.allRenderSceneObjects.CollectionChanged += (sender, args) => collectionChangedInUpdate = true;
         }
 
         public RenderObject HitTest(Point position)
@@ -139,7 +136,9 @@ namespace Spyder.Client.Models
 
         public async Task Update(DrawingData drawingData, Script script, int scriptCue)
         {
-            collectionChangedInUpdate = false;
+            bool collectionChangedInUpdate = false;
+            var collectionChangedHandler = new NotifyCollectionChangedEventHandler((sender, args) => collectionChangedInUpdate = true);
+            this.allRenderSceneObjects.CollectionChanged += collectionChangedHandler;
 
             //Get a current list of pixelspaces from our provided data
             IEnumerable<PixelSpace> pixelSpaces = null;
@@ -242,6 +241,7 @@ namespace Spyder.Client.Models
                 (src, dst) => dst.CopyFrom(src));
 
             //Did our collection change?
+            this.allRenderSceneObjects.CollectionChanged -= collectionChangedHandler;
             if (collectionChangedInUpdate)
             {
                 //Force change notification to force the sorted property to be re-evaluated by our UI

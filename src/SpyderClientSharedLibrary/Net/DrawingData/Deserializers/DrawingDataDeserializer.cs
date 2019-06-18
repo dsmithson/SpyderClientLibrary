@@ -56,7 +56,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             byte packetID = Stream[readIndex++];
             byte totalPackets = Stream[readIndex++];
             int streamLength = Stream[readIndex++];
-            streamLength |= (int)((int)Stream[readIndex++] << 8);
+            streamLength |= (Stream[readIndex++] << 8);
             bool compressed = (compression == (byte)'C');
 
             var deserializer = GetDeserializer(version, ServerVersion);
@@ -139,7 +139,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 OnDrawingDataDeserialized(drawingData);
 
                 rxCache.Clear();
-                return;
             }
         }
 
