@@ -145,14 +145,7 @@ namespace Spyder.Client.Common
 
         public override bool Equals(object obj)
         {
-            if (obj != null)
-                return false;
-
-            var register = obj as Register;
-            if (register == null)
-                return false;
-            else
-                return this.Equals(register);
+            return this.Equals(obj as Register);
         }
 
         public override int GetHashCode()

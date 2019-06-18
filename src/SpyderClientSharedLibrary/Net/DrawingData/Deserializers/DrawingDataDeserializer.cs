@@ -3,6 +3,8 @@ using Knightware.IO;
 using Spyder.Client.IO;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +21,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         private int rxSequence = -1;
         private int rxPacketCount = -1;
         private SortedDictionary<int, byte[]> rxCache = new SortedDictionary<int,byte[]>();
-        private readonly IStreamDecompressor zipDecompressor = new GZipStreamDecompressor();
 
         public string ServerIP { get; private set; }
         public string ServerVersion { get; private set; }
@@ -163,11 +164,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             {
                 return null;
             }
-            if (zipDecompressor == null)
-            {
-                TraceQueue.Trace(this, TracingLevel.Warning, "Unable to decompress drawing data update because no Zip decompressor is available");
-                return null;
-            }
 
             try
             {
@@ -178,12 +174,25 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 uncompressedSize |= (compressedData[offset + 2] << 16);
                 uncompressedSize |= (compressedData[offset + 3] << 24);
 
-                return zipDecompressor.Decompress(compressedData, offset + 4, count - 4, uncompressedSize);
+                return Decompress(compressedData, offset + 4, count - 4, uncompressedSize);
             }
             catch (Exception ex)
             {
                 TraceQueue.Trace(this, TracingLevel.Warning, "{0} occurred while decompressing DrawingData: {1}", ex.GetType().Name, ex.Message);
                 return null;
+            }
+        }
+
+        public byte[] Decompress(byte[] zipCompressedData, int offset, int count, int uncompressedDataLength)
+        {
+            using (MemoryStream compressedStream = new MemoryStream(zipCompressedData, offset, count, false))
+            {
+                using (var decompressor = new GZipStream(compressedStream, CompressionMode.Decompress))
+                {
+                    byte[] decompressedBytes = new byte[uncompressedDataLength];
+                    int read = decompressor.Read(decompressedBytes, 0, uncompressedDataLength);
+                    return (read == uncompressedDataLength ? decompressedBytes : null);
+                }
             }
         }
     }

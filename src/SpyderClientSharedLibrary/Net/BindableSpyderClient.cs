@@ -1064,7 +1064,7 @@ namespace Spyder.Client.Net
 
         public Task<bool> SetOutputBlend(int outputID, BlendEdge edge, bool enabled, int blendSize, BlendMode blendMode, float curve1, float curve2)
         {
-            return SetOutputBlend(outputID, edge, enabled, blendSize, blendMode, curve1, curve2);
+            return client.SetOutputBlend(outputID, edge, enabled, blendSize, blendMode, curve1, curve2);
         }
 
         public Task<bool> ClearOutputBlend(int outputID, BlendEdge edge)

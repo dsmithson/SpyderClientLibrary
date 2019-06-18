@@ -162,14 +162,7 @@ namespace Spyder.Client.Common
 
         public override bool Equals(object obj)
         {
-            if (obj != null)
-                return false;
-
-            var timeCode = obj as TimeCode;
-            if (timeCode == null)
-                return false;
-            else
-                return this.Equals(timeCode);
+            return this.Equals(obj as TimeCode);
         }
 
         public override int GetHashCode()

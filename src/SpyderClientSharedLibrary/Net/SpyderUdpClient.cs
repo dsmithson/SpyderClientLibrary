@@ -1863,7 +1863,7 @@ namespace Spyder.Client.Net
         /// <summary>
         /// Worker that processes the retrieve queue while the client is started
         /// </summary>
-        private async void RunCommandQueueWorkerAsync()
+        private async Task RunCommandQueueWorkerAsync()
         {
             isCommandProcessorRunning = true;
 

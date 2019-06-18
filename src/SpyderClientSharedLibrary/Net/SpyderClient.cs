@@ -473,7 +473,7 @@ namespace Spyder.Client.Net
             }
 
             if (list == null)
-                return null;
+                return Task.FromResult<IRegister>(null);
 
             return GetItemFromListByRegister(list, registerID);
         }
@@ -620,7 +620,7 @@ namespace Spyder.Client.Net
                     //Failed to acquire image.  Cleanup and let the base class try
                     response.Dispose();
                     response = null;
-                    return await base.GetImageFileStream(fileName);
+                    return await base.GetImageFileStream(fileName, maxWidthOrHeight);
                 }
             }
             catch (Exception ex)
