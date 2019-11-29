@@ -24,6 +24,9 @@
     <NoWarn />
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>bin\Release</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <None Remove="Assets\128x128\Black.png" />
     <None Remove="Assets\128x128\Source.png" />
