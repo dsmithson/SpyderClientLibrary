@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Spyder.Client.IO;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Spyder.Client.Common

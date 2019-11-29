@@ -1,4 +1,6 @@
 ﻿using Knightware.Primitives;
+using Spyder.Client.Common;
+using Spyder.Client.Net.DrawingData;
 using System.Threading.Tasks;
 
 namespace Spyder.Client.Models

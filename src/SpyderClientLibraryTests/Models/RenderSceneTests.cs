@@ -1,5 +1,8 @@
 ﻿using Knightware.Primitives;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Spyder.Client.Common;
+using Spyder.Client.Net.DrawingData;
+using Spyder.Client.Scripting;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
