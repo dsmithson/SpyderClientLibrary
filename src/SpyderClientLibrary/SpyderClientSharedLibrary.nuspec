@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>SpyderClientLibrary</id>
+    <version>$version$</version>
+    <title>Spyder Client Library</title>
+    <owners>Derek Smithson</owners>
+    <authors>Derek Smithson</authors>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+    <projectUrl>https://github.com/dsmithson/SpyderClientLibrary</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>Added DataObjectChanged support at BindableSpyderClient class.</releaseNotes>
+    <copyright>Copyright 2015</copyright>
+    <tags>spyder, x20</tags>
+    <dependencies>
+        <dependency id="PCLStorage" version="1.0.2" />
+        <dependency id="KnightwareCore" version="3.1.0" />
+    </dependencies>
+  </metadata>
+</package>
