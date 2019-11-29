@@ -14,7 +14,6 @@
     <copyright>Copyright 2015</copyright>
     <tags>spyder, x20</tags>
     <dependencies>
-        <dependency id="PCLStorage" version="1.0.2" />
         <dependency id="KnightwareCore" version="3.1.0" />
     </dependencies>
   </metadata>
