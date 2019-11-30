@@ -166,7 +166,7 @@ namespace Spyder.Client.Common
 
         public static bool operator ==(TimeCode tc1, TimeCode tc2)
         {
-            if (((object)tc1 == null) || ((object)tc2) == null)
+            if (tc1 is null || tc2 is null)
                 return Object.Equals(tc1, tc2);
 
             return tc1.Equals(tc2);
@@ -174,7 +174,7 @@ namespace Spyder.Client.Common
 
         public static bool operator !=(TimeCode tc1, TimeCode tc2)
         {
-            if (((object)tc1 == null) || ((object)tc2) == null)
+            if (tc1 is null || tc2 is null)
                 return !Object.Equals(tc1, tc2);
 
             return !tc1.Equals(tc2);

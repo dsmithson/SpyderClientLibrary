@@ -218,8 +218,7 @@ namespace Spyder.Client.Common
                 base.CopyFrom(copyFrom);
 
                 //Update reister properties
-                var myRegister = copyFrom as IRegister;
-                if (myRegister != null)
+                if (copyFrom is IRegister myRegister)
                 {
                     Register.Copy(myRegister, this);
                 }
@@ -397,7 +396,7 @@ namespace Spyder.Client.Common
 
         public static bool operator ==(Treatment t1, Treatment t2)
         {
-            if (((object)t1 == null) || ((object)t2) == null)
+            if (t1 is null || t2 is null)
                 return Object.Equals(t1, t2);
 
             return t1.Equals(t2);
@@ -405,7 +404,7 @@ namespace Spyder.Client.Common
 
         public static bool operator !=(Treatment t1, Treatment t2)
         {
-            if (((object)t1 == null) || ((object)t2) == null)
+            if (t1 is null || t2 is null)
                 return !Object.Equals(t1, t2);
 
             return !t1.Equals(t2);

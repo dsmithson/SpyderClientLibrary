@@ -53,22 +53,19 @@ namespace Spyder.Client.Net
         public event DataObjectChangedHandler DataObjectChanged;
         protected void OnDataObjectChanged(DataObjectChangedEventArgs e)
         {
-            if (DataObjectChanged != null)
-                DataObjectChanged(this, e);
+            DataObjectChanged?.Invoke(this, e);
         }
 
         public event DrawingDataReceivedHandler DrawingDataReceived;
         protected void OnDrawingDataReceived(DrawingDataReceivedEventArgs e)
         {
-            if (DrawingDataReceived != null)
-                DrawingDataReceived(this, e);
+            DrawingDataReceived?.Invoke(this, e);
         }
 
         public event TraceLogMessageHandler TraceLogMessageReceived;
         protected void OnTraceLogMessageReceived(TraceLogMessageEventArgs e)
         {
-            if (TraceLogMessageReceived != null)
-                TraceLogMessageReceived(this, e);
+            TraceLogMessageReceived?.Invoke(this, e);
         }
 
         public VersionInfo Version { get; set; }
@@ -107,9 +104,9 @@ namespace Spyder.Client.Net
             serverEventListener = await SpyderServerEventListener.GetInstanceAsync();
             if (serverEventListener != null)
             {
-                serverEventListener.DrawingDataReceived += serverEventListener_DrawingDataReceived;
-                serverEventListener.ServerAnnounceMessageReceived += serverEventListener_ServerAnnounceMessageReceived;
-                serverEventListener.TraceLogMessageReceived += serverEventListener_TraceLogMessageReceived;
+                serverEventListener.DrawingDataReceived += ServerEventListener_DrawingDataReceived;
+                serverEventListener.ServerAnnounceMessageReceived += ServerEventListener_ServerAnnounceMessageReceived;
+                serverEventListener.TraceLogMessageReceived += ServerEventListener_TraceLogMessageReceived;
             }
 
             return true;
@@ -120,9 +117,9 @@ namespace Spyder.Client.Net
             //Stop event listener
             if (serverEventListener != null)
             {
-                serverEventListener.DrawingDataReceived -= serverEventListener_DrawingDataReceived;
-                serverEventListener.ServerAnnounceMessageReceived -= serverEventListener_ServerAnnounceMessageReceived;
-                serverEventListener.TraceLogMessageReceived -= serverEventListener_TraceLogMessageReceived;
+                serverEventListener.DrawingDataReceived -= ServerEventListener_DrawingDataReceived;
+                serverEventListener.ServerAnnounceMessageReceived -= ServerEventListener_ServerAnnounceMessageReceived;
+                serverEventListener.TraceLogMessageReceived -= ServerEventListener_TraceLogMessageReceived;
                 serverEventListener = null;
             }
 
@@ -139,7 +136,7 @@ namespace Spyder.Client.Net
             await base.ShutdownAsync();
         }
 
-        private void serverEventListener_DrawingDataReceived(object sender, DrawingDataReceivedEventArgs e)
+        private void ServerEventListener_DrawingDataReceived(object sender, DrawingDataReceivedEventArgs e)
         {
             if (IsRunning && e.ServerIP == this.ServerIP)
             {
@@ -161,7 +158,7 @@ namespace Spyder.Client.Net
             }
         }
 
-        private void serverEventListener_ServerAnnounceMessageReceived(object sender, SpyderServerAnnounceInformation serverInfo)
+        private void ServerEventListener_ServerAnnounceMessageReceived(object sender, SpyderServerAnnounceInformation serverInfo)
         {
             if (serverInfo != null && serverInfo.Address == this.ServerIP)
             {
@@ -171,7 +168,7 @@ namespace Spyder.Client.Net
             }
         }
 
-        void serverEventListener_TraceLogMessageReceived(object sender, TraceLogMessageEventArgs e)
+        void ServerEventListener_TraceLogMessageReceived(object sender, TraceLogMessageEventArgs e)
         {
             if (e != null && e.Message != null && e.Address == this.ServerIP)
             {
@@ -248,12 +245,10 @@ namespace Spyder.Client.Net
                 if (configFile != null)
                 {
                     configFile.Dispose();
-                    configFile = null;
                 }
                 if (scriptFile != null)
                 {
                     scriptFile.Dispose();
-                    scriptFile = null;
                 }
             }
         }
@@ -445,7 +440,7 @@ namespace Spyder.Client.Net
 
         public override Task<IRegister> GetRegister(RegisterType type, int registerID)
         {
-            IEnumerable<IRegister> list = null;
+            IEnumerable<IRegister> list;
             switch (type)
             {
                 case RegisterType.PlayItem:
@@ -481,7 +476,7 @@ namespace Spyder.Client.Net
         private Task<T> GetItemFromListByRegister<T>(IEnumerable<T> systemDataList, int registerID) where T : IRegister
         {
             if (systemDataList == null)
-                return Task.FromResult<T>(default(T));
+                return Task.FromResult<T>(default);
 
             return Task.FromResult(systemDataList.FirstOrDefault(listItem => listItem.RegisterID == registerID));
         }
@@ -489,7 +484,7 @@ namespace Spyder.Client.Net
         private Task<T> GetItemFromListByRegister<T>(List<T> systemDataList, IRegister register) where T : IRegister
         {
             if (register == null || systemDataList == null)
-                return Task.FromResult<T>(default(T));
+                return Task.FromResult<T>(default);
 
             return Task.FromResult(systemDataList.FirstOrDefault(listItem => listItem.RegisterID == register.RegisterID));
         }
@@ -746,7 +741,6 @@ namespace Spyder.Client.Net
                 if (shapeStream != null)
                 {
                     shapeStream.Dispose();
-                    shapeStream = null;
                 }
             }
         }
@@ -868,7 +862,7 @@ namespace Spyder.Client.Net
         protected override Task<LayerKeyFrameInfo> RequestLayerKeyFrame(int layerID)
         {
             var data = this.drawingData;
-            var dkf = (data == null ? null : data.GetLayer(layerID, MixerBus.Program));
+            var dkf = (data?.GetLayer(layerID, MixerBus.Program));
             if (dkf == null)
             {
                 return base.RequestLayerKeyFrame(layerID);

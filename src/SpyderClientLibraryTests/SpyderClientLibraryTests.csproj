@@ -79,6 +79,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="KnightwareCore, Version=3.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\KnightwareCore.3.1.0\lib\netstandard2.0\KnightwareCore.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
@@ -151,10 +154,6 @@
     <ProjectReference Include="..\SpyderClientLibrary\SpyderClientLibrary.csproj">
       <Project>{2de05b6e-23bf-440a-921d-79043cf14599}</Project>
       <Name>SpyderClientLibrary</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\KnightwareCore\src\KnightwareCore\KnightwareCore.csproj">
-      <Project>{66258288-7801-4a88-9125-f7f89007b2d9}</Project>
-      <Name>KnightwareCore</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

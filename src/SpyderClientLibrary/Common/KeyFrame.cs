@@ -855,7 +855,7 @@ namespace Spyder.Client.Common
 
         public static bool operator ==(KeyFrame kf1, KeyFrame kf2)
         {
-            if (((object)kf1 == null) || ((object)kf2) == null)
+            if (kf1 is null || kf2 is null)
                 return Object.Equals(kf1, kf2);
 
             return kf1.Equals(kf2);
@@ -863,7 +863,7 @@ namespace Spyder.Client.Common
 
         public static bool operator !=(KeyFrame kf1, KeyFrame kf2)
         {
-            if (((object)kf1 == null) || ((object)kf2) == null)
+            if (kf1 is null || kf2 is null)
                 return !Object.Equals(kf1, kf2);
 
             return !kf1.Equals(kf2);

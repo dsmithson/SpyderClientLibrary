@@ -43,6 +43,6 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\knightwarecore\src\KnightwareCore\KnightwareCore.csproj" />
+    <PackageReference Include="KnightwareCore" Version="3.1.0" />
   </ItemGroup>
 </Project>
