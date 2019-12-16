@@ -220,16 +220,48 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
-        private int configOutput;
         public int ConfigOutput
         {
-            get { return configOutput; }
+            get
+            {
+                if (configOutputs != null && configOutputs.Count > 0)
+                    return configOutputs[0];
+                else
+                    return -1;
+            }
             set
             {
-                if (configOutput != value)
+                if (ConfigOutput != value)
                 {
-                    configOutput = value;
-                    OnPropertyChanged();
+                    if (value == -1)
+                    {
+                        this.configOutputs = new List<int>();
+                    }
+                    else
+                    {
+                        this.configOutputs = new List<int>() { value };
+                    }
+
+                    //Raise property change events for the full list and this individual item
+                    OnPropertyChanged("ConfigOutput");
+                    OnPropertyChanged("ConfigOutputs");
+                }
+            }
+        }
+
+        private List<int> configOutputs;
+        public List<int> ConfigOutputs
+        {
+            get { return configOutputs; }
+            set
+            {
+                if (configOutputs != value)
+                {
+                    configOutputs = value;
+
+                    //Raise property change events for the full list and this individual item
+                    OnPropertyChanged("ConfigOutput");
+                    OnPropertyChanged("ConfigOutputs");
                 }
             }
         }
