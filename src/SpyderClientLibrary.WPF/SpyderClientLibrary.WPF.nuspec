@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>SpyderClientLibrary.WPF</id>
+    <version>$version$</version>
+    <title>Spyder Client Library WPF app Extensions</title>
+    <owners>Derek Smithson</owners>
+    <authors>Derek Smithson</authors>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+    <projectUrl>https://github.com/dsmithson/SpyderClientLibrary</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>WPF application extensions for the SpyderClientLibrary package</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>spyder, x20, x80</tags>
+    <dependencies>
+        <dependency id="KnightwareCore" version="3.1.0" />
+		<dependency id="System.Threading.Dataflow" version="4.10.0" />
+    </dependencies>
+  </metadata>
+</package>
