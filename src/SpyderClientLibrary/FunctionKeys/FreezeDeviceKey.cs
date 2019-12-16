@@ -30,15 +30,15 @@
             }
         }
 
-        private bool isFreezeEnabled;
-        public bool IsFreezeEnabled
+        private FreezeKeyAction freeze;
+        public FreezeKeyAction Freeze
         {
-            get { return isFreezeEnabled; }
+            get { return freeze; }
             set
             {
-                if (isFreezeEnabled != value)
+                if (freeze != value)
                 {
-                    isFreezeEnabled = value;
+                    freeze = value;
                     OnPropertyChanged();
                 }
             }
@@ -53,7 +53,7 @@
             {
                 this.SetTopLayer = myCopyFrom.SetTopLayer;
                 this.SetBottomLayer = myCopyFrom.SetBottomLayer;
-                this.IsFreezeEnabled = myCopyFrom.IsFreezeEnabled;
+                this.Freeze = myCopyFrom.Freeze;
             }
         }
     }
