@@ -261,14 +261,14 @@ namespace Spyder.Client.Common
                                 {
                                     functionKey = new FreezeLayerKey()
                                     {
-                                        IsFreezeEnabled = bool.Parse(item.Element("Freeze").Value)
+                                        Freeze = (FreezeKeyAction)Enum.Parse(typeof(FreezeKeyAction), item.Element("Freeze").Value.ToString())
                                     };
                                 }
                                 else if (type.Contains("FreezeDeviceKey"))
                                 {
                                     functionKey = new FreezeDeviceKey()
                                     {
-                                        IsFreezeEnabled = bool.Parse(item.Element("FreezeEnabled").Value),
+                                        Freeze = (FreezeKeyAction)Enum.Parse(typeof(FreezeKeyAction), item.Element("FreezeEnabled").Value.ToString()),
                                         SetTopLayer = bool.Parse(item.Element("SetTopLayer").Value),
                                         SetBottomLayer = bool.Parse(item.Element("SetBottomLayer").Value)
                                     };
