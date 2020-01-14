@@ -500,6 +500,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             }
 
             //Get the configuration outputs
+            response.ConfigOutputs.Clear();
             for(int i=0; i<configOutputCount; i++)
             {
                 response.ConfigOutputs.Add(stream[index++]);

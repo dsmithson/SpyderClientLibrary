@@ -249,7 +249,7 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
-        private List<int> configOutputs;
+        private List<int> configOutputs = new List<int>();
         public List<int> ConfigOutputs
         {
             get { return configOutputs; }
