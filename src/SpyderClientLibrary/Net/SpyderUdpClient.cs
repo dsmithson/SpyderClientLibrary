@@ -435,6 +435,65 @@ namespace Spyder.Client.Net
             return result.Result == ServerOperationResultCode.Success;
         }
 
+        public Task<bool> InputConfigurationRecall(int configurationID, int layerID)
+        {
+            return InputConfigurationRecall(configurationID, layerID, null);
+        }
+
+        public Task<bool> InputAutoSync(int layerID, ConnectorType? connectorType)
+        {
+            return InputConfigurationRecall(-1, layerID, connectorType);
+        }
+
+        private async Task<bool> InputConfigurationRecall(int configurationID, int layerID, ConnectorType? connectorType)
+        {
+            //HACK:  This connector mapping matches what X80 actually does, but not what the documentation calls out
+            //or what prior Spyders (X20/200/300) will do. 
+            int? inputConnectorID;
+            switch (connectorType)
+            {
+                case ConnectorType.Analog:
+                    inputConnectorID = 1;
+                    break;
+                case ConnectorType.DVI:
+                    inputConnectorID = 2;
+                    break;
+                case ConnectorType.HDMI:
+                    inputConnectorID = 4;
+                    break;
+                case ConnectorType.DisplayPort:
+                    inputConnectorID = 8;
+                    break;
+                case ConnectorType.SDI:
+                    inputConnectorID = 16;
+                    break;
+                case ConnectorType.Composite:
+                    inputConnectorID = 32;
+                    break;
+                case ConnectorType.SVideo:
+                    inputConnectorID = 64;
+                    break;
+                default:
+                    inputConnectorID = null;
+                    break;
+            }
+
+            ServerOperationResult result;
+            if(inputConnectorID == null && configurationID != -1)
+            {
+                //Recall config by ID, or autosync with default (current) input connector
+                result = await RetrieveAsync("ICR {0} {1}", configurationID, layerID);
+            }
+            else
+            {
+                //Autosync with connector type specified
+                result = await RetrieveAsync("ICR {0} {1} {2}", configurationID, layerID, configurationID);
+            }
+                
+
+            return result.Result == ServerOperationResultCode.Success;
+        }
+
         #endregion
 
         #region Test Pattern Control
@@ -1638,8 +1697,43 @@ namespace Spyder.Client.Net
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
 
+        public async Task<bool> SetOutputConnector(int outputID, ConnectorType connectorType, bool isEnabled)
+        {
+            int connectorTypeID;
+            switch (connectorType)
+            {
+                case ConnectorType.Analog:
+                    connectorTypeID = 0;
+                    break;
+                case ConnectorType.DVI:
+                    connectorTypeID = 1;
+                    break;
+                case ConnectorType.SDI:
+                    connectorTypeID = 2;
+                    break;
+                case ConnectorType.Composite:
+                case ConnectorType.SVideo:
+                    connectorTypeID = 3;
+                    break;
+                case ConnectorType.HDMI:
+                    connectorTypeID = 4;
+                    break;
+                case ConnectorType.DisplayPort:
+                    connectorTypeID = 5;
+                    break;
+                default:
+                    return false;
+            }
+
+            var result = await RetrieveAsync("OCC {0} {1} {2}",
+                outputID,
+                connectorTypeID,
+                isEnabled ? 1 : 0);
+            return result != null && result.Result == ServerOperationResultCode.Success;
+        }
+
         #endregion
-        
+
         #region PixelSpace Interaction
 
         public async Task<bool> MixBackground(int duration)

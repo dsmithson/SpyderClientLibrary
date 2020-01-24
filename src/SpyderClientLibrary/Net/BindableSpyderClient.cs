@@ -1099,6 +1099,25 @@ namespace Spyder.Client.Net
             return client.SetOutputFormat(outputID, hActive, vActive, refreshRate, interlaced, useReducedBlanking);
         }
 
+        public Task<bool> SetOutputConnector(int outputID, ConnectorType connectorType, bool isEnabled)
+        {
+            return client.SetOutputConnector(outputID, connectorType, isEnabled);
+        }
+
+        #endregion
+
+        #region Input Configuration
+
+        public Task<bool> InputConfigurationRecall(int configurationID, int layerID)
+        {
+            return client.InputConfigurationRecall(configurationID, layerID);
+        }
+
+        public Task<bool> InputAutoSync(int layerID, ConnectorType? connectorType)
+        {
+            return client.InputAutoSync(layerID, connectorType);
+        }
+
         #endregion
 
         #region PixelSpace Interaction

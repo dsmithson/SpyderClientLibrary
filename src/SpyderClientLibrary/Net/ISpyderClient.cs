@@ -237,6 +237,8 @@ namespace Spyder.Client.Net
         Task<List<InputPropertyValue>> InputConfigPropertiesGet(int layerID);
         Task<bool> InputConfigPropertiesSet(int layerID, string propertyName, object value);
         Task<bool> InputConfigPropertiesSet(int layerID, Dictionary<string, object> propertiesAndValues);
+        Task<bool> InputConfigurationRecall(int configurationID, int layerID);
+        Task<bool> InputAutoSync(int layerID, ConnectorType? connectorType);
 
         #endregion
 
@@ -271,6 +273,8 @@ namespace Spyder.Client.Net
         Task<bool> SetOutputModeToSourceMon(int outputID);
 
         Task<bool> SetOutputFormat(int outputID, int hActive, int vActive, float refreshRate, bool interlaced, bool useReducedBlanking);
+
+        Task<bool> SetOutputConnector(int outputID, ConnectorType connectorType, bool isEnabled);
 
         #endregion
 
