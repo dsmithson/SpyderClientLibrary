@@ -4,6 +4,12 @@
     <RootNamespace>Spyder.Client</RootNamespace>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <Authors>Derek Smithson</Authors>
+    <Description>Library for controlling the Spyder 200/300/X20/X80 video processor families. Provides UDP control, server auto-discovery, drawing data (live display info), file transfer services, and image cache management.</Description>
+    <Copyright>Knightware 2020</Copyright>
+    <Version>1.0.0</Version>
+    <PackageProjectUrl>https://github.com/dsmithson/SpyderClientLibrary</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dsmithson/SpyderClientLibrary</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>

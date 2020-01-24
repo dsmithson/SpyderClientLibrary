@@ -10,8 +10,7 @@
     <projectUrl>https://github.com/dsmithson/SpyderClientLibrary</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Added DataObjectChanged support at BindableSpyderClient class.</releaseNotes>
-    <copyright>Copyright 2015</copyright>
+    <copyright>Copyright 2020</copyright>
     <tags>spyder, x20</tags>
     <dependencies>
         <dependency id="KnightwareCore" version="3.1.0" />
