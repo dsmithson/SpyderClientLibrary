@@ -1,22 +1,19 @@
-﻿using System;
+﻿using Knightware.Diagnostics;
+using Knightware.Net;
+using Knightware.Net.Sockets;
+using Knightware.Primitives;
+using Knightware.Text;
+using Knightware.Threading.Tasks;
+using Spyder.Client.Common;
+using Spyder.Client.FunctionKeys;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
-using Spyder.Client.Common;
 using System.Threading.Tasks;
-using Knightware.Net;
-using System.Diagnostics;
-using Knightware.Threading.Tasks;
-using Knightware.Diagnostics;
-using System.IO;
-using Knightware.Text;
-using Spyder.Client.Net.Notifications;
-using Spyder.Client.IO;
-using Spyder.Client.Scripting;
-using Spyder.Client.FunctionKeys;
-using Knightware.Primitives;
-using Knightware.Net.Sockets;
-using System.Globalization;
 
 namespace Spyder.Client.Net
 {
@@ -64,7 +61,7 @@ namespace Spyder.Client.Net
 
             return Task.FromResult(true);
         }
-        
+
         public virtual async Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight = null)
         {
             var stream = new MemoryStream();
@@ -100,15 +97,13 @@ namespace Spyder.Client.Net
                 return null;
 
             int index = 0;
-            int count;
-            if (!int.TryParse(result.ResponseData[index++], out count))
+            if (!int.TryParse(result.ResponseData[index++], out int count))
                 return null;
 
             var response = new List<RegisterPage>();
             for (int i = 0; i < count; i++)
             {
-                int pageIndex;
-                if (!int.TryParse(result.ResponseData[index++], out pageIndex))
+                if (!int.TryParse(result.ResponseData[index++], out int pageIndex))
                     return null;
 
                 response.Add(new RegisterPage()
@@ -129,10 +124,10 @@ namespace Spyder.Client.Net
         {
             return ProcessRRL(type, "RRL {0} {1} {2} {3} {4}",
                 (int)type,
-                (pageIndex.HasValue ? pageIndex.Value : -1),
-                (startIndex.HasValue ? startIndex.Value : 0),
-                (maxCountToReturn.HasValue ? maxCountToReturn : 100000),
-                (maxNameLength.HasValue ? maxNameLength.Value : 1000));
+                (pageIndex ?? -1),
+                startIndex ?? 0,
+                (maxCountToReturn ?? 100000),
+                (maxNameLength ?? 1000));
         }
 
         private async Task<List<IRegister>> ProcessRRL(RegisterType registerType, string rrlCommand, params object[] rrlCommandArgs)
@@ -142,15 +137,13 @@ namespace Spyder.Client.Net
                 return null;
 
             int index = 0;
-            int count;
-            if (!int.TryParse(result.ResponseData[index++], out count))
+            if (!int.TryParse(result.ResponseData[index++], out int count))
                 return null;
 
             var response = new List<IRegister>();
             for (int i = 0; i < count; i++)
             {
-                int registerID;
-                if (!int.TryParse(result.ResponseData[index++], out registerID))
+                if (!int.TryParse(result.ResponseData[index++], out int registerID))
                     return null;
 
                 response.Add(new Register()
@@ -300,29 +293,19 @@ namespace Spyder.Client.Net
 
         private FunctionKey CreateFunctionKeyFromTypeName(string functionKeyType)
         {
-            switch (functionKeyType)
+            return functionKeyType switch
             {
-                case "Source":
-                    return new AssignSourceFunctionKey();
-                case "Freeze Device(s)":
-                    return new FreezeDeviceKey();
-                case "Freeze Layer(s)":
-                    return new FreezeLayerKey();
-                case "Mix BG":
-                    return new MixBackgroundFunctionKey();
-                case "Network Command":
-                    return new NetworkCommandFunctionKey();
-                case "Offset":
-                    return new LayerPositionOffsetFunctionKey();
-                case "Salvo":
-                    return new RouterSalvoFunctionKey();
-                case "Script Recall":
-                    return new ScriptRecallFunctionKey();
-                case "Still":
-                    return new AssignStillFunctionKey();
-                default:
-                    return new FunctionKey();
-            }
+                "Source" => new AssignSourceFunctionKey(),
+                "Freeze Device(s)" => new FreezeDeviceKey(),
+                "Freeze Layer(s)" => new FreezeLayerKey(),
+                "Mix BG" => new MixBackgroundFunctionKey(),
+                "Network Command" => new NetworkCommandFunctionKey(),
+                "Offset" => new LayerPositionOffsetFunctionKey(),
+                "Salvo" => new RouterSalvoFunctionKey(),
+                "Script Recall" => new ScriptRecallFunctionKey(),
+                "Still" => new AssignStillFunctionKey(),
+                _ => new FunctionKey(),
+            };
         }
 
         public virtual Task<List<Still>> GetStills()
@@ -392,8 +375,7 @@ namespace Spyder.Client.Net
             if (result.Result != ServerOperationResultCode.Success)
                 return -1;
 
-            int cue;
-            if (!int.TryParse(result.ResponseData[0], out cue))
+            if (!int.TryParse(result.ResponseData[0], out int cue))
                 cue = -1;
 
             return cue;
@@ -447,39 +429,19 @@ namespace Spyder.Client.Net
 
         private async Task<bool> InputConfigurationRecall(int configurationID, int layerID, ConnectorType? connectorType)
         {
-            //HACK:  This connector mapping matches what X80 actually does, but not what the documentation calls out
-            //or what prior Spyders (X20/200/300) will do. 
-            int? inputConnectorID;
-            switch (connectorType)
+            int? inputConnectorID = connectorType switch
             {
-                case ConnectorType.Analog:
-                    inputConnectorID = 1;
-                    break;
-                case ConnectorType.DVI:
-                    inputConnectorID = 2;
-                    break;
-                case ConnectorType.HDMI:
-                    inputConnectorID = 4;
-                    break;
-                case ConnectorType.DisplayPort:
-                    inputConnectorID = 8;
-                    break;
-                case ConnectorType.SDI:
-                    inputConnectorID = 16;
-                    break;
-                case ConnectorType.Composite:
-                    inputConnectorID = 32;
-                    break;
-                case ConnectorType.SVideo:
-                    inputConnectorID = 64;
-                    break;
-                default:
-                    inputConnectorID = null;
-                    break;
-            }
-
+                ConnectorType.Analog => 1,
+                ConnectorType.DVI => 2,
+                ConnectorType.HDMI => 4,
+                ConnectorType.DisplayPort => 8,
+                ConnectorType.SDI => 16,
+                ConnectorType.Composite => 32,
+                ConnectorType.SVideo => 64,
+                _ => null,
+            };
             ServerOperationResult result;
-            if(inputConnectorID == null && configurationID != -1)
+            if (inputConnectorID == null && configurationID != -1)
             {
                 //Recall config by ID, or autosync with default (current) input connector
                 result = await RetrieveAsync("ICR {0} {1}", configurationID, layerID);
@@ -489,7 +451,7 @@ namespace Spyder.Client.Net
                 //Autosync with connector type specified
                 result = await RetrieveAsync("ICR {0} {1} {2}", configurationID, layerID, configurationID);
             }
-                
+
 
             return result.Result == ServerOperationResultCode.Success;
         }
@@ -563,7 +525,7 @@ namespace Spyder.Client.Net
         {
             if (slideEntries == null || slideEntries.Count == 0)
                 return false;
-            
+
             //Build the slide layout command
             StringBuilder builder = new StringBuilder();
             builder.AppendFormat("SLR {0} {1} {2}",
@@ -572,14 +534,14 @@ namespace Spyder.Client.Net
                 reservedLayers == null ? 0 : reservedLayers.Count);
 
             //Add reserved layers
-            if(reservedLayers != null)
+            if (reservedLayers != null)
             {
                 foreach (int reservedLayer in reservedLayers)
                     builder.AppendFormat(" {0}", reservedLayer);
             }
 
             //Add slide layout entries
-            foreach(var entry in slideEntries)
+            foreach (var entry in slideEntries)
             {
                 builder.AppendFormat(CultureInfo.InvariantCulture, " {0}~{1}~{2}~{3}~{4}~{5}~{6}~{7}~{8}~{9}~{10}~{11}~{12}~{13}~{14}",
                     entry.SourceName.Replace(" ", "%20").Replace("~", "%21"),
@@ -752,8 +714,7 @@ namespace Spyder.Client.Net
         public async Task<int> GetLayerCount()
         {
             var result = await RetrieveAsync("RLC");
-            int layerCount;
-            if (result == null || result.Result != ServerOperationResultCode.Success || result.ResponseData.Count == 0 || !int.TryParse(result.ResponseData[0], out layerCount))
+            if (result == null || result.Result != ServerOperationResultCode.Success || result.ResponseData.Count == 0 || !int.TryParse(result.ResponseData[0], out int layerCount))
                 return -1;
             else
                 return layerCount - 2;
@@ -769,8 +730,7 @@ namespace Spyder.Client.Net
             {
                 int layerID = i + 2;
                 var result = await RetrieveAsync("RLK {0}", layerID);
-                int transparency;
-                if (result == null || result.Result != ServerOperationResultCode.Success || result.ResponseData.Count < 33 || !int.TryParse(result.ResponseData[32], out transparency))
+                if (result == null || result.Result != ServerOperationResultCode.Success || result.ResponseData.Count < 33 || !int.TryParse(result.ResponseData[32], out int transparency))
                     return -1;
 
                 //We've got transparency - is the layer fully transparent?
@@ -910,18 +870,15 @@ namespace Spyder.Client.Net
                 return null;
 
             int index = 0;
-            int count;
             var parts = result.ResponseData;
-            if (!int.TryParse(parts[index++], out count))
+            if (!int.TryParse(parts[index++], out int count))
                 return null;
 
             var response = new List<PixelSpaceMapping>();
             for (int i = 0; i < count; i++)
             {
 
-                int pgmID, pvwID;
-                double scale;
-                if (!int.TryParse(parts[index++], out pgmID) || !int.TryParse(parts[index++], out pvwID) || !double.TryParse(parts[index++], out scale))
+                if (!int.TryParse(parts[index++], out int pgmID) || !int.TryParse(parts[index++], out int pvwID) || !double.TryParse(parts[index++], out double scale))
                     return null;
                 else
                     response.Add(new PixelSpaceMapping(pgmID, pvwID, scale));
@@ -961,9 +918,8 @@ namespace Spyder.Client.Net
                 {
                     foreach (int layerID in layerIDs)
                     {
-                        int currentHSize;
                         var keyFrameRequest = await RetrieveAsync("RLK {0} N", layerID);
-                        if (keyFrameRequest.Result == ServerOperationResultCode.Success && keyFrameRequest.ResponseData.Count >= 5 && int.TryParse(keyFrameRequest.ResponseData[4], out currentHSize))
+                        if (keyFrameRequest.Result == ServerOperationResultCode.Success && keyFrameRequest.ResponseData.Count >= 5 && int.TryParse(keyFrameRequest.ResponseData[4], out int currentHSize))
                         {
                             var result = await RetrieveAsync("KSZ {0} {1}", currentHSize + hSize, BuildLayerIDString(layerIDs));
                             if (result == null || result.Result != ServerOperationResultCode.Success)
@@ -1041,25 +997,14 @@ namespace Spyder.Client.Net
                 }
             }
 
-            int moveTypeCode;
-            switch (moveType)
+            var moveTypeCode = moveType switch
             {
-                case LayerMoveType.AbsolutePixel:
-                    moveTypeCode = 0;
-                    break;
-                case LayerMoveType.RelativePixel:
-                    moveTypeCode = 1;
-                    break;
-                case LayerMoveType.AbsoluteRelativeCoordinate:
-                    moveTypeCode = 2;
-                    break;
-                case LayerMoveType.RelativeRelativeCoordinate:
-                    moveTypeCode = 3;
-                    break;
-                default:
-                    throw new ArgumentException("LayerMoveType provided is invalid", "movetype");
-            }
-
+                LayerMoveType.AbsolutePixel => 0,
+                LayerMoveType.RelativePixel => 1,
+                LayerMoveType.AbsoluteRelativeCoordinate => 2,
+                LayerMoveType.RelativeRelativeCoordinate => 3,
+                _ => throw new ArgumentException("LayerMoveType provided is invalid", "movetype"),
+            };
             string hString, vString;
             if (moveType == LayerMoveType.AbsolutePixel || moveType == LayerMoveType.RelativePixel)
             {
@@ -1076,14 +1021,14 @@ namespace Spyder.Client.Net
             return result != null && result.Result == ServerOperationResultCode.Success && success;
         }
 
-        private async Task<Tuple<double, double>> ConvertFromAbsoluteToRelativeCoordinates(int pixelSpaceID, int x, int y)
-        {
-            var pixelSpace = await GetPixelSpace(pixelSpaceID);
-            if (pixelSpace == null)
-                return null;
+        //private async Task<Tuple<double, double>> ConvertFromAbsoluteToRelativeCoordinates(int pixelSpaceID, int x, int y)
+        //{
+        //    var pixelSpace = await GetPixelSpace(pixelSpaceID);
+        //    if (pixelSpace == null)
+        //        return null;
 
-            return ConvertFromAbsoluteToRelativeCoordinates(pixelSpace, x, y);
-        }
+        //    return ConvertFromAbsoluteToRelativeCoordinates(pixelSpace, x, y);
+        //}
 
         private Tuple<double, double> ConvertFromAbsoluteToRelativeCoordinates(PixelSpace pixelSpace, int x, int y)
         {
@@ -1484,23 +1429,13 @@ namespace Spyder.Client.Net
         {
             if (layerIDs == null || layerIDs.Length == 0)
                 return true;
-
-            string typeCode;
-            switch (type)
+            var typeCode = type switch
             {
-                case AspectRatioAdjustmentType.SetLayerAspectRatio:
-                    typeCode = "t";
-                    break;
-                case AspectRatioAdjustmentType.SetKeyFrameAspectRatio:
-                    typeCode = "o";
-                    break;
-                case AspectRatioAdjustmentType.OffsetKeyFrameAspectRatio:
-                    typeCode = "a";
-                    break;
-                default:
-                    throw new ArgumentException("Unsupported value provided for 'type' argument", "type");
-            }
-
+                AspectRatioAdjustmentType.SetLayerAspectRatio => "t",
+                AspectRatioAdjustmentType.SetKeyFrameAspectRatio => "o",
+                AspectRatioAdjustmentType.OffsetKeyFrameAspectRatio => "a",
+                _ => throw new ArgumentException("Unsupported value provided for 'type' argument", "type"),
+            };
             var result = await RetrieveAsync("ARO {0} {1:0.00} {2}", typeCode, aspectRatioValue, BuildLayerIDString(layerIDs));
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
@@ -1553,7 +1488,7 @@ namespace Spyder.Client.Net
         {
             var builder = new StringBuilder();
             builder.AppendFormat("OSP {0}", outputIndex);
-            foreach(var pair in propertiesAndValues)
+            foreach (var pair in propertiesAndValues)
             {
                 builder.AppendFormat(" {0} {1}", pair.Key, pair.Value?.ToString().Replace(" ", "%20"));
             }
@@ -1634,24 +1569,13 @@ namespace Spyder.Client.Net
 
         public async Task<bool> RotateOutput(int outputID, RotationMode mode)
         {
-
-            int rotation;
-            switch (mode)
+            int rotation = mode switch
             {
-                case RotationMode.Rotate90:
-                    rotation = 90;
-                    break;
-                case RotationMode.Rotate180:
-                    rotation = 180;
-                    break;
-                case RotationMode.Rotate270:
-                    rotation = 270;
-                    break;
-                default:
-                    rotation = 0;
-                    break;
-            }
-
+                RotationMode.Rotate90 => 90,
+                RotationMode.Rotate180 => 180,
+                RotationMode.Rotate270 => 270,
+                _ => 0,
+            };
             var result = await RetrieveAsync("OCR {0} {1}", outputID, rotation);
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
@@ -1687,7 +1611,7 @@ namespace Spyder.Client.Net
 
         public async Task<bool> SetOutputFormat(int outputID, int hActive, int vActive, float refreshRate, bool interlaced, bool useReducedBlanking)
         {
-            var result = await RetrieveAsync("OCF {0} {1} {2} {3} {4} {5} {6}",
+            var result = await RetrieveAsync("OCF {0} {1} {2} {3} {4} {5}",
                 outputID,
                 hActive,
                 vActive,
@@ -1751,7 +1675,7 @@ namespace Spyder.Client.Net
         public virtual async Task<PixelSpace> GetPixelSpace(int pixelSpaceID)
         {
             var pixelSpaces = await GetPixelSpaces();
-            return pixelSpaces == null ? null : pixelSpaces.FirstOrDefault(p => p.ID == pixelSpaceID);
+            return pixelSpaces?.FirstOrDefault(p => p.ID == pixelSpaceID);
         }
 
         public virtual async Task<List<PixelSpace>> GetPixelSpaces()
@@ -1761,9 +1685,8 @@ namespace Spyder.Client.Net
                 return null;
 
             int index = 0;
-            int count;
             var parts = result.ResponseData;
-            if (!int.TryParse(parts[index++], out count))
+            if (!int.TryParse(parts[index++], out int count))
                 return null;
 
             //Get PixelSpaceMappings, which will give us pixelspace scale
@@ -1772,8 +1695,7 @@ namespace Spyder.Client.Net
             var response = new List<PixelSpace>();
             for (int i = 0; i < count; i++)
             {
-                int id, xPosition, yPosition, width, height, renewalGroupID;
-                if (!int.TryParse(parts[index++], out id))
+                if (!int.TryParse(parts[index++], out int id))
                     return null;
 
                 var pixelSpace = new PixelSpace();
@@ -1782,14 +1704,14 @@ namespace Spyder.Client.Net
                 pixelSpace.LastBackgroundStill = parts[index++];
                 pixelSpace.NextBackgroundStill = parts[index++];
 
-                if (!int.TryParse(parts[index++], out xPosition) || !int.TryParse(parts[index++], out yPosition) || !int.TryParse(parts[index++], out width) || !int.TryParse(parts[index++], out height) || !int.TryParse(parts[index++], out renewalGroupID))
+                if (!int.TryParse(parts[index++], out int xPosition) || !int.TryParse(parts[index++], out int yPosition) || !int.TryParse(parts[index++], out int width) || !int.TryParse(parts[index++], out int height) || !int.TryParse(parts[index++], out int renewalGroupID))
                     return null;
 
                 pixelSpace.Rect = new Rectangle(xPosition, yPosition, width, height);
                 pixelSpace.RenewMasterFrameID = renewalGroupID;
 
                 //Assign scale if this is a preview pixelspace
-                var mapping = (mappings == null ? null : mappings.FirstOrDefault(m => m.PreviewID == id));
+                var mapping = (mappings?.FirstOrDefault(m => m.PreviewID == id));
                 if (mapping == null)
                     pixelSpace.Scale = 1f;
                 else
@@ -1964,8 +1886,7 @@ namespace Spyder.Client.Net
             while (IsRunning)
             {
                 //Get next item in the list
-                CommandExecutionPriority commandQueue;
-                var currentOperation = DequeueNextCommand(out commandQueue);
+                var currentOperation = DequeueNextCommand(out CommandExecutionPriority commandQueue);
                 if (currentOperation == null)
                 {
                     //Wait to be signalled
@@ -2002,7 +1923,7 @@ namespace Spyder.Client.Net
                 else
                 {
                     //If our response has prior continuation data, add it to our final response now
-                    if(currentOperation.ContinuationData != null)
+                    if (currentOperation.ContinuationData != null)
                     {
                         currentOperation.ContinuationData.Append(result.ResponseRaw);
                         result.ResponseRaw = currentOperation.ContinuationData.ToString();
@@ -2099,7 +2020,6 @@ namespace Spyder.Client.Net
                 if (socket != null)
                 {
                     await socket.ShutdownAsync();
-                    socket = null;
                 }
             }
         }

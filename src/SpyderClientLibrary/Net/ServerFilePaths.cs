@@ -1,7 +1,4 @@
 ﻿using Spyder.Client.Common;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Spyder.Client.Net
 {
@@ -43,7 +40,7 @@ namespace Spyder.Client.Net
             }
 
             //Spyder 200/300 store their system settings in a server relative path
-            if(hardwareType == HardwareType.Spyder300)
+            if (hardwareType == HardwareType.Spyder300)
             {
                 this.SystemSettingsFilePath = $@"c:\Applications\SpyderServer\Version {version.Major}.{version.Minor}.{version.Build}\SystemSettings.xml";
             }

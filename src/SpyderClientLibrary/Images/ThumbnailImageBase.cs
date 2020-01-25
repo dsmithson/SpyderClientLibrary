@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Knightware.Diagnostics;
+﻿using Knightware.Diagnostics;
 using Knightware.Primitives;
 using Knightware.Threading;
-using Knightware;
+using System;
+using System.Threading.Tasks;
 
 namespace Spyder.Client.Images
 {
@@ -20,13 +16,13 @@ namespace Spyder.Client.Images
     public abstract class ThumbnailImageBase<K, T> : DispatcherPropertyChangedBase
         where T : class
     {
-        private TaskCompletionSource<bool> nativeResolutionTcs = new TaskCompletionSource<bool>();
+        private readonly TaskCompletionSource<bool> nativeResolutionTcs = new TaskCompletionSource<bool>();
         private readonly Dispatcher dispatcher = Dispatcher.Current;
         private bool extraSmallImageLoadFailed;
         private bool smallImageLoadFailed;
         private bool mediumImageLoadFailed;
         private bool largeImageLoadFailed;
-                
+
         /// <summary>
         /// Event raised indicating that an image file needs to be requested
         /// </summary>
@@ -98,7 +94,7 @@ namespace Spyder.Client.Images
                 }
             }
         }
-        
+
         private TimedCacheWeakReference<T> smallImage;
         public virtual T SmallImage
         {
@@ -122,7 +118,7 @@ namespace Spyder.Client.Images
         private TimedCacheWeakReference<T> mediumImage;
         public virtual T MediumImage
         {
-            get 
+            get
             {
                 return TryGetImage(mediumImage, mediumImageLoadFailed, ImageSize.Medium, () => IsLoadingMediumImage, (isLoading) => IsLoadingMediumImage = isLoading);
             }
@@ -147,11 +143,10 @@ namespace Spyder.Client.Images
         {
             get { return TryGetImage(largeImage, largeImageLoadFailed, ImageSize.Large, () => IsLoadingLargeImage, (isLoading) => IsLoadingLargeImage = isLoading); }
         }
-        
+
         private T TryGetImage(TimedCacheWeakReference<T> imageReference, bool previousImageLoadFailed, ImageSize size, Func<bool> getIsLoadingImage, Action<bool> setIsLoadingImage)
         {
-            T existing;
-            if (imageReference == null || !imageReference.TryGetTarget(out existing) || existing == null)
+            if (imageReference == null || !imageReference.TryGetTarget(out T existing) || existing == null)
             {
                 if (!getIsLoadingImage() && !previousImageLoadFailed)
                 {

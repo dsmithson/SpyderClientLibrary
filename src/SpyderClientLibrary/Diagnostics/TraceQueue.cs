@@ -1,4 +1,4 @@
-﻿using Spyder.Client.Threading.Tasks;
+﻿using Knightware.Threading.Tasks;
 using System.Threading.Tasks;
 
 namespace Spyder.Client.Diagnostics
@@ -15,13 +15,13 @@ namespace Spyder.Client.Diagnostics
         /// Event raised when a new Trace message is generated
         /// </summary>
         public static event TraceMessageHandler TraceMessageRaised;
-        private static void OnTraceMessageRaised(TraceMessage message)
-        {
-            if (TraceMessageRaised != null)
-            {
-                TraceMessageRaised(message);
-            }
-        }
+        //private static void OnTraceMessageRaised(TraceMessage message)
+        //{
+        //    if (TraceMessageRaised != null)
+        //    {
+        //        TraceMessageRaised(message);
+        //    }
+        //}
 
         /// <summary>
         /// Event raised when the tracing level has changed
@@ -29,8 +29,7 @@ namespace Spyder.Client.Diagnostics
         public static event TracingLevelChangedHandler TracingLevelChanged;
         private static void OnTracingLevelChanged(TracingLevel newTracingLevel)
         {
-            if (TracingLevelChanged != null)
-                TracingLevelChanged(newTracingLevel);
+            TracingLevelChanged?.Invoke(newTracingLevel);
         }
 
         private static TracingLevel tracingLevel = Diagnostics.TracingLevel.Success;
@@ -50,9 +49,8 @@ namespace Spyder.Client.Diagnostics
         static TraceQueue()
         {
             //Initialize our message queue
-            messageQueue = new AsyncListProcessor<TraceMessage>(ProcessQueue);
-            messageQueue.MaximumQueueCount = maxMessageQueueCount;
-            messageQueue.Startup();
+            messageQueue = new AsyncListProcessor<TraceMessage>(ProcessQueue, maxQueueCount: maxMessageQueueCount);
+            messageQueue.StartupAsync().Wait();
         }
 
         #region Trace Overloads

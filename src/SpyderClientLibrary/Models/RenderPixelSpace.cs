@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Knightware.Primitives;
 using Spyder.Client.Common;
 using Spyder.Client.Models.StackupProviders;
 using Spyder.Client.Net.DrawingData;
-using Knightware.Primitives;
 
 namespace Spyder.Client.Models
 {
@@ -26,9 +21,9 @@ namespace Spyder.Client.Models
             }
         }
 
-        public int X 
+        public int X
         {
-            get { return rect.X; } 
+            get { return rect.X; }
         }
 
         public int Y
@@ -63,7 +58,7 @@ namespace Spyder.Client.Models
                 }
             }
         }
-        
+
         private string background0;
         public string Background0
         {
@@ -147,7 +142,7 @@ namespace Spyder.Client.Models
         {
             this.ID = pixelSpace.ID;
             this.Rect = (stackupProvider == null ? pixelSpace.Rect : stackupProvider.GenerateOffsetRect(pixelSpace.Rect, pixelSpace.ID));
-            this.StackupProviderScale = (double)this.Rect.Width / ((double)pixelSpace.Rect.Width / pixelSpace.Scale);
+            this.StackupProviderScale = Rect.Width / ((double)pixelSpace.Rect.Width / pixelSpace.Scale);
             this.Scale = pixelSpace.Scale;
             this.ZIndex = pixelSpace.ID;
 

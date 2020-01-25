@@ -1,15 +1,14 @@
-﻿using Spyder.Client.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Spyder.Client.Scripting;
+﻿using Knightware.Primitives;
+using Knightware.Threading.Tasks;
+using Spyder.Client.Common;
 using Spyder.Client.FunctionKeys;
 using Spyder.Client.Net.DrawingData;
 using Spyder.Client.Net.Notifications;
-using Knightware.Threading.Tasks;
-using Knightware.Primitives;
+using Spyder.Client.Scripting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Spyder.Client.Net
 {
@@ -18,8 +17,8 @@ namespace Spyder.Client.Net
     /// </summary>
     internal class SpyderDemoServer
     {
-        private SystemData data;
-        private DrawingData.DrawingData drawingData;
+        private readonly SystemData data;
+        private readonly DrawingData.DrawingData drawingData;
         private readonly AutoResetWorker drawingDataUpdateWorker;
 
         private int lastCommandKeyRegisterIDRecalled = -1;
@@ -198,7 +197,7 @@ namespace Spyder.Client.Net
 
         public bool DeleteCommandKey(params int[] commandKeyRegisterIDs)
         {
-            if(data.CommandKeys != null)
+            if (data.CommandKeys != null)
             {
                 var keys = data.CommandKeys.Where(c => commandKeyRegisterIDs.Contains(c.RegisterID)).ToList();
                 foreach (var key in keys)
@@ -333,26 +332,26 @@ namespace Spyder.Client.Net
 
         public bool MixOffAllLayers(int duration)
         {
-            return DoOperationToLayer((l) => l.Transparency = 255, 
+            return DoOperationToLayer((l) => l.Transparency = 255,
                 drawingData.DrawingKeyFrames
                 .Where(l => !l.Value.IsBackground)
                 .Select(l => l.Key)
                 .ToArray());
         }
 
-        public bool MixOffLayer(int duration, params int[] layerIDs) 
+        public bool MixOffLayer(int duration, params int[] layerIDs)
         {
             return DoOperationToLayer((l) => l.Transparency = 255, layerIDs);
         }
 
-        public bool MixOnLayer(int duration, params int[] layerIDs) 
+        public bool MixOnLayer(int duration, params int[] layerIDs)
         {
             return DoOperationToLayer((l) => l.Transparency = 0, layerIDs);
         }
 
         public int GetFirstAvailableLayer()
         {
-            foreach(var layer in drawingData.DrawingKeyFrames.Values)
+            foreach (var layer in drawingData.DrawingKeyFrames.Values)
             {
                 if (!layer.IsVisible && !layer.IsBackground)
                     return layer.LayerID;
@@ -364,7 +363,7 @@ namespace Spyder.Client.Net
         {
             return drawingData.DrawingKeyFrames.Where(l => !l.Value.IsBackground).Count();
         }
-        
+
         public bool MixOnLayer(int pixelSpaceID, Point position, int width, int duration, Register content)
         {
             return MixOnLayer(GetFirstAvailableLayer(), pixelSpaceID, position, width, duration, content);
@@ -583,7 +582,7 @@ namespace Spyder.Client.Net
             //TODO:  Implement me
             return true;
         }
-        
+
         public bool AdjustZoomPan(int layerID, AdjustmentType type, double zoom, int horizontalPan, int verticalPan)
         {
             //TODO: Implement me
@@ -715,7 +714,7 @@ namespace Spyder.Client.Net
             }
 
             //Add preview pixelspaces
-            foreach(var previewPixelSpace in data.PreviewPixelSpaces)
+            foreach (var previewPixelSpace in data.PreviewPixelSpaces)
             {
                 response.PreviewPixelSpaceIDs.Add(previewPixelSpace.Key, previewPixelSpace.Value);
             }

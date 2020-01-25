@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Spyder.Client.Common
+﻿namespace Spyder.Client.Common
 {
     /// <summary>
     /// Contains a list of shapes defined as XAML markup and embedded within the Vista library

@@ -1,6 +1,6 @@
 ﻿namespace Spyder.Client.FunctionKeys
 {
-    public enum FreezeKeyAction {  True, False, Toggle }
+    public enum FreezeKeyAction { True, False, Toggle }
 
     public class FreezeLayerKey : RelativeFunctionKey
     {

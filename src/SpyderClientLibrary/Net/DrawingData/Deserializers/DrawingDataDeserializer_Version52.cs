@@ -1,11 +1,7 @@
-﻿using Spyder.Client.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Knightware.Primitives;
+using Spyder.Client.Common;
 using Spyder.Client.IO;
-using Knightware.Primitives;
+using System;
 
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
@@ -188,7 +184,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 l.AspectRatio = stream.GetFloat(ref index);	//aspect ratio
                 l.LayerRect = stream.GetRectangle(ref index);
                 l.AOIRect = stream.GetRectangle(ref index);
-                
+
                 //Not storing element type
                 //l.ElementType = (ElementType)stream[index++];	//Element Type
                 index++;
@@ -225,14 +221,14 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.BorderThickness = stream.GetShort(ref index);	//border thickness
                 kf.Width = stream.GetShort(ref index);			//HSize
                 kf.BorderInsideSoftness = stream.GetShort(ref index);	//Border inside softness
-                kf.BorderOutsideSoftness = stream.GetShort(ref index);	//Border outside softness
-                
+                kf.BorderOutsideSoftness = stream.GetShort(ref index);  //Border outside softness
+
                 kf.ShadowHOffset = stream.GetShort(ref index);	//Shadow H Offset
                 kf.ShadowVOffset = stream.GetShort(ref index);	//Shadow V Offset
                 kf.ShadowHSize = stream.GetShort(ref index);		//Shadow H Size
                 kf.ShadowVSize = kf.ShadowHSize;
                 //kf.ShadowVSize = stream.GetShort(ref index);		//Shadow V Size
-                
+
                 kf.ShadowSoftness = stream.GetShort(ref index);	//Shadow softness
                 kf.ShadowTransparency = stream.GetShort(ref index);	//Shadow Transparency
                 kf.BorderLumaOffsetBottom = stream.GetShort(ref index);
@@ -266,7 +262,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     stream[index++],
                     stream[index++]);
 
-                kf.CropAnchor = (CropAnchorTypes)(int)stream[index++];
+                kf.CropAnchor = (CropAnchorTypes)stream[index++];
                 l.StereoMode = (InputStereoMode)stream[index++];
 
                 //Frame Config
@@ -287,7 +283,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     X = l.LayerRect.X + cloneHOffset,
                     Y = l.LayerRect.Y,
                     Width = l.LayerRect.Width,
-                    Height= l.LayerRect.Height
+                    Height = l.LayerRect.Height
                 };
 
                 //Scale (coerced from parent pixelspace)
@@ -306,13 +302,13 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
             //Compatibility fix - if any of the PGM layers are not visible but the preview layers are, promote the preview layers to PGM layers
             //This is needed for Spyder X80 V5.0.3 and above, where PGM and PVW layers have become discrete operating objects
-            for(int i=0; i<newDkCount; i++)
+            for (int i = 0; i < newDkCount; i++)
             {
                 var pgmLayer = response.DrawingKeyFrames[i];
-                if(pgmLayer != null && !pgmLayer.IsVisible && !pgmLayer.IsBackground)
+                if (pgmLayer != null && !pgmLayer.IsVisible && !pgmLayer.IsBackground)
                 {
                     var pvwLayer = response.PreviewDrawingKeyFrames[i];
-                    if(pvwLayer.IsVisible)
+                    if (pvwLayer.IsVisible)
                     {
                         response.DrawingKeyFrames.Remove(i);
                         response.PreviewDrawingKeyFrames.Remove(i);
@@ -352,7 +348,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((ConnectorType)(int)stream[index++]);
+                router.ConnectorType = ((ConnectorType)stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
@@ -464,7 +460,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 var outputFlags = (OutputFlags)stream[index++];
                 output.Interlaced = outputFlags.HasFlag(OutputFlags.Interlaced);
                 output.IsFrameLocked = outputFlags.HasFlag(OutputFlags.IsFrameLocked);
-                
+
                 output.VerticalRefresh = stream.GetFloat(ref index);
                 output.Name = stream.GetString(ref index);
                 output.HdcpStatus = (HdcpLinkStatus)stream[index++];

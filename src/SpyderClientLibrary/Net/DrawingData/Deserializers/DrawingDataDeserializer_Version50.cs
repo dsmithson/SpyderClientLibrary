@@ -1,11 +1,7 @@
-﻿using Spyder.Client.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Knightware.Primitives;
+using Spyder.Client.Common;
 using Spyder.Client.IO;
-using Knightware.Primitives;
+using System;
 
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
@@ -14,7 +10,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// </summary>
     public class DrawingDataDeserializer_Version50 : IDrawingDataDeserializer
     {
-        private string serverVersion;
+        private readonly string serverVersion;
 
 
         [Flags]
@@ -179,7 +175,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 l.AspectRatio = stream.GetFloat(ref index);	//aspect ratio
                 l.LayerRect = stream.GetRectangle(ref index);
                 l.AOIRect = stream.GetRectangle(ref index);
-                
+
                 //Not storing element type
                 //l.ElementType = (ElementType)stream[index++];	//Element Type
                 index++;
@@ -260,7 +256,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     stream[index++],
                     stream[index++]);
 
-                kf.CropAnchor = (CropAnchorTypes)(int)stream[index++];
+                kf.CropAnchor = (CropAnchorTypes)stream[index++];
                 l.StereoMode = (InputStereoMode)stream[index++];
 
                 //Frame Config
@@ -281,7 +277,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     X = l.LayerRect.X + cloneHOffset,
                     Y = l.LayerRect.Y,
                     Width = l.LayerRect.Width,
-                    Height= l.LayerRect.Height
+                    Height = l.LayerRect.Height
                 };
 
                 //Scale (coerced from parent pixelspace)
@@ -328,7 +324,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((ConnectorType)(int)stream[index++]);
+                router.ConnectorType = ((ConnectorType)stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
@@ -440,7 +436,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 var outputFlags = (OutputFlags)stream[index++];
                 output.Interlaced = outputFlags.HasFlag(OutputFlags.Interlaced);
                 output.IsFrameLocked = outputFlags.HasFlag(OutputFlags.IsFrameLocked);
-                
+
                 output.VerticalRefresh = stream.GetFloat(ref index);
                 output.Name = stream.GetString(ref index);
                 output.HdcpStatus = (HdcpLinkStatus)stream[index++];

@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Spyder.Client.Common
+﻿namespace Spyder.Client.Common
 {
-    public enum ContentType {  Source, Still }
+    public enum ContentType { Source, Still }
 
     /// <summary>
     /// Abstraction over still our source content type

@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Spyder.Client.Images
 {
@@ -18,7 +14,7 @@ namespace Spyder.Client.Images
         /// Source image stream, which needs to be turned into the type of T
         /// </summary>
         public Stream Stream { get; private set; }
-        
+
         /// <summary>
         /// Resulting T item created by the provided stream.
         /// </summary>
