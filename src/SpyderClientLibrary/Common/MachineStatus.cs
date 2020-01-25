@@ -1,11 +1,4 @@
-﻿using Knightware;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Spyder.Client.Common
+﻿namespace Spyder.Client.Common
 {
     public class MachineStatus : PropertyChangedBase
     {
@@ -36,7 +29,7 @@ namespace Spyder.Client.Common
             }
         }
         protected bool autoMode;
-        
+
         public bool Playing
         {
             get { return playing; }
@@ -204,7 +197,7 @@ namespace Spyder.Client.Common
             }
         }
         protected bool tapeDir = false;
-        
+
         public bool Var
         {
             get { return var; }

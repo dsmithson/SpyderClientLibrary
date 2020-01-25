@@ -1,12 +1,8 @@
-﻿using Spyder.Client.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Spyder.Client.IO;
+﻿using Knightware.Diagnostics;
 using Knightware.Primitives;
-using Knightware.Diagnostics;
+using Spyder.Client.Common;
+using Spyder.Client.IO;
+using System;
 
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
@@ -262,7 +258,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     stream[index++],
                     stream[index++]);
 
-                kf.CropAnchor = (CropAnchorTypes)(int)stream[index++];
+                kf.CropAnchor = (CropAnchorTypes)stream[index++];
                 l.StereoMode = (InputStereoMode)stream[index++];
 
                 //Frame Config
@@ -273,7 +269,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.BorderShapeFile = stream.GetString(ref index);
                 kf.BorderShapeStretch = (BorderStretchMode)stream[index++];
                 kf.BorderShapeStretchAspectRatio = stream.GetFloat(ref index);
-                
+
                 kf.BorderFillSource = (TextureFillSource)stream[index++];
                 kf.BorderTextureType = (TextureType)stream[index++];
                 kf.BorderTileMode = (TextureTileMode)stream[index++];
@@ -350,7 +346,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((ConnectorType)(int)stream[index++]);
+                router.ConnectorType = ((ConnectorType)stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
@@ -506,7 +502,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         {
             //X80 added a new enum before custom, which can throw off serialization in X20 frames with a SpyderModel value of custom
             SpyderModels response = (SpyderModels)modelByte;
-            if(halType != HardwareType.SpyderX80 && response == SpyderModels.X80)
+            if (halType != HardwareType.SpyderX80 && response == SpyderModels.X80)
                 return SpyderModels.Custom;
 
             return response;
@@ -514,7 +510,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
         protected OutputModuleType OutputModuleTypeFromByte(byte modelByte, HardwareType halType)
         {
-            if(halType == HardwareType.SpyderX80)
+            if (halType == HardwareType.SpyderX80)
             {
                 switch (modelByte)
                 {
@@ -550,7 +546,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         {
             if (halType == HardwareType.SpyderX80)
             {
-                switch(modeByte)
+                switch (modeByte)
                 {
                     case 0: return OutputMode.Normal;
                     case 1: return OutputMode.Multiviewer;

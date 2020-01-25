@@ -267,6 +267,16 @@ namespace Spyder.Client.Net
             return Task.FromResult(server.GetInputConfig(sourceName));
         }
 
+        public Task<bool> InputConfigurationRecall(int configID, int layerID)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> InputAutoSync(int layerID, ConnectorType? connector)
+        {
+            return Task.FromResult(true);
+        }
+
         public Task<bool> LearnCommandKey(int pageIndex, int? registerID, string name, MixerBus learnFrom, bool learnAsMixers, bool learnAsRelative)
         {
             return Task.FromResult(server.LearnCommandKey(pageIndex, registerID, name, learnFrom, learnAsMixers, learnAsRelative));
@@ -628,6 +638,11 @@ namespace Spyder.Client.Net
         }
 
         public Task<bool> SetOutputFormat(int outputID, int hActive, int vActive, float refreshRate, bool interlaced, bool useReducedBlanking)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetOutputConnector(int outputID, ConnectorType connector, bool enabled)
         {
             return Task.FromResult(true);
         }

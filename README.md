@@ -4,7 +4,7 @@
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=dsmithson_SpyderClientLibrary&metric=alert_status)](https://sonarcloud.io/dashboard?id=dsmithson_SpyderClientLibrary)
 
-Provides a modern, fully async compatible .Net Core based library for creating applications and utilities targeting the 
+Provides a modern, fully async compatible .Net Standard 2.0 library for creating applications and utilities targeting the 
 [Spyder video processor](http://www.vistasystems.net/video-processors-and-matrix-switchers/video-processors/pages/default.aspx) 
 from Desktop (.Net 4.6.2 or later) or Windows UWP applications (Windows 10).
 
@@ -19,11 +19,11 @@ Key Features
 Usage
 -----
 
-This library was built using Visual Studio 2017, and can either be downloaded and compiled from source or downloaded as a
+This library was built using Visual Studio 2019, and can either be downloaded and compiled from source or downloaded as a
 [Nuget Package](https://www.nuget.org/packages/SpyderClientLibrary/) if you prefer - search for SpyderClientLibrary from 
 the Nuget package manager to get started.
 
-If you are running Windows 8.1 or later, take a look at the [Spyder Client for Windows 8.1](http://apps.microsoft.com/webpdp/app/6ae527ae-9f38-4f42-aea8-369c1e45ced9)
+If you are running Windows 8.1 or later, take a look at the [Spyder Client for Windows](http://apps.microsoft.com/webpdp/app/6ae527ae-9f38-4f42-aea8-369c1e45ced9)
 application in the Windows Store for an example of some of the things possible. 
 
 

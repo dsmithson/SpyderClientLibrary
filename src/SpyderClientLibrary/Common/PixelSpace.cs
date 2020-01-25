@@ -1,10 +1,4 @@
-﻿using Knightware;
-using Knightware.Primitives;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Knightware.Primitives;
 
 namespace Spyder.Client.Common
 {

@@ -73,7 +73,7 @@ namespace Spyder.Client.Net.Notifications
             serverInfoCache = new Dictionary<string, SpyderServerListenerState>();
 
             listener.DataReceived += listener_DataReceived;
-            if(!await listener.StartupAsync(multicastIP, multicastPort))
+            if (!await listener.StartupAsync(multicastIP, multicastPort))
             {
                 TraceQueue.Trace(this, TracingLevel.Error, "Failed to startup listener.  Shutting down...");
                 await ShutdownAsync();

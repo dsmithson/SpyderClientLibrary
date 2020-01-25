@@ -55,11 +55,7 @@ namespace Spyder.Client.Net
             }
         }
 
-        [TestMethod]
-        public async Task GetPixelSpacesTest()
-        {
-            await GetDataTest(() => udp.GetPixelSpaces());
-        }
+        #region Data
 
         [TestMethod]
         public async Task GetSourcesTest()
@@ -128,5 +124,51 @@ namespace Spyder.Client.Net
             Assert.AreNotEqual(0, results.Count(), "No items returned");
             return results;
         }
+
+        #endregion
+
+        #region Output Configuration
+
+        [TestMethod]
+        public async Task FreezeAndUnFreezeOutputTest()
+        {
+            Assert.IsTrue(await udp.FreezeOutput(0), "Failed to freeze output");
+            Assert.IsTrue(await udp.UnFreezeOutput(0), "Failed to freeze output");
+        }
+
+        #endregion
+
+        #region Layer Control
+
+        [TestMethod]
+        public async Task FreezeAndUnFreezeLayerTest()
+        {
+            Assert.IsTrue(await udp.FreezeLayer(2), "Failed to freeze layer");
+            Assert.IsTrue(server.Sys.GetLayer(2).IsFrozen, "Layer did not actually freeze");
+
+            Assert.IsTrue(await udp.UnFreezeLayer(2), "Failed to un-freeze layer");
+            Assert.IsFalse(server.Sys.GetLayer(2).IsFrozen, "Layer did not actually un-freeze");
+        }
+
+        #endregion
+
+
+        #region PixelSpace Interaction
+
+        [TestMethod]
+        public async Task GetPixelSpacesTest()
+        {
+            var pixelSpaces = await GetDataTest(() => udp.GetPixelSpaces());
+            Assert.IsNotNull(pixelSpaces, "Failed to get pixelspaces");
+            Assert.AreNotEqual(0, pixelSpaces.Count, "No PixelSpaces were returned");
+        }
+
+        public async Task GetPixelSpaceTest()
+        {
+            var pixelSpaces = await udp.GetPixelSpace((int)server.Sys.PixelSpaces.GetKey(0));
+            Assert.IsNotNull(pixelSpaces, "Failed to get PixelSpace");
+        }
+
+        #endregion
     }
 }

@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Knightware.Primitives;
 using Spyder.Client.Common;
 using Spyder.Client.Models.StackupProviders;
 using Spyder.Client.Net.DrawingData;
-using Knightware.Primitives;
 using Spyder.Client.Scripting;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Spyder.Client.Models
 {
@@ -63,7 +61,7 @@ namespace Spyder.Client.Models
             get { return isStillLoaded; }
             set
             {
-                if(isStillLoaded != value)
+                if (isStillLoaded != value)
                 {
                     isStillLoaded = value;
                     OnPropertyChanged();
@@ -77,7 +75,7 @@ namespace Spyder.Client.Models
             get { return isFrozen; }
             set
             {
-                if(isFrozen != value)
+                if (isFrozen != value)
                 {
                     isFrozen = value;
                     OnPropertyChanged();
@@ -185,7 +183,7 @@ namespace Spyder.Client.Models
             get { return shadowOpacity; }
             set
             {
-                if(shadowOpacity != value)
+                if (shadowOpacity != value)
                 {
                     shadowOpacity = value;
                     OnPropertyChanged();
@@ -213,7 +211,7 @@ namespace Spyder.Client.Models
             get { return aoiScaledMargin; }
             set
             {
-                if(aoiScaledMargin != value)
+                if (aoiScaledMargin != value)
                 {
                     aoiScaledMargin = value;
                     OnPropertyChanged();
@@ -283,7 +281,7 @@ namespace Spyder.Client.Models
             get { return windowLabel; }
             set
             {
-                if(windowLabel != value)
+                if (windowLabel != value)
                 {
                     windowLabel = value;
                     OnPropertyChanged();
@@ -389,7 +387,7 @@ namespace Spyder.Client.Models
 
         public void CopyFrom(DrawingKeyFrame dkf, DrawingPixelSpace parentPixelSpace, IStackupProvider stackupProvider = null)
         {
-            if(parentPixelSpace == null)
+            if (parentPixelSpace == null)
             {
                 this.Opacity = 0;
                 return;
@@ -397,7 +395,7 @@ namespace Spyder.Client.Models
 
             this.LayerRect = (stackupProvider == null ? dkf.LayerRect : stackupProvider.GenerateOffsetRect(dkf.LayerRect, dkf.PixelSpaceID));
             this.CloneRect = (stackupProvider == null ? dkf.CloneRect : stackupProvider.GenerateOffsetRect(dkf.CloneRect, dkf.PixelSpaceID));
-            this.StackupProviderScale = (double)this.LayerRect.Width / ((double)dkf.LayerRect.Width / parentPixelSpace.Scale);
+            this.StackupProviderScale = LayerRect.Width / ((double)dkf.LayerRect.Width / parentPixelSpace.Scale);
             this.AOIRect = dkf.AOIRect;
             this.Opacity = ((255 - dkf.Transparency) / (double)255);
             this.KeyFrame.CopyFrom(dkf.KeyFrame);
@@ -434,9 +432,7 @@ namespace Spyder.Client.Models
             this.BorderThickness = CalculateRenderBorderThickness(dkf.KeyFrame.BorderThickness, scale, dkf.LayerRect, layerRect, dkf.HActive, dkf.VActive);
 
             //Scaled AOI rectangles are used directly by UI components for rendering thumbnail cropping
-            Thickness scaledAOIMargin;
-            Rectangle scaledAOIRect;
-            CalculateScaledAOI(dkf.HActive, dkf.VActive, this.LayerRect, this.AOIRect, this.BorderThickness, out scaledAOIMargin, out scaledAOIRect);
+            CalculateScaledAOI(dkf.HActive, dkf.VActive, this.LayerRect, this.AOIRect, this.BorderThickness, out Thickness scaledAOIMargin, out Rectangle scaledAOIRect);
             this.AOIScaledMargin = scaledAOIMargin;
             this.AOIScaledRect = scaledAOIRect;
         }
@@ -456,16 +452,16 @@ namespace Spyder.Client.Models
                 //If we are at the end of this element, remove all associated layers from screen
                 if (elementCueIndex >= element.CueCount)
                 {
-                    response.Add(new RenderLayer() 
+                    response.Add(new RenderLayer()
                     {
-                        LayerID = element.StartLayer + i, 
-                        Opacity = 0 
+                        LayerID = element.StartLayer + i,
+                        Opacity = 0
                     });
                     continue;
                 }
 
                 var layerProperties = GetRenderLayerProperties(drawingData, element, i, elementCueIndex);
-                
+
                 RenderLayer layer = new RenderLayer()
                 {
                     LayerID = element.StartLayer + i,
@@ -499,7 +495,7 @@ namespace Spyder.Client.Models
                         {
                             ic.HActive = dimensions.Width;
                             ic.VActive = dimensions.Height;
-                            ic.AspectRatio = (float)dimensions.Width / (float)dimensions.Height;
+                            ic.AspectRatio = dimensions.Width / (float)dimensions.Height;
                         }
                     }
                 }
@@ -529,7 +525,7 @@ namespace Spyder.Client.Models
 
                 layer.LayerRect = (stackupProvider == null ? layerRect : stackupProvider.GenerateOffsetRect(layerRect, pixelSpace.ID));
                 layer.CloneRect = (stackupProvider == null ? layerRect : stackupProvider.GenerateOffsetRect(cloneRect, pixelSpace.ID));
-                layer.StackupProviderScale = (double)layer.LayerRect.Width / ((double)layerRect.Width / pixelSpace.Scale);
+                layer.StackupProviderScale = layer.LayerRect.Width / ((double)layerRect.Width / pixelSpace.Scale);
                 layer.AOIRect = LayerHelpers.GetAOIRectangle(layer.KeyFrame, ic);
                 layer.Scale = pixelSpace.Scale;
                 layer.PixelSpaceID = pixelSpace.ID;
@@ -554,9 +550,7 @@ namespace Spyder.Client.Models
                     (ic == null ? 1080 : ic.VActive));
 
                 //Scaled AOI rectangles are used directly by UI components for rendering thumbnail cropping
-                Thickness scaledAOIMargin;
-                Rectangle scaledAOIRect;
-                CalculateScaledAOI(ic.HActive, ic.VActive, layer.LayerRect, layer.AOIRect, layer.BorderThickness, out scaledAOIMargin, out scaledAOIRect);
+                CalculateScaledAOI(ic.HActive, ic.VActive, layer.LayerRect, layer.AOIRect, layer.BorderThickness, out Thickness scaledAOIMargin, out Rectangle scaledAOIRect);
                 layer.AOIScaledMargin = scaledAOIMargin;
                 layer.AOIScaledRect = scaledAOIRect;
             }
@@ -609,8 +603,7 @@ namespace Spyder.Client.Models
                         var layerB = currentDrawingData.GetLayer(element.StartLayer + 1, MixerBus.Program);
                         if (layerA != null && layerB != null)
                         {
-                            DrawingKeyFrame pgmLayer, pvwLayer;
-                            GetMixerTopAndBottomLayers(layerA, layerB, element.PixelSpaceID, drivingContent, drivingKf, out pgmLayer, out pvwLayer);
+                            GetMixerTopAndBottomLayers(layerA, layerB, element.PixelSpaceID, drivingContent, drivingKf, out DrawingKeyFrame pgmLayer, out DrawingKeyFrame pvwLayer);
                             pgmLayerID = pgmLayer.LayerID;
 
                             //If PGM does not match the target KF and source, then a mixer transition will occur
@@ -717,8 +710,8 @@ namespace Spyder.Client.Models
                     layerVActive = 768;
 
                 //Actual border thickness is based on the native resolution of the input
-                double layerHScale = Math.Min(1, (double)layerHActive / (double)layerNativeRect.Width);
-                double layerVScale = Math.Min(1, (double)layerVActive / (double)layerNativeRect.Height);
+                double layerHScale = Math.Min(1, layerHActive / (double)layerNativeRect.Width);
+                double layerVScale = Math.Min(1, layerVActive / (double)layerNativeRect.Height);
                 effectiveThickness.Left = (borderThickness * layerHScale);
                 effectiveThickness.Top = (borderThickness * layerVScale);
 
@@ -732,7 +725,7 @@ namespace Spyder.Client.Models
                 //Offset by render scaling
                 if (layerNativeRect.Width != layerRenderRect.Width && layerRenderRect.Width > 0)
                 {
-                    double renderScale = (double)layerRenderRect.Width / (double)layerNativeRect.Width;
+                    double renderScale = layerRenderRect.Width / (double)layerNativeRect.Width;
                     effectiveThickness.Left *= renderScale;
                     effectiveThickness.Top *= renderScale;
                 }
@@ -744,7 +737,7 @@ namespace Spyder.Client.Models
 
             return effectiveThickness;
         }
-        
+
         private static void CalculateScaledAOI(int hActive, int vActive, Rectangle layerRect, Rectangle aoiRect, Thickness borderThickness, out Thickness aoiScaledMargin, out Rectangle aoiScaledRect)
         {
             if (aoiRect.Left == 0 && aoiRect.Top == 0 && aoiRect.Right == hActive && aoiRect.Bottom == vActive)
@@ -764,7 +757,7 @@ namespace Spyder.Client.Models
                 double totalHCrop = leftPercent + rightPercent;
                 double totalVCrop = topPercent + bottomPercent;
 
-                double uncroppedWidth; 
+                double uncroppedWidth;
                 if (totalHCrop == 0)
                     uncroppedWidth = layerRect.Width;
                 if (totalHCrop >= 1)
