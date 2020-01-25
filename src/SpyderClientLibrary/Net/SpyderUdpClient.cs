@@ -293,19 +293,29 @@ namespace Spyder.Client.Net
 
         private FunctionKey CreateFunctionKeyFromTypeName(string functionKeyType)
         {
-            return functionKeyType switch
+            switch (functionKeyType)
             {
-                "Source" => new AssignSourceFunctionKey(),
-                "Freeze Device(s)" => new FreezeDeviceKey(),
-                "Freeze Layer(s)" => new FreezeLayerKey(),
-                "Mix BG" => new MixBackgroundFunctionKey(),
-                "Network Command" => new NetworkCommandFunctionKey(),
-                "Offset" => new LayerPositionOffsetFunctionKey(),
-                "Salvo" => new RouterSalvoFunctionKey(),
-                "Script Recall" => new ScriptRecallFunctionKey(),
-                "Still" => new AssignStillFunctionKey(),
-                _ => new FunctionKey(),
-            };
+                case "Source":
+                    return new AssignSourceFunctionKey();
+                case "Freeze Device(s)":
+                    return new FreezeDeviceKey();
+                case "Freeze Layer(s)":
+                    return new FreezeLayerKey();
+                case "Mix BG":
+                    return new MixBackgroundFunctionKey();
+                case "Network Command":
+                    return new NetworkCommandFunctionKey();
+                case "Offset":
+                    return new LayerPositionOffsetFunctionKey();
+                case "Salvo":
+                    return new RouterSalvoFunctionKey();
+                case "Script Recall":
+                    return new ScriptRecallFunctionKey();
+                case "Still":
+                    return new AssignStillFunctionKey();
+                default:
+                    return new FunctionKey();
+            }
         }
 
         public virtual Task<List<Still>> GetStills()
@@ -429,16 +439,33 @@ namespace Spyder.Client.Net
 
         private async Task<bool> InputConfigurationRecall(int configurationID, int layerID, ConnectorType? connectorType)
         {
-            int? inputConnectorID = connectorType switch
+            int? inputConnectorID = null;
+            switch(connectorType)
             {
-                ConnectorType.Analog => 1,
-                ConnectorType.DVI => 2,
-                ConnectorType.HDMI => 4,
-                ConnectorType.DisplayPort => 8,
-                ConnectorType.SDI => 16,
-                ConnectorType.Composite => 32,
-                ConnectorType.SVideo => 64,
-                _ => null,
+                case ConnectorType.Analog:
+                    inputConnectorID = 1;
+                    break;
+                case ConnectorType.DVI:
+                    inputConnectorID = 2;
+                    break;
+                case ConnectorType.HDMI:
+                    inputConnectorID = 4;
+                    break;
+                case ConnectorType.DisplayPort:
+                    inputConnectorID = 8;
+                    break;
+                case ConnectorType.SDI:
+                    inputConnectorID = 16;
+                    break;
+                case ConnectorType.Composite:
+                    inputConnectorID = 32;
+                    break;
+                case ConnectorType.SVideo:
+                    inputConnectorID = 64;
+                    break;
+                default:
+                    connectorType = null;
+                    break;
             };
             ServerOperationResult result;
             if (inputConnectorID == null && configurationID != -1)
@@ -997,14 +1024,25 @@ namespace Spyder.Client.Net
                 }
             }
 
-            var moveTypeCode = moveType switch
+            int moveTypeCode;
+            switch (moveType)
             {
-                LayerMoveType.AbsolutePixel => 0,
-                LayerMoveType.RelativePixel => 1,
-                LayerMoveType.AbsoluteRelativeCoordinate => 2,
-                LayerMoveType.RelativeRelativeCoordinate => 3,
-                _ => throw new ArgumentException("LayerMoveType provided is invalid", "movetype"),
-            };
+                case LayerMoveType.AbsolutePixel:
+                    moveTypeCode = 0;
+                    break;
+                case LayerMoveType.RelativePixel:
+                    moveTypeCode = 1;
+                    break;
+                case LayerMoveType.AbsoluteRelativeCoordinate:
+                    moveTypeCode = 2;
+                    break;
+                case LayerMoveType.RelativeRelativeCoordinate:
+                    moveTypeCode = 3;
+                    break;
+                default:
+                    throw new ArgumentException("LayerMoveType provided is invalid", "movetype");
+            }
+
             string hString, vString;
             if (moveType == LayerMoveType.AbsolutePixel || moveType == LayerMoveType.RelativePixel)
             {
@@ -1429,13 +1467,23 @@ namespace Spyder.Client.Net
         {
             if (layerIDs == null || layerIDs.Length == 0)
                 return true;
-            var typeCode = type switch
+
+            string typeCode;
+            switch (type)
             {
-                AspectRatioAdjustmentType.SetLayerAspectRatio => "t",
-                AspectRatioAdjustmentType.SetKeyFrameAspectRatio => "o",
-                AspectRatioAdjustmentType.OffsetKeyFrameAspectRatio => "a",
-                _ => throw new ArgumentException("Unsupported value provided for 'type' argument", "type"),
-            };
+                case AspectRatioAdjustmentType.SetLayerAspectRatio:
+                    typeCode = "t";
+                    break;
+                case AspectRatioAdjustmentType.SetKeyFrameAspectRatio:
+                    typeCode = "o";
+                    break;
+                case AspectRatioAdjustmentType.OffsetKeyFrameAspectRatio:
+                    typeCode = "a";
+                    break;
+                default:
+                    throw new ArgumentException("Unsupported value provided for 'type' argument", "type");
+            }
+
             var result = await RetrieveAsync("ARO {0} {1:0.00} {2}", typeCode, aspectRatioValue, BuildLayerIDString(layerIDs));
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
@@ -1569,13 +1617,23 @@ namespace Spyder.Client.Net
 
         public async Task<bool> RotateOutput(int outputID, RotationMode mode)
         {
-            int rotation = mode switch
+            int rotation;
+            switch (mode)
             {
-                RotationMode.Rotate90 => 90,
-                RotationMode.Rotate180 => 180,
-                RotationMode.Rotate270 => 270,
-                _ => 0,
-            };
+                case RotationMode.Rotate90:
+                    rotation = 90;
+                    break;
+                case RotationMode.Rotate180:
+                    rotation = 180;
+                    break;
+                case RotationMode.Rotate270:
+                    rotation = 270;
+                    break;
+                default:
+                    rotation = 0;
+                    break;
+            }
+
             var result = await RetrieveAsync("OCR {0} {1}", outputID, rotation);
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
