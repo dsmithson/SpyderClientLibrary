@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\128x128\Black.png" />
+    <None Remove="Assets\128x128\Source.png" />
+    <None Remove="Assets\32x32\Source.png" />
+    <None Remove="Assets\512x512\Source.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SpyderClientLibrary.WPF\Images\DesignerThumbnailImage.cs" Link="Images\DesignerThumbnailImage.cs" />
+    <Compile Include="..\SpyderClientLibrary.WPF\Images\StaticThumbnailImage.cs" Link="Images\StaticThumbnailImage.cs" />
+    <Compile Include="..\SpyderClientLibrary.WPF\Images\ThumbnailIdentifier.cs" Link="Images\ThumbnailIdentifier.cs" />
+    <Compile Include="..\SpyderClientLibrary.WPF\Images\ThumbnailImage.cs" Link="Images\ThumbnailImage.cs" />
+    <Compile Include="..\SpyderClientLibrary.WPF\Images\ThumbnailManager.cs" Link="Images\ThumbnailManager.cs" />
+    <Compile Include="..\SpyderClientLibrary.WPF\Images\ThumbnailManager.Desktop.cs" Link="Images\ThumbnailManager.Desktop.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\128x128\Black.png" />
+    <EmbeddedResource Include="Assets\128x128\Source.png" />
+    <EmbeddedResource Include="Assets\32x32\Source.png" />
+    <EmbeddedResource Include="Assets\512x512\Source.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SpyderClientLibrary\SpyderClientLibrary.csproj" />
+  </ItemGroup>
+
+</Project>

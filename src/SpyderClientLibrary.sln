@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibraryTests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibrary.UWP", "SpyderClientLibrary.UWP\SpyderClientLibrary.UWP.csproj", "{2C967B09-7E92-4380-B08E-8EDA186EC162}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibrary.WPFCore", "SpyderClientLibrary.WPFCore\SpyderClientLibrary.WPFCore.csproj", "{D11F00CE-8143-4154-99AE-5D269571E755}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,18 @@ Global
 		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x64.Build.0 = Release|x64
 		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x86.ActiveCfg = Release|x86
 		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x86.Build.0 = Release|x86
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Debug|x64.Build.0 = Debug|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Debug|x86.Build.0 = Debug|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Release|x64.ActiveCfg = Release|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Release|x64.Build.0 = Release|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Release|x86.ActiveCfg = Release|Any CPU
+		{D11F00CE-8143-4154-99AE-5D269571E755}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

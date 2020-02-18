@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 #if DESKTOP
 using System.Windows.Media.Imaging;
+#elif NETCOREAPP
+using System.Windows.Media.Imaging;
 #elif NETFX_CORE
 using Windows.UI.Xaml.Media.Imaging;
 #endif

@@ -5,6 +5,8 @@ using System.Text;
 
 #if DESKTOP
 using System.Windows.Media.Imaging;
+#elif NETCOREAPP
+using System.Windows.Media.Imaging;
 #elif NETFX_CORE
 using Windows.Graphics.Imaging;
 using Windows.UI.Xaml.Media.Imaging;

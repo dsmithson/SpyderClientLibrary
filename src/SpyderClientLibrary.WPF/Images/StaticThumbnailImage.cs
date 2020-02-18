@@ -9,6 +9,9 @@ using Knightware.Diagnostics;
 #if DESKTOP
 using System.Windows.Media.Imaging;
 using System.Reflection;
+#elif NETCOREAPP
+using System.Windows.Media.Imaging;
+using System.Reflection;
 #elif NETFX_CORE
 using Windows.Graphics.Imaging;
 using Windows.UI.Xaml.Media.Imaging;
@@ -25,6 +28,13 @@ namespace Spyder.Client.Images
             get
             {
 #if DESKTOP
+                return GetImage(sourceImages, () =>
+                    new StaticThumbnailImage(
+                        "Spyder.Client.Assets._32x32.Source.png",
+                        "Spyder.Client.Assets._128x128.Source.png",
+                        "Spyder.Client.Assets._512x512.Source.png",
+                        "Spyder.Client.Assets._512x512.Source.png"));
+#elif NETCOREAPP
                 return GetImage(sourceImages, () =>
                     new StaticThumbnailImage(
                         "Spyder.Client.Assets._32x32.Source.png",
@@ -50,6 +60,13 @@ namespace Spyder.Client.Images
 #if DESKTOP
                 return GetImage(sourceImages, () =>
                     new StaticThumbnailImage("Spyder.Client.Assets._128x128.Black.png"));
+#elif NETCOREAPP
+                return GetImage(sourceImages, () =>
+                    new StaticThumbnailImage(
+                        "Spyder.Client.Assets._32x32.Source.png",
+                        "Spyder.Client.Assets._128x128.Source.png",
+                        "Spyder.Client.Assets._512x512.Source.png",
+                        "Spyder.Client.Assets._512x512.Source.png"));
 #elif NETFX_CORE
                 return GetImage(blackImages, () =>
                     new StaticThumbnailImage("ms-appx:///Assets/128x128/Black.png"));
@@ -166,6 +183,16 @@ namespace Spyder.Client.Images
         private BitmapImage GetImage(string imageUri)
         {
 #if DESKTOP
+            var assembly = Assembly.GetExecutingAssembly();
+            var stream = assembly.GetManifestResourceStream(imageUri);
+            var image = new BitmapImage();
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.StreamSource = stream;
+            image.EndInit();
+
+            return image;
+#elif NETCOREAPP
             var assembly = Assembly.GetExecutingAssembly();
             var stream = assembly.GetManifestResourceStream(imageUri);
             var image = new BitmapImage();
