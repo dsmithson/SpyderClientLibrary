@@ -476,7 +476,7 @@ namespace Spyder.Client.Net
             else
             {
                 //Autosync with connector type specified
-                result = await RetrieveAsync("ICR {0} {1} {2}", configurationID, layerID, configurationID);
+                result = await RetrieveAsync("ICR {0} {1} {2}", configurationID, layerID, inputConnectorID);
             }
 
 
