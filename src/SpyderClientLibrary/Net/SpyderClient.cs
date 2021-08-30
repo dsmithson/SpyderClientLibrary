@@ -651,6 +651,10 @@ namespace Spyder.Client.Net
                 if (writeFileToLocalCache && localCacheFolder != null)
                 {
                     string imageCacheFolder = Path.Combine(localCacheFolder, "Images");
+                    if(!Directory.Exists(imageCacheFolder))
+                    {
+                        Directory.CreateDirectory(imageCacheFolder);
+                    }
                     string file = Path.Combine(imageCacheFolder, fileName);
                     using (Stream stream = File.Create(file))
                     {
