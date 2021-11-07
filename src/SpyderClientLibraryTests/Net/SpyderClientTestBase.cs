@@ -152,7 +152,6 @@ namespace Spyder.Client.Net
 
         #endregion
 
-
         #region PixelSpace Interaction
 
         [TestMethod]
@@ -170,5 +169,30 @@ namespace Spyder.Client.Net
         }
 
         #endregion
+
+        public async Task GetDataIOProcessorStatusTest()
+        {
+            var drawingData = server.Sys.GetDrawingData();
+            var status = await udp.GetDataIOProcessorStatus();
+            Assert.IsNotNull(status, "Failed to get status");
+            Assert.AreEqual(drawingData.ProgressString, status.Message, "Incorrect progress string");
+            Assert.AreEqual(drawingData.PercentComplete, status.PercentCompleteRaw, "Percent Complete incorrect");
+
+            if(drawingData.PercentComplete == 101)
+            {
+                Assert.IsTrue(status.IsIdle, "Expected processor to be idle");
+                Assert.AreEqual(100, status.PercentComplete, "Expected PercentComplete to be 100");
+            }
+            else
+            {
+                Assert.IsFalse(status.IsIdle, "Expected processor to not be idle");
+                Assert.AreEqual(drawingData.PercentComplete, status.PercentComplete, "Incorrect PercentComplete");
+            }
+        }
+
+        public async Task WaitForDataIOProcessorToBeIdleTest()
+        {
+            Assert.IsTrue(await udp.WaitForDataIOProcessorToBeIdle(TimeSpan.FromSeconds(30)), "Failed to wait for idle");
+        }
     }
 }

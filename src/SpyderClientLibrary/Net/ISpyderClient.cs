@@ -1,6 +1,7 @@
 ﻿using Knightware.Primitives;
 using Spyder.Client.Common;
 using Spyder.Client.FunctionKeys;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -334,5 +335,9 @@ namespace Spyder.Client.Net
         Task<bool> RecallCommandKey(int registerID, int cueIndex);
         Task<bool> RecallFunctionKey(int registerID);
         Task<bool> RecallRegisterToLayer(RegisterType registerType, int registerID, params int[] layerIDs);
+
+        Task<DataIOProcessorStatus> GetDataIOProcessorStatus();
+
+        Task<bool> WaitForDataIOProcessorToBeIdle(TimeSpan maxWaitTimeout, int delayBeforeFirstPollMs = 2000);
     }
 }

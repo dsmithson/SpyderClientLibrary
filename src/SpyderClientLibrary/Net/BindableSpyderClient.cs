@@ -1205,5 +1205,44 @@ namespace Spyder.Client.Net
             else
                 return this.ServerIP.CompareTo(compareTo.ServerIP);
         }
+
+        public async Task<DataIOProcessorStatus> GetDataIOProcessorStatus()
+        {
+            if(drawingData != null)
+            {
+                return new DataIOProcessorStatus((int)drawingData.PercentComplete, drawingData.ProgressString);
+            }
+            else
+            {
+                return await client.GetDataIOProcessorStatus()
+                    .ConfigureAwait(false);
+            }
+        }
+
+        public async Task<bool> WaitForDataIOProcessorToBeIdle(TimeSpan maxWaitTimeout, int delayBeforeFirstPollMs = 2000)
+        {
+            if (delayBeforeFirstPollMs > 0)
+            {
+                await Task.Delay(delayBeforeFirstPollMs)
+                    .ConfigureAwait(false);
+            }
+
+            DateTime timeoutTime = DateTime.Now.Add(maxWaitTimeout);
+            while (DateTime.Now < timeoutTime)
+            {
+                var status = await GetDataIOProcessorStatus()
+                    .ConfigureAwait(false);
+
+                if (status == null)
+                    return false;
+
+                if (status.IsIdle)
+                    return true;
+
+                await Task.Delay(TimeSpan.FromSeconds(1))
+                    .ConfigureAwait(false);
+            }
+            return false;
+        }
     }
 }

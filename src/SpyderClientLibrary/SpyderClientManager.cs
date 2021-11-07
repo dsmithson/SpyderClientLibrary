@@ -171,6 +171,27 @@ namespace Spyder.Client
             return true;
         }
 
+        /// <summary>
+        /// Returns a BindableSpyderClient instance from a specified IP, waiting until a supplied timeout expires in the case the server is not currently online
+        /// </summary>
+        public async Task<BindableSpyderClient> GetServerAsync(string serverIP, TimeSpan timeout)
+        {
+            if (string.IsNullOrEmpty(serverIP))
+                return null;
+
+            DateTime timeoutTime = DateTime.Now.Add(timeout);
+            BindableSpyderClient client = null;
+            while((client = await GetServerAsync(serverIP).ConfigureAwait(false)) == null && DateTime.Now < timeoutTime)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1))
+                    .ConfigureAwait(false);
+            }
+            return client;
+        }
+
+        /// <summary>
+        /// Returns a BindableSpyderClient instance from a specified IP, or null if it is not currently in the list of servers on the network
+        /// </summary>
         public async Task<BindableSpyderClient> GetServerAsync(string serverIP)
         {
             if (string.IsNullOrEmpty(serverIP))

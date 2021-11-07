@@ -64,6 +64,52 @@ namespace Spyder.Client.Net
             return Task.FromResult(true);
         }
 
+        public virtual async Task<DataIOProcessorStatus> GetDataIOProcessorStatus()
+        {
+            ServerOperationResult result = await RetrieveAsync("RPS");
+            if (result.Result != ServerOperationResultCode.Success)
+                return default;
+
+            //Should always have a percentage
+            if (!int.TryParse(result.ResponseData.FirstOrDefault(), out int percentComplete))
+                return default;
+
+            //May or may not have a message
+            string msg = null;
+            if(result.ResponseData.Count > 1)
+            {
+                msg = DecodeSpyderParameter(result.ResponseData[1]);
+            }
+
+            return new DataIOProcessorStatus(percentComplete, msg);
+        }
+
+        public virtual async Task<bool> WaitForDataIOProcessorToBeIdle(TimeSpan maxWaitTimeout, int delayBeforeFirstPollMs = 2000)
+        {
+            if (delayBeforeFirstPollMs > 0)
+            {
+                await Task.Delay(delayBeforeFirstPollMs)
+                    .ConfigureAwait(false);
+            }
+
+            DateTime timeoutTime = DateTime.Now.Add(maxWaitTimeout);
+            while (DateTime.Now < timeoutTime)
+            {
+                var status = await GetDataIOProcessorStatus()
+                    .ConfigureAwait(false);
+                
+                if (status == null)
+                    return false;
+
+                if (status.IsIdle)
+                    return true;
+
+                await Task.Delay(TimeSpan.FromSeconds(1))
+                    .ConfigureAwait(false);
+            }
+            return false;
+        }
+
         public virtual async Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight = null)
         {
             var stream = new MemoryStream();

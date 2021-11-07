@@ -749,5 +749,16 @@ namespace Spyder.Client.Net
             int frames = (int)(framesPerSecond * duration.TotalSeconds);
             return frames;
         }
+
+        public Task<DataIOProcessorStatus> GetDataIOProcessorStatus()
+        {
+            return Task.FromResult(new DataIOProcessorStatus(101, "Ready"));
+        }
+
+        public async Task<bool> WaitForDataIOProcessorToBeIdle(TimeSpan maxWaitTimeout, int delayBeforeFirstPollMs = 2000)
+        {
+            await Task.Delay(Math.Min(100, delayBeforeFirstPollMs));
+            return true;
+        }
     }
 }
