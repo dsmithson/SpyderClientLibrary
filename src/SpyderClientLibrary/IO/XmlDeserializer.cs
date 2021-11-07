@@ -69,11 +69,14 @@ namespace Spyder.Client.IO
             return Read(parent, elementName, defaultValue, (value) => value);
         }
 
-        public TEnum ReadEnum<TEnum>(XElement parent, string elementName, TEnum defaultValue)
+        public TEnum ReadEnum<TEnum>(XElement parent, string elementName, TEnum defaultValue, Func<string, string> valueTransform = null)
             where TEnum : struct
         {
             return Read(parent, elementName, defaultValue, (value) =>
                 {
+                    if(valueTransform != null)
+                        value = valueTransform(value);
+
                     return Enum.TryParse(value, out TEnum response) ? response : ReturnDefaultValue(elementName, defaultValue);
                 });
         }

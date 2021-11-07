@@ -20,21 +20,15 @@ namespace Spyder.Client.Net
     {
         private SpyderServerEventListener serverEventListener;
         private readonly string localCacheFolder;
-        private readonly HardwareType hardwareType;
         private QFTClient qftClient;
         private SystemData systemData;
         private DrawingData.DrawingData drawingData;
         private int lastDataObjectVersion = -1;
 
-        public HardwareType HardwareType
-        {
-            get { return hardwareType; }
-        }
-
         /// <summary>
         /// Contains folder and file paths on the server hardware
         /// </summary>
-        public ServerFilePaths ServerFilePaths => ServerFilePaths.FromHardwareType(hardwareType, Version);
+        public ServerFilePaths ServerFilePaths => ServerFilePaths.FromHardwareType(this.HardwareType, Version);
 
         /// <summary>
         /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
@@ -73,10 +67,9 @@ namespace Spyder.Client.Net
         public string ServerName { get; set; }
 
         public SpyderClient(HardwareType hardwareType, string serverIP, string localCacheFolder)
-            : base(serverIP)
+            : base(hardwareType, serverIP)
         {
             this.localCacheFolder = localCacheFolder;
-            this.hardwareType = hardwareType;
         }
 
         public override async Task<bool> StartupAsync()

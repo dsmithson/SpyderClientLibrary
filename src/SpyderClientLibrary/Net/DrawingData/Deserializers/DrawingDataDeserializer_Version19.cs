@@ -291,7 +291,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((InputConnector)stream[index++]).ToConnectorType();
+                router.ConnectorType = ParseRouterConnectorType(stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
@@ -428,6 +428,20 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             }
 
             return response;
+        }
+
+        private ConnectorType ParseRouterConnectorType(byte val)
+        {
+            switch (val)
+            {
+                case 0: return ConnectorType.Analog;
+                case 1: return ConnectorType.DVI;
+                case 2: return ConnectorType.SDI;
+                case 3: return ConnectorType.SDI;
+                case 4: return ConnectorType.Composite;
+                case 5: return ConnectorType.SVideo;
+                default: throw new ArgumentException($"Unable to convert value {val} to a DrawingData router connector type", nameof(val));
+            }
         }
     }
 }

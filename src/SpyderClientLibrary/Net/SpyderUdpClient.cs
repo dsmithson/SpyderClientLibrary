@@ -26,10 +26,12 @@ namespace Spyder.Client.Net
 
         public bool IsRunning { get; private set; }
         public string ServerIP { get; private set; }
+        public HardwareType HardwareType { get; private set; }
 
-        public SpyderUdpClient(string serverIP)
+        public SpyderUdpClient(HardwareType hardwareType, string serverIP)
         {
             this.ServerIP = serverIP;
+            this.HardwareType = hardwareType;
         }
 
         public virtual async Task<bool> StartupAsync()
@@ -439,48 +441,33 @@ namespace Spyder.Client.Net
 
         private async Task<bool> InputConfigurationRecall(int configurationID, int layerID, ConnectorType? connectorType)
         {
-            int? inputConnectorID = null;
-            switch(connectorType)
+            string connectorName = null;
+            if (connectorType.HasValue)
             {
-                case ConnectorType.Analog:
-                    inputConnectorID = 1;
-                    break;
-                case ConnectorType.DVI:
-                    inputConnectorID = 2;
-                    break;
-                case ConnectorType.HDMI:
-                    inputConnectorID = 4;
-                    break;
-                case ConnectorType.DisplayPort:
-                    inputConnectorID = 8;
-                    break;
-                case ConnectorType.SDI:
-                    inputConnectorID = 16;
-                    break;
-                case ConnectorType.Composite:
-                    inputConnectorID = 32;
-                    break;
-                case ConnectorType.SVideo:
-                    inputConnectorID = 64;
-                    break;
-                default:
-                    connectorType = null;
-                    break;
-            };
-            ServerOperationResult result;
-            if (inputConnectorID == null && configurationID != -1)
-            {
-                //Recall config by ID, or autosync with default (current) input connector
-                result = await RetrieveAsync("ICR {0} {1}", configurationID, layerID);
+                //Sanity check on our connector type if it has a value
+                if (!connectorType.Value.IsValidConnectorTypeForHardware(this.HardwareType, ConnectorTypeUsage.Input))
+                {
+                    TraceQueue.Trace(this, TracingLevel.Warning, $"Connector type '{connectorType}' is not valid for hardware type '{this.HardwareType}'");
+                }
+
+                connectorName = connectorType?.ToString();
+                if (connectorName == nameof(ConnectorType.Analog))
+                {
+                    //Only 200/300/X20 Spyder supports analog inputs, and Vista Advanced will be looking to parse this as
+                    //an InputConnector which will expect a name of HD15 instead of Analog
+                    connectorName = "HD15";
+                }
+
+                //Autosync with connector type specified
+                var result = await RetrieveAsync("ICR {0} {1} {2}", configurationID, layerID, connectorName);
+                return result.Result == ServerOperationResultCode.Success;
             }
             else
             {
-                //Autosync with connector type specified
-                result = await RetrieveAsync("ICR {0} {1} {2}", configurationID, layerID, inputConnectorID);
+                //Recall config by ID, or autosync with default (current) input connector
+                var result = await RetrieveAsync("ICR {0} {1}", configurationID, layerID);
+                return result.Result == ServerOperationResultCode.Success;
             }
-
-
-            return result.Result == ServerOperationResultCode.Success;
         }
 
         #endregion
