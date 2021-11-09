@@ -1600,7 +1600,7 @@ namespace Spyder.Client.Net
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
 
-        public async Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex)
+        public async Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex = null)
         {
             var result = await RetrieveAsync("LSO {0} {1}{2}",
                 EncodeSpyderParameter(fileName),
@@ -1610,7 +1610,7 @@ namespace Spyder.Client.Net
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
 
-        public async Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex)
+        public async Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex = null)
         {
             var result = await RetrieveAsync("CSO {0}{1}",
                 outputID,
@@ -1671,7 +1671,7 @@ namespace Spyder.Client.Net
             return result != null && result.Result == ServerOperationResultCode.Success;
         }
 
-        public async Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex)
+        public async Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex = null)
         {
             var result = await RetrieveAsync("OCM {0} Normal {1} {2}{3}",
                 outputID,

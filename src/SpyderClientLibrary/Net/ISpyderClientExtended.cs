@@ -24,12 +24,14 @@ namespace Spyder.Client.Net
 
         ServerFilePaths ServerFilePaths { get; }
 
+        string ServerName { get; }
+
+        VersionInfo Version { get; }
+
         /// <summary>
         /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
         /// </summary>
         TimeSpan DrawingDataThrottleInterval { get; set; }
-
-        Task<VersionInfo> GetVersionInfo();
 
         Task<bool> SetImageFileStream(string fileName, Stream fileStream);
 

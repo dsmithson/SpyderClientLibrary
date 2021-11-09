@@ -25,6 +25,8 @@ namespace Spyder.Client.Net
 
         public string ServerIP { get; set; } = "Demo";
 
+        public string ServerName { get; } = "Demo Server";
+
         public VersionInfo Version => new VersionInfo(0, 0, 0);
 
         public string HostName { get; set; }
@@ -103,11 +105,6 @@ namespace Spyder.Client.Net
         public Task<bool> Save()
         {
             return Task.FromResult(true);
-        }
-
-        public Task<VersionInfo> GetVersionInfo()
-        {
-            return Task.FromResult(server.GetVersionInfo());
         }
 
         public Task<Stream> GetImageFileStream(string fileName, int? maxWidthOrHeight = 2048)
@@ -587,12 +584,12 @@ namespace Spyder.Client.Net
             return Task.FromResult(true);
         }
 
-        public Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex)
+        public Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex = null)
         {
             return Task.FromResult(true);
         }
 
-        public Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex)
+        public Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex = null)
         {
             return Task.FromResult(true);
         }
@@ -617,7 +614,7 @@ namespace Spyder.Client.Net
             return Task.FromResult(true);
         }
 
-        public Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex)
+        public Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex = null)
         {
             return Task.FromResult(true);
         }

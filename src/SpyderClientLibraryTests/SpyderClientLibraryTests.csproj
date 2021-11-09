@@ -146,7 +146,6 @@
     <Compile Include="ReflectionTests.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Text\HexUtilTests.cs" />
-    <Compile Include="TimedCacheWeakReferenceTests.cs" />
     <Compile Include="UnitTestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
