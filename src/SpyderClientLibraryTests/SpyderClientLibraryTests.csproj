@@ -122,7 +122,6 @@
     <Compile Include="Common\SystemDataV5_2Tests.cs" />
     <Compile Include="Common\SystemDataV5Tests.cs" />
     <Compile Include="Common\SystemDataV4Tests.cs" />
-    <Compile Include="Diagnostics\TraceQueueTests.cs" />
     <Compile Include="Drawing\BitmapHelperTests.cs" />
     <Compile Include="Images\MockImageCreateEventArgs.cs" />
     <Compile Include="Images\MockQFTThumbnailManager.cs" />

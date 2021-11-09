@@ -71,16 +71,22 @@ namespace Spyder.Client.Drawing
 
         private static void WriteInt(Stream stream, int value)
         {
-            stream.WriteByte((byte)(value));
-            stream.WriteByte((byte)(value >> 8));
-            stream.WriteByte((byte)(value >> 16));
-            stream.WriteByte((byte)(value >> 24));
+            stream.Write(new byte[]
+            {
+                (byte)value,
+                (byte)(value >> 8),
+                (byte)(value >> 16),
+                (byte)(value >> 24)
+            }, 0, 4);
         }
 
         private static void WriteShort(Stream stream, short value)
         {
-            stream.WriteByte((byte)(value));
-            stream.WriteByte((byte)(value >> 8));
+            stream.Write(new byte[]
+            {
+                (byte)value,
+                (byte)(value >> 8)
+            }, 0, 2);
         }
     }
 }

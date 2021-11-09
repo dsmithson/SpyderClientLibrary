@@ -28,7 +28,7 @@ namespace Spyder.Client.Net
         {
             get
             {
-                return PercentCompleteRaw == 101;
+                return PercentCompleteRaw == 0 || PercentCompleteRaw == 101;
             }
         }
 

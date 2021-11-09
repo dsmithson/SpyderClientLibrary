@@ -170,6 +170,7 @@ namespace Spyder.Client.Net
 
         #endregion
 
+        [TestMethod]
         public async Task GetDataIOProcessorStatusTest()
         {
             var drawingData = server.Sys.GetDrawingData();
@@ -178,10 +179,10 @@ namespace Spyder.Client.Net
             Assert.AreEqual(drawingData.ProgressString, status.Message, "Incorrect progress string");
             Assert.AreEqual(drawingData.PercentComplete, status.PercentCompleteRaw, "Percent Complete incorrect");
 
-            if(drawingData.PercentComplete == 101)
+            if(drawingData.PercentComplete == 0 || drawingData.PercentComplete == 101)
             {
                 Assert.IsTrue(status.IsIdle, "Expected processor to be idle");
-                Assert.AreEqual(100, status.PercentComplete, "Expected PercentComplete to be 100");
+                Assert.AreEqual(drawingData.PercentComplete, status.PercentComplete, "Expected PercentComplete to match DrawingData");
             }
             else
             {
@@ -190,6 +191,7 @@ namespace Spyder.Client.Net
             }
         }
 
+        [TestMethod]
         public async Task WaitForDataIOProcessorToBeIdleTest()
         {
             Assert.IsTrue(await udp.WaitForDataIOProcessorToBeIdle(TimeSpan.FromSeconds(30)), "Failed to wait for idle");
