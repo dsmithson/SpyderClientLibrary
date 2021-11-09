@@ -274,7 +274,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 for (int outputIndex = 0; outputIndex < router.OutputCount; outputIndex++)
                     router.Crosspoints.Add(-1);
 
-                int crosspointsCount = stream[index++];
+                int crosspointsCount = stream.GetShort(ref index);
                 for (int crosspointIndex = 0; crosspointIndex < crosspointsCount; crosspointIndex++)
                 {
                     int output = stream.GetShort(ref index);

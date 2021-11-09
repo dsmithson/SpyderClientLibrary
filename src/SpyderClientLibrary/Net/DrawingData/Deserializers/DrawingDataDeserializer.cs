@@ -16,7 +16,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
         private int rxSequence = -1;
         private int rxPacketCount = -1;
-        private readonly SortedDictionary<int, byte[]> rxCache = new SortedDictionary<int, byte[]>();
+        private readonly SortedDictionary<int, byte[]> rxCache = new();
 
         public string ServerIP { get; private set; }
         public string ServerVersion { get; private set; }
@@ -30,13 +30,10 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         /// <summary>
         /// Event raised when a new DrawingData object has been deserialized
         /// </summary>
-        public event EventHandler<DrawingData> DrawingDataDeserialized;
-        protected void OnDrawingDataDeserialized(DrawingData data)
+        public event DrawingDataDeserializedEventHandler DrawingDataDeserialized;
+        protected void OnDrawingDataDeserialized(DrawingDataDeserializedEventArgs args)
         {
-            if (DrawingDataDeserialized != null)
-            {
-                DrawingDataDeserialized(this, data);
-            }
+            DrawingDataDeserialized?.Invoke(this, args);
         }
 
         public void Read(byte[] Stream, int offset)
@@ -132,7 +129,11 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 }
 
                 //Raise drawing data update event
-                OnDrawingDataDeserialized(drawingData);
+                OnDrawingDataDeserialized(new DrawingDataDeserializedEventArgs()
+                {
+                    DrawingData = drawingData,
+                    RawMessage = fullRxPacket
+                });
 
                 rxCache.Clear();
             }

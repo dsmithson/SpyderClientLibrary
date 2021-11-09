@@ -75,7 +75,7 @@ namespace Spyder.Client.Net
             }
 
             //Raise change notification
-            OnDrawingDataReceived(new DrawingDataReceivedEventArgs("Demo", drawingData));
+            OnDrawingDataReceived(new DrawingDataReceivedEventArgs("Demo", drawingData, null));
 
             return Task.FromResult(true);
         }

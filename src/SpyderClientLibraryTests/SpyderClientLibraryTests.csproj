@@ -189,6 +189,11 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_2.10.8_V8.bin" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_3.5.9_V19.bin" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_4.0.1_V19.bin" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_4.1.0_V20.bin" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_5.4.1_V54.bin" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

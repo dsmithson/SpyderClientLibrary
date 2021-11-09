@@ -243,7 +243,7 @@ namespace Spyder.Client.Net.Notifications
             }
         }
 
-        void deserializer_DrawingDataDeserialized(object sender, DrawingData.DrawingData drawingData)
+        void deserializer_DrawingDataDeserialized(object sender, DrawingDataDeserializedEventArgs e)
         {
             var deserializer = (DrawingDataDeserializer)sender;
 
@@ -256,7 +256,7 @@ namespace Spyder.Client.Net.Notifications
             }
 
             //Raise the DrawingDataReceived event
-            OnDrawingDataReceived(new DrawingDataReceivedEventArgs(deserializer.ServerIP, drawingData));
+            OnDrawingDataReceived(new DrawingDataReceivedEventArgs(deserializer.ServerIP, e.DrawingData, e.RawMessage));
         }
 
         private ServerEventType? ParseHeader(byte[] data)
