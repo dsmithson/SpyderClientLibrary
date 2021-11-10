@@ -8,21 +8,17 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// <summary>
     /// Deserializes DrawingData messages in the version 52 serialization format - Spyder Studio / X80
     /// </summary>
-    public class DrawingDataDeserializer_Version52 : IDrawingDataDeserializer
+    public class DrawingDataDeserializer_Version52 : DrawingDataDeserializer_Version51
     {
-        private readonly string serverVersion;
-        private readonly bool serverVersionIs50x;
-
-        [Flags]
-        private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
+        protected readonly bool serverVersionIs50x;
 
         public DrawingDataDeserializer_Version52(string serverVersion)
+            : base(serverVersion)
         {
-            this.serverVersion = serverVersion;
             this.serverVersionIs50x = serverVersion.StartsWith("5.0");
         }
 
-        public DrawingData Deserialize(byte[] stream)
+        public override DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
                 return null;
@@ -348,7 +344,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((ConnectorType)stream[index++]);
+                router.ConnectorType = ParseRouterConnectorType(stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
@@ -408,7 +404,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 //Machine Time
                 FieldRate frameRate = (FieldRate)stream[index++];
                 long frames = stream.GetLong(ref index);
-                newMachine.Time.Set(frameRate, frames);
+                newMachine.Time = new TimeCode(frameRate, frames);
 
                 //Machine Status (Block 1)
                 flags = stream[index++];

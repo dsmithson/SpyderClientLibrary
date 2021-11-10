@@ -86,8 +86,8 @@
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\..\SpyderClient\src\packages\System.Threading.Tasks.Dataflow.4.11.0\lib\netstandard2.0\System.Threading.Tasks.Dataflow.dll</HintPath>
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\..\SpyderClient\src\packages\System.Threading.Tasks.Dataflow.6.0.0-rc.2.21480.5\lib\net461\System.Threading.Tasks.Dataflow.dll</HintPath>
     </Reference>
     <Reference Include="System.Xaml" />
     <Reference Include="System.XML" />
@@ -122,7 +122,6 @@
     <Compile Include="Common\SystemDataV5_2Tests.cs" />
     <Compile Include="Common\SystemDataV5Tests.cs" />
     <Compile Include="Common\SystemDataV4Tests.cs" />
-    <Compile Include="Diagnostics\TraceQueueTests.cs" />
     <Compile Include="Drawing\BitmapHelperTests.cs" />
     <Compile Include="Images\MockImageCreateEventArgs.cs" />
     <Compile Include="Images\MockQFTThumbnailManager.cs" />
@@ -146,7 +145,6 @@
     <Compile Include="ReflectionTests.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Text\HexUtilTests.cs" />
-    <Compile Include="TimedCacheWeakReferenceTests.cs" />
     <Compile Include="UnitTestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -191,6 +189,11 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_2.10.8_V8.bin" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_3.5.9_V19.bin" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_4.0.1_V19.bin" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_4.1.0_V20.bin" />
+    <EmbeddedResource Include="Resources\TestDrawingData\DrawingData_5.4.1_V54.bin" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

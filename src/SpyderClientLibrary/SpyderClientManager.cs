@@ -20,7 +20,7 @@ namespace Spyder.Client
     public class SpyderClientManager : INotifyPropertyChanged
     {
         private readonly SynchronizationContext context;
-        private readonly Func<HardwareType, string, Task<ISpyderClientExtended>> getSpyderClient;
+        private readonly Func<SpyderServerAnnounceInformation, Task<ISpyderClientExtended>> getSpyderClient;
         private readonly AsyncLock spyderServersLock = new AsyncLock();
         private readonly AsyncLock spyderServersInitializingLock = new AsyncLock();
         private readonly List<BindableSpyderClient> spyderServers = new List<BindableSpyderClient>();
@@ -78,13 +78,13 @@ namespace Spyder.Client
         /// </summary>
         public SpyderClientManager()
         : this(
-            (hardwareType, serverIP) =>
+            (serverInfo) =>
             {
                 var serverCacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SpyderClient");
                 if (!Directory.Exists(serverCacheFolder))
                     Directory.CreateDirectory(serverCacheFolder);
 
-                ISpyderClientExtended response = new SpyderClient(hardwareType, serverIP, serverCacheFolder);
+                ISpyderClientExtended response = new SpyderClient(serverInfo.HardwareType, serverInfo.Address, serverCacheFolder, serverInfo.Version, serverInfo.ServerName);
 
                 return Task.FromResult(response);
             })
@@ -98,20 +98,20 @@ namespace Spyder.Client
         /// <param name="localCacheRoot">Directory root for saving image and other cached files.  If the specified directory does not exist, it will be created.</param>
         public SpyderClientManager(string localCacheRoot)
         : this(
-            (hardwareType, serverIP) =>
+            (serverInfo) =>
             {
-                string serverCacheFolderPath = Path.Combine(localCacheRoot, serverIP);
+                string serverCacheFolderPath = Path.Combine(localCacheRoot, serverInfo.Address);
                 if (!Directory.Exists(serverCacheFolderPath))
                     Directory.CreateDirectory(serverCacheFolderPath);
 
-                ISpyderClientExtended response = new SpyderClient(hardwareType, serverIP, serverCacheFolderPath);
+                ISpyderClientExtended response = new SpyderClient(serverInfo.HardwareType, serverInfo.Address, serverCacheFolderPath, serverInfo.Version, serverInfo.ServerName);
 
                 return Task.FromResult(response);
             })
         {
         }
 
-        protected SpyderClientManager(Func<HardwareType, string, Task<ISpyderClientExtended>> getSpyderClient)
+        protected SpyderClientManager(Func<SpyderServerAnnounceInformation, Task<ISpyderClientExtended>> getSpyderClient)
         {
             this.getSpyderClient = getSpyderClient;
 
@@ -171,6 +171,27 @@ namespace Spyder.Client
             return true;
         }
 
+        /// <summary>
+        /// Returns a BindableSpyderClient instance from a specified IP, waiting until a supplied timeout expires in the case the server is not currently online
+        /// </summary>
+        public async Task<BindableSpyderClient> GetServerAsync(string serverIP, TimeSpan timeout)
+        {
+            if (string.IsNullOrEmpty(serverIP))
+                return null;
+
+            DateTime timeoutTime = DateTime.Now.Add(timeout);
+            BindableSpyderClient client = null;
+            while((client = await GetServerAsync(serverIP).ConfigureAwait(false)) == null && DateTime.Now < timeoutTime)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1))
+                    .ConfigureAwait(false);
+            }
+            return client;
+        }
+
+        /// <summary>
+        /// Returns a BindableSpyderClient instance from a specified IP, or null if it is not currently in the list of servers on the network
+        /// </summary>
         public async Task<BindableSpyderClient> GetServerAsync(string serverIP)
         {
             if (string.IsNullOrEmpty(serverIP))
@@ -213,12 +234,7 @@ namespace Spyder.Client
                     spyderServersInitializing.Add(serverInfo.Address);
 
                     //Add a new server to our list
-                    var spyderClient = new SpyderClient(serverInfo.HardwareType, serverInfo.Address, "SpyderClient")
-                    {
-                        Version = serverInfo.Version,
-                        ServerName = serverInfo.ServerName
-                    };
-
+                    var spyderClient = await getSpyderClient(serverInfo);
 
                     //Startup our client asynchronously
                     var bindableClient = new BindableSpyderClient(spyderClient);

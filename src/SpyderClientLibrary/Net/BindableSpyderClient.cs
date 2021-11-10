@@ -31,6 +31,17 @@ namespace Spyder.Client.Net
             get { return client.HardwareType; }
         }
 
+        public VersionInfo Version
+        {
+            get
+            {
+                if (client is ISpyderClientExtended spyderClient)
+                    return spyderClient.Version;
+                else
+                    return null;
+            }
+        }
+
         /// <summary>
         /// Contains path information to access files on the Spyder server
         /// </summary>
@@ -764,11 +775,6 @@ namespace Spyder.Client.Net
             return client.GetShapeFileNames();
         }
 
-        public Task<VersionInfo> GetVersionInfo()
-        {
-            return client.GetVersionInfo();
-        }
-
         public Task<ServerSettings> GetServerSettings()
         {
             return client.GetServerSettings();
@@ -1044,12 +1050,12 @@ namespace Spyder.Client.Net
             return client.UnFreezeOutput(outputIDs);
         }
 
-        public Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex)
+        public Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex = null)
         {
             return client.LoadStillOnOutput(fileName, outputID, dx4ChannelIndex);
         }
 
-        public Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex)
+        public Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex = null)
         {
             return client.ClearStillOnOutput(outputID, dx4ChannelIndex);
         }
@@ -1074,7 +1080,7 @@ namespace Spyder.Client.Net
             return client.RotateOutput(outputID, mode);
         }
 
-        public Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex)
+        public Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex = null)
         {
             return client.SetOutputModeToNormal(outputID, hStart, vStart, dx4ChannelIndex);
         }
@@ -1204,6 +1210,45 @@ namespace Spyder.Client.Net
                 return -1;
             else
                 return this.ServerIP.CompareTo(compareTo.ServerIP);
+        }
+
+        public async Task<DataIOProcessorStatus> GetDataIOProcessorStatus()
+        {
+            if(drawingData != null)
+            {
+                return new DataIOProcessorStatus((int)drawingData.PercentComplete, drawingData.ProgressString);
+            }
+            else
+            {
+                return await client.GetDataIOProcessorStatus()
+                    .ConfigureAwait(false);
+            }
+        }
+
+        public async Task<bool> WaitForDataIOProcessorToBeIdle(TimeSpan maxWaitTimeout, int delayBeforeFirstPollMs = 2000)
+        {
+            if (delayBeforeFirstPollMs > 0)
+            {
+                await Task.Delay(delayBeforeFirstPollMs)
+                    .ConfigureAwait(false);
+            }
+
+            DateTime timeoutTime = DateTime.Now.Add(maxWaitTimeout);
+            while (DateTime.Now < timeoutTime)
+            {
+                var status = await GetDataIOProcessorStatus()
+                    .ConfigureAwait(false);
+
+                if (status == null)
+                    return false;
+
+                if (status.IsIdle)
+                    return true;
+
+                await Task.Delay(TimeSpan.FromSeconds(1))
+                    .ConfigureAwait(false);
+            }
+            return false;
         }
     }
 }

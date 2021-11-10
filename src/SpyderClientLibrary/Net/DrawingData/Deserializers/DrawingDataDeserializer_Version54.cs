@@ -7,21 +7,16 @@ using System;
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
     /// <summary>
-    /// Deserializes DrawingData messages in the version 53 serialization format - Spyder Studio / X80
+    /// Deserializes DrawingData messages in the version 54 serialization format - Spyder Studio / X80
     /// </summary>
-    public class DrawingDataDeserializer_Version54 : IDrawingDataDeserializer
+    public class DrawingDataDeserializer_Version54 : DrawingDataDeserializer_Version53
     {
-        private readonly string serverVersion;
-
-        [Flags]
-        private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
-
         public DrawingDataDeserializer_Version54(string serverVersion)
+            : base(serverVersion)
         {
-            this.serverVersion = serverVersion;
         }
 
-        public DrawingData Deserialize(byte[] stream)
+        public override DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
                 return null;
@@ -350,7 +345,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((ConnectorType)stream[index++]);
+                router.ConnectorType = ParseRouterConnectorType(stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
@@ -410,7 +405,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 //Machine Time
                 FieldRate frameRate = (FieldRate)stream[index++];
                 long frames = stream.GetLong(ref index);
-                newMachine.Time.Set(frameRate, frames);
+                newMachine.Time = new TimeCode(frameRate, frames);
 
                 //Machine Status (Block 1)
                 flags = stream[index++];
@@ -503,98 +498,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             }
 
             return response;
-        }
-
-        /// <summary>
-        /// Serialization between output mode and integers are different between SpyderX20 and X80.  Call this method to get a hardware-specific OutputMode value from an integer.
-        /// </summary>
-        /// <returns></returns>
-        protected SpyderModels SpyderModelFromByte(byte modelByte, HardwareType halType)
-        {
-            //X80 added a new enum before custom, which can throw off serialization in X20 frames with a SpyderModel value of custom
-            SpyderModels response = (SpyderModels)modelByte;
-            if (halType != HardwareType.SpyderX80 && response == SpyderModels.X80)
-                return SpyderModels.Custom;
-
-            return response;
-        }
-
-        protected OutputModuleType OutputModuleTypeFromByte(byte modelByte, HardwareType halType)
-        {
-            if (halType == HardwareType.SpyderX80)
-            {
-                switch (modelByte)
-                {
-                    case 0: return OutputModuleType.SpyderDX4;
-                    case 1: return OutputModuleType.SpyderUniversal;
-                    case 2: return OutputModuleType.X20;
-                    case 3: return OutputModuleType.X80;
-                    case 4: return OutputModuleType.URS;
-                    case 5: return OutputModuleType.OutputBase;
-                }
-            }
-            else
-            {
-                switch (modelByte)
-                {
-                    case 0: return OutputModuleType.SpyderDX4;
-                    case 1: return OutputModuleType.SpyderUniversal;
-                    case 2: return OutputModuleType.X20;
-                    case 3: return OutputModuleType.URS;
-                    case 4: return OutputModuleType.OutputBase;
-                }
-            }
-
-            //Default
-            return OutputModuleType.OutputBase;
-        }
-
-        /// <summary>
-        /// Serialization between output mode and integers are different between SpyderX20 and X80.  Call this method to get a hardware-specific OutputMode value from an integer.
-        /// </summary>
-        /// <returns></returns>
-        protected OutputMode OutputModeFromByte(byte modeByte, HardwareType halType)
-        {
-            if (halType == HardwareType.SpyderX80)
-            {
-                switch (modeByte)
-                {
-                    case 0: return OutputMode.Normal;
-                    case 1: return OutputMode.Multiviewer;
-                    case 2: return OutputMode.Scaled;
-                    case 3: return OutputMode.Aux;
-                    case 4: return OutputMode.UnscaledAux;
-                    case 5: return OutputMode.OpMon;
-                    case 6: return OutputMode.SourceMon;
-                    case 7: return OutputMode.PassiveLeft;
-                    case 8: return OutputMode.PassiveRight;
-                    case 9: return OutputMode.ActiveStereo;
-                    default:
-                        {
-                            TraceQueue.Trace(this, TracingLevel.Warning, $"Unknown value for output mode in drawing data deserialization: " + modeByte);
-                            return OutputMode.Normal;
-                        }
-                }
-            }
-            else
-            {
-                switch (modeByte)
-                {
-                    case 0: return OutputMode.Normal;
-                    case 1: return OutputMode.Scaled;
-                    case 2: return OutputMode.OpMon;
-                    case 3: return OutputMode.SourceConfig;
-                    case 4: return OutputMode.PassiveLeft;
-                    case 5: return OutputMode.PassiveRight;
-                    case 6: return OutputMode.ActiveStereo;
-                    case 7: return OutputMode.SourceMon;
-                    default:
-                        {
-                            TraceQueue.Trace(this, TracingLevel.Warning, $"Unknown value for output mode in drawing data deserialization: " + modeByte);
-                            return OutputMode.Normal;
-                        }
-                }
-            }
         }
     }
 }

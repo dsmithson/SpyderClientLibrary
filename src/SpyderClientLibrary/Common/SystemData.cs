@@ -481,7 +481,7 @@ namespace Spyder.Client.Common
                         ID = deserializer.Read(item, "ID", -1),
                         Name = deserializer.Read(item, "Name", string.Empty),
                         RouterType = deserializer.Read(item, "RouterType", string.Empty),
-                        ConnectorType = deserializer.ReadEnum(item, "ConnectorType", InputConnector.HD15).ToConnectorType(),
+                        ConnectorType = deserializer.ReadEnum(item, "ConnectorType", ConnectorType.Analog, TransformConnectorTypeFromInputConnector),
                         InputCount = deserializer.Read(item, "Inputs", -1),
                         OutputCount = deserializer.Read(item, "Outputs", -1),
                         Port = deserializer.Read(item, "Port", -1),
@@ -535,7 +535,7 @@ namespace Spyder.Client.Common
                         UseAlternateInputSynchronizationMethod = deserializer.Read(item, "UseAlternateInputSyncronizationMethod", false),
                         ClockPhase = deserializer.Read(item, "ClockPhase", 0),
                         ColorSpace = deserializer.ReadEnum(item, "ColorSpace", ColorSpace.RGB),
-                        ConnectorType = deserializer.ReadEnum(item, "Connector", InputConnector.HD15),
+                        ConnectorType = deserializer.ReadEnum(item, "Connector", ConnectorType.Analog, TransformConnectorTypeFromInputConnector),
                         CropOffsetBottom = deserializer.Read(item, "CropOffsetBottom", 0),
                         CropOffsetLeft = deserializer.Read(item, "CropOffsetLeft", 0),
                         CropOffsetRight = deserializer.Read(item, "CropOffsetRight", 0),
@@ -574,6 +574,15 @@ namespace Spyder.Client.Common
                         VHoldOff = deserializer.Read(item, "VHoldOff", 0),
                         VStart = deserializer.Read(item, "VStart", 0)
                     }));
+        }
+
+        private string TransformConnectorTypeFromInputConnector(string inputConnector)
+        {
+            //Vista Advanced inputs will refer to their analog input connector as HD15
+            if (inputConnector == "HD15")
+                return nameof(ConnectorType.Analog);
+
+            return inputConnector;
         }
 
         protected RouterSalvo ParseRouterSalvo(XElement routerSalvoRoot)

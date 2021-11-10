@@ -9,19 +9,14 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// <summary>
     /// Deserializes DrawingData messages in the version 53 serialization format - Spyder Studio / X80
     /// </summary>
-    public class DrawingDataDeserializer_Version53 : IDrawingDataDeserializer
+    public class DrawingDataDeserializer_Version53 : DrawingDataDeserializer_Version52
     {
-        private readonly string serverVersion;
-
-        [Flags]
-        private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
-
         public DrawingDataDeserializer_Version53(string serverVersion)
+            : base(serverVersion)
         {
-            this.serverVersion = serverVersion;
         }
 
-        public DrawingData Deserialize(byte[] stream)
+        public override DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
                 return null;
@@ -346,7 +341,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((ConnectorType)stream[index++]);
+                router.ConnectorType = ParseRouterConnectorType(stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
@@ -406,7 +401,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 //Machine Time
                 FieldRate frameRate = (FieldRate)stream[index++];
                 long frames = stream.GetLong(ref index);
-                newMachine.Time.Set(frameRate, frames);
+                newMachine.Time = new TimeCode(frameRate, frames);
 
                 //Machine Status (Block 1)
                 flags = stream[index++];
@@ -498,7 +493,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         /// Serialization between output mode and integers are different between SpyderX20 and X80.  Call this method to get a hardware-specific OutputMode value from an integer.
         /// </summary>
         /// <returns></returns>
-        protected SpyderModels SpyderModelFromByte(byte modelByte, HardwareType halType)
+        protected virtual SpyderModels SpyderModelFromByte(byte modelByte, HardwareType halType)
         {
             //X80 added a new enum before custom, which can throw off serialization in X20 frames with a SpyderModel value of custom
             SpyderModels response = (SpyderModels)modelByte;
@@ -508,7 +503,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             return response;
         }
 
-        protected OutputModuleType OutputModuleTypeFromByte(byte modelByte, HardwareType halType)
+        protected virtual OutputModuleType OutputModuleTypeFromByte(byte modelByte, HardwareType halType)
         {
             if (halType == HardwareType.SpyderX80)
             {
@@ -542,7 +537,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
         /// Serialization between output mode and integers are different between SpyderX20 and X80.  Call this method to get a hardware-specific OutputMode value from an integer.
         /// </summary>
         /// <returns></returns>
-        protected OutputMode OutputModeFromByte(byte modeByte, HardwareType halType)
+        protected virtual OutputMode OutputModeFromByte(byte modeByte, HardwareType halType)
         {
             if (halType == HardwareType.SpyderX80)
             {

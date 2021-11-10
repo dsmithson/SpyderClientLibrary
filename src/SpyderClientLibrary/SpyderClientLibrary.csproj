@@ -1,15 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
     <RootNamespace>Spyder.Client</RootNamespace>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <Authors>Derek Smithson</Authors>
     <Description>Library for controlling the Spyder 200/300/X20/X80 video processor families. Provides UDP control, server auto-discovery, drawing data (live display info), file transfer services, and image cache management.</Description>
-    <Copyright>Knightware 2020</Copyright>
-    <Version>1.0.0</Version>
+    <Copyright>Knightware 2021</Copyright>
+    <Version>3.1.1</Version>
     <PackageProjectUrl>https://github.com/dsmithson/SpyderClientLibrary</PackageProjectUrl>
     <RepositoryUrl>https://github.com/dsmithson/SpyderClientLibrary</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReleaseNotes>Added additional UDP external control commands</PackageReleaseNotes>
+    <Company>Knightware</Company>
+    <PackageLicenseFile></PackageLicenseFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -28,7 +34,6 @@
     <WarningsAsErrors />
     <OutputPath>bin\Debug</OutputPath>
     <NoWarn />
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>bin\Release</OutputPath>

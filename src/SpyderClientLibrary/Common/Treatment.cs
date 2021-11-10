@@ -349,7 +349,7 @@ namespace Spyder.Client.Common
 
         public override int GetHashCode()
         {
-            return (((int)Type * 251) + RegisterID) * 251 + LookupID;
+            return ((int)Type * 251) + RegisterID;
         }
 
         public bool Equals(Treatment other)

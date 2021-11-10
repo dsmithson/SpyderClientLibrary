@@ -1,37 +1,56 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Spyder.Client.Common
 {
-    [Flags]
+    /// <summary>
+    /// Used to specify the 
+    /// </summary>
+    public enum ConnectorTypeUsage {  Unspecified, Input, Output, Router };
+
     public enum ConnectorType
     {
-        Auto = 0,
-        Analog = 1,
-        DVI = 2,
-        HDMI = 4,
-        DisplayPort = 8,
-        SDI = 16,
-        Composite = 32,
-        SVideo = 64,
-
-        // Convenience shortcuts
-        AllX80 = SDI | HDMI | DVI | DisplayPort,
-        AllX80ButSDI = HDMI | DVI | DisplayPort
+        Auto,
+        Analog,
+        Composite,
+        DVI,
+        DisplayPort,
+        HDMI,
+        SDI,
+        SVideo
     }
 
-    public static class ConnectorTypeConverters
+    public static class ConnectorTypeExtensions
     {
-        public static InputConnector ToInputConnector(this ConnectorType connectorType)
+        public static List<ConnectorType> GetValidConnectorTypes(this HardwareType hardwareType, ConnectorTypeUsage usage)
         {
-            return (InputConnector)Enum.Parse(typeof(InputConnector), connectorType.ToString());
+            var response = new List<ConnectorType>();
+            if(hardwareType == HardwareType.SpyderX80)
+            {
+                response.Add(ConnectorType.HDMI);
+                response.Add(ConnectorType.DisplayPort);
+                response.Add(ConnectorType.SDI);
+
+                //Auto is valid for inputs or router types
+                if(usage != ConnectorTypeUsage.Output)
+                {
+                    response.Add(ConnectorType.Auto);
+                }
+            }
+            else
+            {
+                response.Add(ConnectorType.Analog);
+                response.Add(ConnectorType.DVI);
+                response.Add(ConnectorType.SDI);
+                response.Add(ConnectorType.Composite);
+                response.Add(ConnectorType.SVideo);
+            }
+            return response;
         }
 
-        public static ConnectorType ToConnectorType(this InputConnector inputConnector)
+        public static bool IsValidConnectorTypeForHardware(this ConnectorType connectorType, HardwareType hardwareType, ConnectorTypeUsage usage)
         {
-            if (inputConnector == InputConnector.HD15)
-                return ConnectorType.Analog;
-
-            return (ConnectorType)Enum.Parse(typeof(ConnectorType), inputConnector.ToString());
+            return GetValidConnectorTypes(hardwareType, usage).Contains(connectorType);
         }
     }
 }

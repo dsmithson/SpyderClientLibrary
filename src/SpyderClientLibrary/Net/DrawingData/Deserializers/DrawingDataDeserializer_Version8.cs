@@ -11,7 +11,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// </summary>
     public class DrawingDataDeserializer_Version8 : IDrawingDataDeserializer
     {
-        public DrawingData Deserialize(byte[] stream)
+        public virtual DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
                 return null;
@@ -265,7 +265,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 router.InputCount = stream.GetShort(ref index);
                 router.OutputCount = stream.GetShort(ref index);
                 router.Port = stream[index++];
-                router.ConnectorType = ((InputConnector)stream[index++]).ToConnectorType();
+                router.ConnectorType = ParseRouterConnectorType(stream[index++]);
                 router.ControlLevel = stream.GetInt(ref index);
                 router.LevelCount = stream.GetInt(ref index);
 
@@ -274,7 +274,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 for (int outputIndex = 0; outputIndex < router.OutputCount; outputIndex++)
                     router.Crosspoints.Add(-1);
 
-                int crosspointsCount = stream[index++];
+                int crosspointsCount = stream.GetShort(ref index);
                 for (int crosspointIndex = 0; crosspointIndex < crosspointsCount; crosspointIndex++)
                 {
                     int output = stream.GetShort(ref index);
@@ -328,7 +328,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
                 newMachine.LastPlayItemID = stream.GetShort(ref index);
                 FieldRate rate = (FieldRate)stream[index++];
-                newMachine.Time.Set(rate, frames);
+                newMachine.Time = new TimeCode(rate, frames);
                 newMachine.Port = stream[index++];
 
                 //Few more things we don't use
@@ -419,6 +419,20 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             response.IsDataIOIdle = (stream[index++] == 1);
 
             return response;
+        }
+
+        protected virtual ConnectorType ParseRouterConnectorType(byte val)
+        {
+            return val switch
+            {
+                0 => ConnectorType.Analog,
+                1 => ConnectorType.DVI,
+                2 => ConnectorType.SDI,
+                3 => ConnectorType.SDI,
+                4 => ConnectorType.Composite,
+                5 => ConnectorType.SVideo,
+                _ => throw new ArgumentException($"Unable to convert value {val} to a DrawingData router connector type", nameof(val)),
+            };
         }
     }
 }

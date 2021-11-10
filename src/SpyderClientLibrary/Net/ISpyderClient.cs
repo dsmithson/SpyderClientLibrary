@@ -1,6 +1,7 @@
 ﻿using Knightware.Primitives;
 using Spyder.Client.Common;
 using Spyder.Client.FunctionKeys;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -252,9 +253,9 @@ namespace Spyder.Client.Net
 
         Task<bool> UnFreezeOutput(params int[] outputIDs);
 
-        Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex);
+        Task<bool> LoadStillOnOutput(string fileName, int outputID, int? dx4ChannelIndex = null);
 
-        Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex);
+        Task<bool> ClearStillOnOutput(int outputID, int? dx4ChannelIndex = null);
 
         Task<bool> SaveOutputConfiguration(int outputID);
 
@@ -264,7 +265,7 @@ namespace Spyder.Client.Net
 
         Task<bool> RotateOutput(int outputID, RotationMode mode);
 
-        Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex);
+        Task<bool> SetOutputModeToNormal(int outputID, int hStart, int vStart, int? dx4ChannelIndex = null);
 
         Task<bool> SetOutputModeToOpMon(int outputID, int pixelSpaceID);
 
@@ -334,5 +335,9 @@ namespace Spyder.Client.Net
         Task<bool> RecallCommandKey(int registerID, int cueIndex);
         Task<bool> RecallFunctionKey(int registerID);
         Task<bool> RecallRegisterToLayer(RegisterType registerType, int registerID, params int[] layerIDs);
+
+        Task<DataIOProcessorStatus> GetDataIOProcessorStatus();
+
+        Task<bool> WaitForDataIOProcessorToBeIdle(TimeSpan maxWaitTimeout, int delayBeforeFirstPollMs = 2000);
     }
 }

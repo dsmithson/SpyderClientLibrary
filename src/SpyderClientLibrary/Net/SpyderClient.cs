@@ -20,21 +20,15 @@ namespace Spyder.Client.Net
     {
         private SpyderServerEventListener serverEventListener;
         private readonly string localCacheFolder;
-        private readonly HardwareType hardwareType;
         private QFTClient qftClient;
         private SystemData systemData;
         private DrawingData.DrawingData drawingData;
         private int lastDataObjectVersion = -1;
 
-        public HardwareType HardwareType
-        {
-            get { return hardwareType; }
-        }
-
         /// <summary>
         /// Contains folder and file paths on the server hardware
         /// </summary>
-        public ServerFilePaths ServerFilePaths => ServerFilePaths.FromHardwareType(hardwareType, Version);
+        public ServerFilePaths ServerFilePaths => ServerFilePaths.FromHardwareType(this.HardwareType, Version);
 
         /// <summary>
         /// Defines a throttle for maximum drawing data event raising (per Spyder server).  Setting to 1 second, for example, will ensure DrawingData does not fire more than once per second.  Set to TimeSpan.Zero (default) to disable throttling.
@@ -68,15 +62,16 @@ namespace Spyder.Client.Net
             TraceLogMessageReceived?.Invoke(this, e);
         }
 
-        public VersionInfo Version { get; set; }
+        public VersionInfo Version { get; private set; }
 
-        public string ServerName { get; set; }
+        public string ServerName { get; private set; }
 
-        public SpyderClient(HardwareType hardwareType, string serverIP, string localCacheFolder)
-            : base(serverIP)
+        public SpyderClient(HardwareType hardwareType, string serverIP, string localCacheFolder, VersionInfo version = null, string serverName = null)
+            : base(hardwareType, serverIP)
         {
+            this.ServerName = serverName;
+            this.Version = version;
             this.localCacheFolder = localCacheFolder;
-            this.hardwareType = hardwareType;
         }
 
         public override async Task<bool> StartupAsync()
@@ -165,6 +160,10 @@ namespace Spyder.Client.Net
                 //Update our version info
                 if (this.Version == null || !this.Version.Equals(serverInfo.Version))
                     this.Version = serverInfo.Version;
+
+                //Update our server name
+                if(this.ServerName != serverInfo.ServerName)
+                    this.ServerName = serverInfo.ServerName;
             }
         }
 
@@ -174,11 +173,6 @@ namespace Spyder.Client.Net
             {
                 OnTraceLogMessageReceived(e);
             }
-        }
-
-        public Task<VersionInfo> GetVersionInfo()
-        {
-            return Task.FromResult(this.Version);
         }
 
         public async Task<bool> LoadDataAsync()
@@ -651,6 +645,10 @@ namespace Spyder.Client.Net
                 if (writeFileToLocalCache && localCacheFolder != null)
                 {
                     string imageCacheFolder = Path.Combine(localCacheFolder, "Images");
+                    if(!Directory.Exists(imageCacheFolder))
+                    {
+                        Directory.CreateDirectory(imageCacheFolder);
+                    }
                     string file = Path.Combine(imageCacheFolder, fileName);
                     using (Stream stream = File.Create(file))
                     {
@@ -766,7 +764,7 @@ namespace Spyder.Client.Net
             if (!IsRunning || qftClient == null || !qftClient.IsRunning)
                 return null;
 
-            VersionInfo version = await GetVersionInfo();
+            VersionInfo version = this.Version;
             if (version == null)
                 return null;
 
@@ -774,14 +772,14 @@ namespace Spyder.Client.Net
             List<string> settingsFileLocations = new List<string>()
             {
                 ServerFilePaths.SystemSettingsFilePath,
-                
-#if DEBUG
-                //Local machine running Vista Advanced
+         
+                //Local machine running Vista Advanced or Spyder Studio
                 @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2012 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
                 @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2009 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
                 @"c:\Program Files (x86)\Vista Systems, Corp\Spyder Control Suite 2005 {0}.{1}.{2}\Version {0}.{1}.{2}\SystemSettings.xml",
-                @"c:\Program Files (x86)\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml"
-#endif
+                @"c:\Program Files (x86)\Vista Systems, Corp\Vista Advanced\Version {0}.{1}.{2}\SystemSettings.xml",
+                @"c:\program files (x86)\Christie Digital Systems\Advanced\{0}.{1}.{2}\SystemSettings.xml",
+                @"c:\program files (x86)\Christie Digital Systems\Spyder Studio\{0}.{1}.{2}\SystemSettings.xml"
             };
 
             foreach (string settingsFile in settingsFileLocations)
