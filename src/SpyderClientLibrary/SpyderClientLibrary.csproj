@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
     <RootNamespace>Spyder.Client</RootNamespace>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <Authors>Derek Smithson</Authors>
@@ -33,7 +34,6 @@
     <WarningsAsErrors />
     <OutputPath>bin\Debug</OutputPath>
     <NoWarn />
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>bin\Release</OutputPath>
