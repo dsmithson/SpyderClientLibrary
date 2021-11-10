@@ -69,8 +69,8 @@ namespace Spyder.Client.Net
 
         protected async Task sendFile(long size)
         {
-            string clientFile = createDummyFile(Path.GetTempFileName(), size);
-            string serverFile = Path.GetTempFileName();
+            string clientFile = createDummyFile(Path.GetRandomFileName(), size);
+            string serverFile = Path.GetRandomFileName();
             try
             {
                 using (Stream stream = File.OpenRead(clientFile))
@@ -101,8 +101,8 @@ namespace Spyder.Client.Net
 
         public async Task receiveFile(long size)
         {
-            string serverFile = createDummyFile(Path.GetTempFileName(), size);
-            string clientFile = Path.GetTempFileName();
+            string serverFile = createDummyFile(Path.GetRandomFileName(), size);
+            string clientFile = Path.GetRandomFileName();
             try
             {
                 TryDeleteFile(clientFile);
@@ -276,7 +276,7 @@ namespace Spyder.Client.Net
         [TestMethod()]
         public async Task FileExists()
         {
-            string dummyFile = Path.GetTempFileName();
+            string dummyFile = Path.GetRandomFileName();
             try
             {
                 TryDeleteFile(dummyFile);
@@ -396,8 +396,8 @@ namespace Spyder.Client.Net
         [TestMethod()]
         public async Task ReceiveFileFiftyTimes()
         {
-            string serverFile = createDummyFile(Path.GetTempFileName(), 65536);
-            string clientFile = Path.GetTempFileName();
+            string serverFile = createDummyFile(Path.GetRandomFileName(), 65536);
+            string clientFile = Path.GetRandomFileName();
             try
             {
                 for (int i = 0; i < 50; i++)
@@ -422,8 +422,8 @@ namespace Spyder.Client.Net
         public async Task SendAndOverwriteOneHundredTimes()
         {
             char fillChar = 'a';
-            string serverFile = Path.GetTempFileName();
-            string clientFile = Path.GetTempFileName();
+            string serverFile = Path.GetRandomFileName();
+            string clientFile = Path.GetRandomFileName();
 
             try
             {
@@ -450,9 +450,9 @@ namespace Spyder.Client.Net
         {
             const int megabytes = 10;
             long fileSize = megabytes * 1024 * 1024;
-            string tempFile = Path.GetTempFileName();
+            string tempFile = Path.GetRandomFileName();
             createDummyFile(tempFile, fileSize);
-            string destFile = Path.GetTempFileName();
+            string destFile = Path.GetRandomFileName();
 
             try
             {
@@ -482,9 +482,9 @@ namespace Spyder.Client.Net
         {
             const int megabytes = 10;
             long fileSize = megabytes * 1024 * 1024;
-            string tempFile = Path.GetTempFileName();
+            string tempFile = Path.GetRandomFileName();
             createDummyFile(tempFile, fileSize);
-            string destFile = Path.GetTempFileName();
+            string destFile = Path.GetRandomFileName();
 
             try
             {
@@ -627,7 +627,7 @@ namespace Spyder.Client.Net
 
         protected string createDummyFile()
         {
-            return createDummyFile(Path.GetTempFileName(), 1024);
+            return createDummyFile(Path.GetRandomFileName(), 1024);
         }
 
         protected void createRecursiveFolder(string tempDir)

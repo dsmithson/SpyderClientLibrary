@@ -723,7 +723,7 @@ namespace Spyder.Client.Net
                 if (FileCompressionEnabled)
                 {
                     //Create a new stream which will contain compressed data to be sent over the network
-                    tempFileName = Path.GetTempFileName();
+                    tempFileName = Path.GetRandomFileName();
 
                     stream = File.Create(tempFileName);
                     disposeStream = true;
