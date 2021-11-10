@@ -408,7 +408,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 //Machine Time
                 FieldRate frameRate = (FieldRate)stream[index++];
                 long frames = stream.GetLong(ref index);
-                newMachine.Time.Set(frameRate, frames);
+                newMachine.Time = new TimeCode(frameRate, frames);
 
                 //Machine Status (Block 1)
                 flags = stream[index++];

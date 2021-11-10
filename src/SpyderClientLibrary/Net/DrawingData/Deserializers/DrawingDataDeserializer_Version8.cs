@@ -328,7 +328,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
                 newMachine.LastPlayItemID = stream.GetShort(ref index);
                 FieldRate rate = (FieldRate)stream[index++];
-                newMachine.Time.Set(rate, frames);
+                newMachine.Time = new TimeCode(rate, frames);
                 newMachine.Port = stream[index++];
 
                 //Few more things we don't use

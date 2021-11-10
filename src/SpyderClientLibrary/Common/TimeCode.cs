@@ -2,76 +2,36 @@
 
 namespace Spyder.Client.Common
 {
-    public class TimeCode : PropertyChangedBase, IEquatable<TimeCode>
+    public class TimeCode : IEquatable<TimeCode>
     {
-        private int hours;
+        private readonly int hours;
         public int Hours
         {
             get { return hours; }
-            set
-            {
-                if (hours != value)
-                {
-                    hours = value;
-                    OnPropertyChanged();
-                }
-            }
         }
 
-        private int minutes;
+        private readonly int minutes;
         public int Minutes
         {
             get { return minutes; }
-            set
-            {
-                if (minutes != value)
-                {
-                    minutes = value;
-                    OnPropertyChanged();
-                }
-            }
         }
 
-        private int seconds;
+        private readonly int seconds;
         public int Seconds
         {
             get { return seconds; }
-            set
-            {
-                if (seconds != value)
-                {
-                    seconds = value;
-                    OnPropertyChanged();
-                }
-            }
         }
 
-        private int frames;
+        private readonly int frames;
         public int Frames
         {
             get { return frames; }
-            set
-            {
-                if (frames != value)
-                {
-                    frames = value;
-                    OnPropertyChanged();
-                }
-            }
         }
 
-        private FieldRate fieldRate;
+        private readonly FieldRate fieldRate;
         public FieldRate FieldRate
         {
             get { return fieldRate; }
-            set
-            {
-                if (fieldRate != value)
-                {
-                    fieldRate = value;
-                    OnPropertyChanged();
-                }
-            }
         }
 
         public int FramesPerSecond()
@@ -108,32 +68,32 @@ namespace Spyder.Client.Common
             string s = string.Format("{0:d2}:{1:d2}:{2:d2}.{3:d2}", hours, minutes, seconds, frames);
             return s;
         }
-        public void Set(TimeCode t)
+
+        public TimeCode(FieldRate fieldRate = FieldRate.NTSC, int hours = 0, int minutes = 0, int seconds = 0, int frames = 0)
         {
-            this.hours = t.Hours;
-            this.minutes = t.Minutes;
-            this.seconds = t.Seconds;
-            this.frames = t.Frames;
+            this.fieldRate = fieldRate;
+            this.hours = hours;
+            this.minutes = minutes;
+            this.seconds = seconds;
+            this.frames = frames;
         }
-        public void Set(long frames)
+
+        public TimeCode(FieldRate fieldRate, long frames)
         {
+            this.fieldRate = fieldRate;
+
             long total = frames;
             long f = FramesPerSecond();
 
-            Hours = (int)(total / 60L / 60L / f);
+            this.hours = (int)(total / 60L / 60L / f);
             total -= (hours * 60 * 60 * f);
 
-            Minutes = (int)(total / 60L / f);
+            this.minutes = (int)(total / 60L / f);
             total -= (minutes * 60 * f);
 
-            Seconds = (int)(total / f);
+            this.seconds = (int)(total / f);
 
-            Frames = (int)(frames % f);
-        }
-        public void Set(FieldRate rate, long frames)
-        {
-            this.FieldRate = rate;
-            Set(frames);
+            this.frames = (int)(frames % f);
         }
 
         public bool Equals(TimeCode other)

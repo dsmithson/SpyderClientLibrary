@@ -13,14 +13,12 @@ namespace Spyder.Client.IO
             if (element == null)
                 return defaultValue;
 
-            return new TimeCode()
-            {
-                Hours = Read(element, "Hours", 0),
-                Minutes = Read(element, "Minutes", 0),
-                Seconds = Read(element, "Seconds", 0),
-                Frames = Read(element, "Frames", 0),
-                FieldRate = ReadEnum(element, "FPS", FieldRate.FR_29_97)
-            };
+            return new TimeCode(
+                ReadEnum(element, "FPS", FieldRate.FR_29_97),
+                Read(element, "Hours", 0),
+                Read(element, "Minutes", 0),
+                Read(element, "Seconds", 0),
+                Read(element, "Frames", 0));
         }
 
         public Color Read(XElement parent, string elementName, Color defaultValue)

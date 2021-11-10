@@ -778,8 +778,7 @@ namespace Spyder.Client.Common
 
         public override int GetHashCode()
         {
-            //TODO:  Better hash code needed (maybe more object properties included)?
-            return (((int)(hPosition * 10000) * 251) + ((int)vPosition * 1000) * 251) + width;
+            return base.GetHashCode();
         }
 
         public bool Equals(KeyFrame compare)
