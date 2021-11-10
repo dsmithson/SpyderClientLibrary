@@ -11,7 +11,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// </summary>
     public class DrawingDataDeserializer_Version8 : IDrawingDataDeserializer
     {
-        public DrawingData Deserialize(byte[] stream)
+        public virtual DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
                 return null;
@@ -421,18 +421,18 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             return response;
         }
 
-        protected ConnectorType ParseRouterConnectorType(byte val)
+        protected virtual ConnectorType ParseRouterConnectorType(byte val)
         {
-            switch (val)
+            return val switch
             {
-                case 0: return ConnectorType.Analog;
-                case 1: return ConnectorType.DVI;
-                case 2: return ConnectorType.SDI;
-                case 3: return ConnectorType.SDI;
-                case 4: return ConnectorType.Composite;
-                case 5: return ConnectorType.SVideo;
-                default: throw new ArgumentException($"Unable to convert value {val} to a DrawingData router connector type", nameof(val));
-            }
+                0 => ConnectorType.Analog,
+                1 => ConnectorType.DVI,
+                2 => ConnectorType.SDI,
+                3 => ConnectorType.SDI,
+                4 => ConnectorType.Composite,
+                5 => ConnectorType.SVideo,
+                _ => throw new ArgumentException($"Unable to convert value {val} to a DrawingData router connector type", nameof(val)),
+            };
         }
     }
 }

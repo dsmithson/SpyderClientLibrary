@@ -8,20 +8,21 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// <summary>
     /// Deserializes DrawingData messages in the version 50 serialization format - Spyder Studio / X80
     /// </summary>
-    public class DrawingDataDeserializer_Version50 : IDrawingDataDeserializer
+    public class DrawingDataDeserializer_Version50 : DrawingDataDeserializer_Version20
     {
-        private readonly string serverVersion;
+        protected readonly string serverVersion;
 
 
         [Flags]
-        private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
+        protected enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
 
         public DrawingDataDeserializer_Version50(string serverVersion)
+            : base(serverVersion)
         {
             this.serverVersion = serverVersion;
         }
 
-        public DrawingData Deserialize(byte[] stream)
+        public override DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
                 return null;
@@ -470,20 +471,20 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             return response;
         }
 
-        protected ConnectorType ParseRouterConnectorType(byte val)
+        protected override ConnectorType ParseRouterConnectorType(byte val)
         {
-            switch (val)
+            return val switch
             {
-                case 0: return ConnectorType.Auto;
-                case 1: return ConnectorType.Analog;
-                case 2: return ConnectorType.DVI;
-                case 3: return ConnectorType.HDMI;
-                case 4: return ConnectorType.DisplayPort;
-                case 5: return ConnectorType.SDI;
-                case 6: return ConnectorType.Composite;
-                case 7: return ConnectorType.SVideo;
-                default: throw new ArgumentException($"Unable to convert value {val} to a DrawingData router connector type", nameof(val));
-            }
+                0 => ConnectorType.Auto,
+                1 => ConnectorType.Analog,
+                2 => ConnectorType.DVI,
+                3 => ConnectorType.HDMI,
+                4 => ConnectorType.DisplayPort,
+                5 => ConnectorType.SDI,
+                6 => ConnectorType.Composite,
+                7 => ConnectorType.SVideo,
+                _ => throw new ArgumentException($"Unable to convert value {val} to a DrawingData router connector type", nameof(val)),
+            };
         }
     }
 }

@@ -8,20 +8,14 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// <summary>
     /// Deserializes DrawingData messages in the version 51 serialization format - Spyder Studio / X80
     /// </summary>
-    public class DrawingDataDeserializer_Version51 : IDrawingDataDeserializer
+    public class DrawingDataDeserializer_Version51 : DrawingDataDeserializer_Version50
     {
-        private readonly string serverVersion;
-
-
-        [Flags]
-        private enum OutputFlags { None = 0, Interlaced = 1, IsFrameLocked = 2 }
-
         public DrawingDataDeserializer_Version51(string serverVersion)
+            : base(serverVersion)
         {
-            this.serverVersion = serverVersion;
         }
 
-        public DrawingData Deserialize(byte[] stream)
+        public override DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
                 return null;
@@ -457,22 +451,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             }
 
             return response;
-        }
-
-        private ConnectorType ParseRouterConnectorType(byte val)
-        {
-            switch (val)
-            {
-                case 0: return ConnectorType.Auto;
-                case 1: return ConnectorType.Analog;
-                case 2: return ConnectorType.DVI;
-                case 3: return ConnectorType.HDMI;
-                case 4: return ConnectorType.DisplayPort;
-                case 5: return ConnectorType.SDI;
-                case 6: return ConnectorType.Composite;
-                case 7: return ConnectorType.SVideo;
-                default: throw new ArgumentException($"Unable to convert value {val} to a DrawingData router connector type", nameof(val));
-            }
         }
     }
 }
