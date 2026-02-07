@@ -1,4 +1,6 @@
-﻿namespace Spyder.Client.Common
+﻿using System.ComponentModel;
+
+namespace Spyder.Client.Common
 {
     public enum OutputMode
     {
@@ -16,7 +18,13 @@
         //Enum formats in correct byte order for X20 and X80 are below
         Multiviewer,
         Aux,
-        UnscaledAux
+        UnscaledAux,
+
+        //Added in Spyder-S
+        //Note these are not in the enum order of Spyder-S, and explicit serialization/deserialization is required.  
+        //Enum formats in correct byte order for Spyder-S is below
+        Tiled,
+        Unused,
     };
 
     /// <summary>
@@ -50,4 +58,17 @@
         ActiveStereo,
         SourceMon
     };
+
+    public enum OutputModeSpyderS
+    {
+        Normal,
+        Multiviewer,
+        Scaled,
+        Aux,
+        UnscaledAux,
+        OpMon,
+        SourceMon,
+        Tiled,
+        Unused,
+    }
 }

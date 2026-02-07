@@ -1,5 +1,6 @@
 ﻿using Knightware.Primitives;
 using Spyder.Client.Common;
+using System;
 
 namespace Spyder.Client.Net.DrawingData
 {
@@ -32,6 +33,54 @@ namespace Spyder.Client.Net.DrawingData
                 }
             }
         }
+
+        /// <summary>
+        /// Starting in Spyder-S, global layers are automatically provisioned with static slave layers for each frame group
+        /// </summary>
+        public bool IsGlobalLayer
+        {
+            get { return isGlobalLayer; }
+            set
+            {
+                if (isGlobalLayer != value)
+                {
+                    isGlobalLayer = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private bool isGlobalLayer;
+
+        /// <summary>
+        /// In Spyder-S frames, layers can use mix effects as content
+        /// </summary>
+        public int MixEffectID
+        {
+            get { return mixEffectID; }
+            set
+            {
+                if(mixEffectID != value)
+                {
+                    mixEffectID = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private int mixEffectID = -1;
+
+        public DrawingMixEffect MixEffect
+        {
+            get { return mixEffect; }
+            set
+            {
+                if(mixEffect != value)
+                {
+                    mixEffect = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private DrawingMixEffect mixEffect;
 
         private int sourceRouterInput;
         public int SourceRouterInput
@@ -276,16 +325,32 @@ namespace Spyder.Client.Net.DrawingData
         private Rectangle cloneRect;
         public Rectangle CloneRect
         {
-            get { return cloneRect; }
+            get
+            {
+                if (cloneRects == null || cloneRects.Length < 1)
+                    return Rectangle.Empty;
+
+                return cloneRects[0];
+            }
             set
             {
-                if (cloneRect != value)
+                CloneRects = new Rectangle[] { value };
+            }
+        }
+
+        public Rectangle[] CloneRects
+        {
+            get { return cloneRects; }
+            set
+            {
+                if(cloneRects != value)
                 {
-                    cloneRect = value;
+                    cloneRects = value;
                     OnPropertyChanged();
                 }
             }
         }
+        private Rectangle[] cloneRects;
 
         private float aspectRatio;
         public float AspectRatio

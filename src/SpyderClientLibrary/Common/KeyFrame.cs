@@ -411,17 +411,39 @@ namespace Spyder.Client.Common
             }
         }
 
-        private float cloneOffset;
-        public float CloneOffset
+        /// <summary>
+        /// Spyder-S supports up to 4 clones
+        /// </summary>
+        public float[] CloneOffsets
         {
-            get { return cloneOffset; }
+            get { return cloneOffsets; }
             set
             {
-                if (cloneOffset != value)
+                if(cloneOffsets != value)
                 {
-                    cloneOffset = value;
-                    OnPropertyChanged();
+                    cloneOffsets = value;
+                    OnPropertyChanged(nameof(CloneOffsets));
+                    OnPropertyChanged(nameof(CloneOffset));
                 }
+            }
+        }
+        private float[] cloneOffsets;
+
+        /// <summary>
+        /// Gets or sets the offset value for the first clone in the collection - all Spyder types before Spyder-S support only one clone
+        /// </summary>
+        public float CloneOffset
+        {
+            get 
+            {
+                if (cloneOffsets == null || cloneOffsets.Length < 1)
+                    return 0f;
+
+                return cloneOffsets[0];
+            }
+            set
+            {
+                CloneOffsets = new float[] { value };
             }
         }
 
