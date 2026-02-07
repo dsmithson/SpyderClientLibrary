@@ -452,8 +452,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 output.HTotal = stream.GetShort(ref index);
                 output.VTotal = stream.GetShort(ref index);
 
-                output.DirectAuxId = stream.GetInt(ref index);
-
                 var outputFlags = (OutputFlags)stream[index++];
                 output.Interlaced = outputFlags.HasFlag(OutputFlags.Interlaced);
                 output.IsFrameLocked = outputFlags.HasFlag(OutputFlags.IsFrameLocked);
