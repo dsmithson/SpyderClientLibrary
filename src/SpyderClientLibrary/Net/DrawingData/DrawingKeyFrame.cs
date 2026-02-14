@@ -1,6 +1,7 @@
 ﻿using Knightware.Primitives;
 using Spyder.Client.Common;
 using System;
+using Spyder.Client;
 
 namespace Spyder.Client.Net.DrawingData
 {
@@ -322,7 +323,6 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
-        private Rectangle cloneRect;
         public Rectangle CloneRect
         {
             get
@@ -334,7 +334,10 @@ namespace Spyder.Client.Net.DrawingData
             }
             set
             {
-                CloneRects = new Rectangle[] { value };
+                if (value.IsEmpty)
+                    CloneRects = null;
+                else
+                    CloneRects = new Rectangle[] { value };
             }
         }
 
@@ -343,10 +346,11 @@ namespace Spyder.Client.Net.DrawingData
             get { return cloneRects; }
             set
             {
-                if(cloneRects != value)
+                if(!cloneRects.SequenceEqualSafe(value))
                 {
                     cloneRects = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(CloneRect));
                 }
             }
         }
@@ -685,6 +689,15 @@ namespace Spyder.Client.Net.DrawingData
             this.TestPattern = copyFrom.TestPattern;
             this.Scale = copyFrom.Scale;
             this.ShadowIsEnabled = copyFrom.ShadowIsEnabled;
+            this.IsGlobalLayer = copyFrom.IsGlobalLayer;
+            this.MixEffectID = copyFrom.MixEffectID;
+
+            if (copyFrom.MixEffect == null)
+                this.MixEffect = null;
+            else if (this.MixEffect == null)
+                this.MixEffect = new DrawingMixEffect(copyFrom.MixEffect);
+            else
+                this.MixEffect.CopyFrom(copyFrom.MixEffect);
         }
     }
 }

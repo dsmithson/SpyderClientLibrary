@@ -1,5 +1,6 @@
 ﻿using Knightware.Primitives;
 using System;
+using Spyder.Client;
 
 namespace Spyder.Client.Common
 {
@@ -419,7 +420,7 @@ namespace Spyder.Client.Common
             get { return cloneOffsets; }
             set
             {
-                if(cloneOffsets != value)
+                if(!cloneOffsets.SequenceEqualSafe(value))
                 {
                     cloneOffsets = value;
                     OnPropertyChanged(nameof(CloneOffsets));
@@ -443,7 +444,10 @@ namespace Spyder.Client.Common
             }
             set
             {
-                CloneOffsets = new float[] { value };
+                if (value == 0)
+                    CloneOffsets = null;
+                else
+                    CloneOffsets = new float[] { value };
             }
         }
 

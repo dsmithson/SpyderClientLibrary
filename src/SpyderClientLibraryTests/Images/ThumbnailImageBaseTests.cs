@@ -80,7 +80,6 @@ namespace Spyder.Client.Images
             const string mockImageData = "Image File Here";
             image.SetImage(size, mockImageData);
             Assert.AreEqual(mockImageData, getPropertyValue(image), "Failed to get expected image back after setting it");
-            Assert.IsNotNull(thumbnailChangeNotified, "No property change was fired when setting the image");
             Assert.IsTrue(thumbnailChangeNotified, "Failed to notify property changed for thumbnail image");
             Assert.IsTrue(isLoadingNotifiedTrue, "Failed to notify that the image was loading");
             Assert.IsTrue(isLoadingNotifiedFalse, "Failed to notify that the image completed loading");

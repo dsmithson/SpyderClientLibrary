@@ -221,7 +221,7 @@ namespace Spyder.Client.Net
 
                 Assert.AreEqual(expected.Length, actual.Length, "Directory count was unexpected");
                 for (int i = 0; i < actual.Length; i++)
-                    Assert.AreEqual(expected[i], actual[i], "Directory at index {0} did not match", i);
+                    Assert.AreEqual(expected[i], actual[i], $"Directory at index {i} did not match");
             }
             finally
             {
@@ -249,7 +249,7 @@ namespace Spyder.Client.Net
 
                 Assert.AreEqual(expected.Length, actual.Length, "File count was unexpected");
                 for (int i = 0; i < actual.Length; i++)
-                    Assert.AreEqual(expected[i], actual[i], "File at index {0} did not match", i);
+                    Assert.AreEqual(expected[i], actual[i], $"File at index {i} did not match");
             }
             finally
             {
@@ -321,7 +321,7 @@ namespace Spyder.Client.Net
         {
             const int maxSkewInMs = 250;
             TimeSpan offset = await client.GetRemoteTimeOffset();
-            Assert.IsTrue(Math.Abs(offset.TotalMilliseconds) < maxSkewInMs, "Time offset was too large.  Offset was {0}", offset);
+            Assert.IsTrue(Math.Abs(offset.TotalMilliseconds) < maxSkewInMs, $"Time offset was too large.  Offset was {offset}");
         }
 
         [TestMethod()]

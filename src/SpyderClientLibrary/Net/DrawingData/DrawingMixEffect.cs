@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
-using Knightware.Primitives;
+﻿using Knightware.Primitives;
 using Spyder.Client.Common;
+using System;
+using System.Collections.Generic;
+using Spyder.Client;
 
 namespace Spyder.Client.Net.DrawingData
 {
-    public class DrawingMixEffect : PropertyChangedBase
+    public class DrawingMixEffect : PropertyChangedBase, IEquatable<DrawingMixEffect>
     {
         private int id;
         public int ID
@@ -204,6 +206,58 @@ namespace Spyder.Client.Net.DrawingData
                     OnPropertyChanged();
                 }
             }
+        }
+
+        public DrawingMixEffect()
+        {
+
+        }
+
+        public DrawingMixEffect(DrawingMixEffect copyFrom)
+        {
+            CopyFrom(copyFrom);
+        }
+
+        public void CopyFrom(DrawingMixEffect copyFrom)
+        {
+            if (copyFrom == null)
+                return;
+
+            ID = copyFrom.ID;
+            Name = copyFrom.Name;
+            BackgroundPixelSpaceId = copyFrom.BackgroundPixelSpaceId;
+            Type = copyFrom.Type;
+            TopIsFrozen = copyFrom.TopIsFrozen;
+            BottomIsFrozen = copyFrom.BottomIsFrozen;
+            TopSupportsFreeze = copyFrom.TopSupportsFreeze;
+            BottomSupportsFreeze = copyFrom.BottomSupportsFreeze;
+            TopContentName = copyFrom.TopContentName;
+            TopContentThumbnail = copyFrom.TopContentThumbnail;
+            BottomContentName = copyFrom.BottomContentName;
+            BottomContentThumbnail = copyFrom.BottomContentThumbnail;
+            TopContentOpacity = copyFrom.TopContentOpacity;
+            Usages = new List<DrawingMixEffectUsage>(copyFrom.Usages);
+        }
+
+        public bool Equals(DrawingMixEffect other)
+        {
+            if (other == null)
+                return false;
+
+            return ID == other.ID &&
+                   Name == other.Name &&
+                   BackgroundPixelSpaceId == other.BackgroundPixelSpaceId &&
+                   Type == other.Type &&
+                   TopIsFrozen == other.TopIsFrozen &&
+                   BottomIsFrozen == other.BottomIsFrozen &&
+                   TopSupportsFreeze == other.TopSupportsFreeze &&
+                   BottomSupportsFreeze == other.BottomSupportsFreeze &&
+                   TopContentName == other.TopContentName &&
+                   TopContentThumbnail == other.TopContentThumbnail &&
+                   BottomContentName == other.BottomContentName &&
+                   BottomContentThumbnail == other.BottomContentThumbnail &&
+                   TopContentOpacity == other.TopContentOpacity &&
+                   Usages.SequenceEqualSafe(other.Usages);
         }
     }
 }

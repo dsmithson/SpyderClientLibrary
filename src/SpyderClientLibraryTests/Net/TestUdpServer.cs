@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
-using Vista.SystemManager;
 
 namespace Spyder.Client.Net
 {
@@ -35,35 +34,22 @@ namespace Spyder.Client.Net
             this.Result = ServerOperationResultCode.Success;
             this.ResponseRaw = string.Join(" ", responseParts?.Select(part => part.ToString().Replace(" ", "%20")).ToList());
         }
+
+        public TestUdpResponse(string responseRaw)
+        {
+            this.Result = ServerOperationResultCode.Success;
+            this.ResponseRaw = responseRaw;
+        }
     }
 
     public class TestUdpServer : IDisposable
     {
         private Socket udpServer;
-        private static SystemMgr sys;
-        private static StringCommandProcessor stringProcessor;
-
-        public SystemMgr Sys { get { return sys; } }
 
         public Func<TestUdpCommand, TestUdpResponse> ProcessCommand { get; set; }
 
         public TestUdpServer()
         {
-            //Load a test configuration
-            LoadManifestFile("Spyder.Client.Resources.TestConfigs.Version4.SystemSettings.xml", @"c:\spyder\SystemSettings.xml");
-            LoadManifestFile("Spyder.Client.Resources.TestConfigs.Version4.SystemConfiguration.xml", @"c:\spyder\SystemConfiguration.xml");
-            LoadManifestFile("Spyder.Client.Resources.TestConfigs.Version4.Scripts.xml", @"c:\spyder\scripts\scripts.xml");
-
-            //Load a systemMgr to process requests
-            sys = new SystemMgr(@"c:\spyder\systemsettings.xml");
-            sys.SystemDataFileName = @"c:\spyder\SystemConfiguration.xml";
-            sys.Post();
-            sys.AppInit();
-
-            // udp interface
-            stringProcessor = new StringCommandProcessor();
-            stringProcessor.Startup(sys);
-
             udpServer = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             udpServer.Bind(new IPEndPoint(IPAddress.Loopback, SpyderUdpClient.ServerPort));
             BeginListening(new byte[1400]);
@@ -88,18 +74,6 @@ namespace Spyder.Client.Net
             {
                 udpServer.Dispose();
                 udpServer = null;
-            }
-
-            if (stringProcessor != null)
-            {
-                stringProcessor.Shutdown();
-                stringProcessor = null;
-            }
-
-            if (sys != null)
-            {
-                sys.Shutdown();
-                sys = null;
             }
         }
 
@@ -145,8 +119,7 @@ namespace Spyder.Client.Net
                 //Process command and get a response
                 if (ProcessCommand == null)
                 {
-                    //Use internal parser
-                    stringProcessor.ProcessCommand(fullCommand, out fullResponse);
+                    throw new NotImplementedException("No handler was provided for processing the UDP message");
                 }
                 else
                 {

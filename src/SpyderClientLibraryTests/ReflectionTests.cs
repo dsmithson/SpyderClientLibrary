@@ -53,12 +53,12 @@ namespace Spyder.Client
                         propertiesChanged.Clear();
                         object existingValue = propertyInfo.GetValue(instance);
                         propertyInfo.SetValue(instance, existingValue);
-                        Assert.AreEqual(0, propertiesChanged.Count, "PropertyChanged should not have been fired when setting same value, but {0} was fired", propertiesChanged.FirstOrDefault());
+                        Assert.IsEmpty(propertiesChanged, $"PropertyChanged should not have been fired when setting same value, but '{string.Join(", ", propertiesChanged)}' was fired");
 
                         object newValue = UnitTestHelper.GetNewValue(propertyInfo.PropertyType, existingValue);
                         propertyInfo.SetValue(instance, newValue);
-                        Assert.AreNotEqual(0, propertiesChanged.Count, "PropertyChanged was not raised for {0}", propertyInfo.Name);
-                        Assert.IsTrue(propertiesChanged.Contains(propertyInfo.Name), "PropertyChanged event raised was unexpected - ", propertiesChanged[0]);
+                        Assert.AreNotEqual(0, propertiesChanged.Count, $"PropertyChanged was not raised for '{propertyInfo.Name}'");
+                        Assert.Contains(propertyInfo.Name, propertiesChanged, $"Expected PropertyChanged event '{propertyInfo.Name}' raised but observed: {string.Join(", ", propertiesChanged)}");
                     }
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using Knightware.Primitives;
 using Spyder.Client.Common;
+using System;
 
 namespace Spyder.Client.Net.DrawingData
 {
@@ -13,7 +14,7 @@ namespace Spyder.Client.Net.DrawingData
         PreviewPixelSpace,
     }
 
-    public class DrawingMixEffectUsage : PropertyChangedBase
+    public class DrawingMixEffectUsage : PropertyChangedBase, IEquatable<DrawingMixEffectUsage>
     {
         private int sourceID;
         public int SourceID
@@ -56,6 +57,36 @@ namespace Spyder.Client.Net.DrawingData
                     OnPropertyChanged();
                 }
             }
+        }
+
+        public DrawingMixEffectUsage()
+        {
+
+        }
+
+        public DrawingMixEffectUsage(DrawingMixEffectUsage copyFrom)
+        {
+            CopyFrom(copyFrom);
+        }
+
+        public void CopyFrom(DrawingMixEffectUsage copyFrom)
+        {
+            if (copyFrom == null)
+                return;
+
+            this.SourceID = copyFrom.sourceID;
+            this.Label = copyFrom.Label;
+            this.UsageType = copyFrom.UsageType;
+        }
+
+        public bool Equals(DrawingMixEffectUsage other)
+        {
+            if (other == null)
+                return false;
+
+            return SourceID == other.SourceID &&
+                Label == other.Label &&
+                UsageType == other.UsageType;
         }
     }
 }
