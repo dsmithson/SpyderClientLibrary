@@ -1,17 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31729.503
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11408.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpyderClientLibrary", "SpyderClientLibrary\SpyderClientLibrary.csproj", "{2DE05B6E-23BF-440A-921D-79043CF14599}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibrary.WPF", "SpyderClientLibrary.WPF\SpyderClientLibrary.WPF.csproj", "{FB0FC802-4FC5-4446-B2DD-48201C738DD1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibraryTests", "SpyderClientLibraryTests\SpyderClientLibraryTests.csproj", "{86E8F979-1B27-433D-B443-8B881EC87E1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpyderClientLibrary.UWP", "SpyderClientLibrary.UWP\SpyderClientLibrary.UWP.csproj", "{2C967B09-7E92-4380-B08E-8EDA186EC162}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DrawingDataRawCaptureUtility", "DrawingDataRawCaptureUtility\DrawingDataRawCaptureUtility.csproj", "{B5576525-F72D-4C9C-BBE9-9CB98EFC3846}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DrawingDataRawCaptureUtility", "DrawingDataRawCaptureUtility\DrawingDataRawCaptureUtility.csproj", "{B5576525-F72D-4C9C-BBE9-9CB98EFC3846}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{72FF007D-BC3E-4D06-A47B-49DB716122AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,18 +33,6 @@ Global
 		{2DE05B6E-23BF-440A-921D-79043CF14599}.Release|x64.Build.0 = Release|x64
 		{2DE05B6E-23BF-440A-921D-79043CF14599}.Release|x86.ActiveCfg = Release|x86
 		{2DE05B6E-23BF-440A-921D-79043CF14599}.Release|x86.Build.0 = Release|x86
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Debug|x64.ActiveCfg = Debug|x64
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Debug|x64.Build.0 = Debug|x64
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Debug|x86.ActiveCfg = Debug|x86
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Debug|x86.Build.0 = Debug|x86
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|x64.ActiveCfg = Release|x64
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|x64.Build.0 = Release|x64
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|x86.ActiveCfg = Release|x86
-		{FB0FC802-4FC5-4446-B2DD-48201C738DD1}.Release|x86.Build.0 = Release|x86
 		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -59,18 +45,6 @@ Global
 		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|x64.Build.0 = Release|Any CPU
 		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|x86.ActiveCfg = Release|x86
 		{86E8F979-1B27-433D-B443-8B881EC87E1F}.Release|x86.Build.0 = Release|x86
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|x64.ActiveCfg = Debug|x64
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|x64.Build.0 = Debug|x64
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|x86.ActiveCfg = Debug|x86
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Debug|x86.Build.0 = Debug|x86
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x64.ActiveCfg = Release|x64
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x64.Build.0 = Release|x64
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x86.ActiveCfg = Release|x86
-		{2C967B09-7E92-4380-B08E-8EDA186EC162}.Release|x86.Build.0 = Release|x86
 		{B5576525-F72D-4C9C-BBE9-9CB98EFC3846}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B5576525-F72D-4C9C-BBE9-9CB98EFC3846}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5576525-F72D-4C9C-BBE9-9CB98EFC3846}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -86,6 +60,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B5576525-F72D-4C9C-BBE9-9CB98EFC3846} = {72FF007D-BC3E-4D06-A47B-49DB716122AD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1F8970A9-5785-44B1-BAB3-98BF6948138B}

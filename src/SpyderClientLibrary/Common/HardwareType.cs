@@ -6,6 +6,7 @@
         Montage,
         Spyder300,
         SpyderX20,
-        SpyderX80
+        SpyderX80,
+        SpyderS,
     }
 }

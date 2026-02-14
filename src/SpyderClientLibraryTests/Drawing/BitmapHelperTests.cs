@@ -35,9 +35,9 @@ namespace Spyder.Client.Drawing
                         for (int x = 0; x < imageWidth; x++)
                         {
                             var pixel = bitmap.GetPixel(x, y);
-                            Assert.AreEqual(color.R, pixel.R, "R value was incorrect at location {0}, {1}", x, y);
-                            Assert.AreEqual(color.G, pixel.G, "G value was incorrect at location {0}, {1}", x, y);
-                            Assert.AreEqual(color.B, pixel.B, "B value was incorrect at location {0}, {1}", x, y);
+                            Assert.AreEqual(color.R, pixel.R, $"R value was incorrect at location {x}, {y}");
+                            Assert.AreEqual(color.G, pixel.G, $"G value was incorrect at location {x}, {y}");
+                            Assert.AreEqual(color.B, pixel.B, $"B value was incorrect at location {x}, {y}");
                         }
                     }
                 }

@@ -231,6 +231,34 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
+        private UnscaledAuxSourceType unscaledAuxSourceType;
+        public UnscaledAuxSourceType UnscaledAuxSourceType
+        {
+            get { return unscaledAuxSourceType; }
+            set
+            {
+                if(unscaledAuxSourceType != value)
+                {
+                    unscaledAuxSourceType = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private int unscaledAuxSourceId = -1;
+        public int UnscaledAuxSourceId
+        {
+            get { return unscaledAuxSourceId; }
+            set
+            {
+                if(unscaledAuxSourceId != value)
+                {
+                    unscaledAuxSourceId = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private OutputModuleType outputType;
         public OutputModuleType OutputType
         {

@@ -3,53 +3,28 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <RootNamespace>Spyder.Client</RootNamespace>
-    <Platforms>AnyCPU;x86;x64</Platforms>
     <Authors>Derek Smithson</Authors>
+    <Company>Knightware</Company>
+    <Version>0.0.1</Version>
     <Description>Library for controlling the Spyder 200/300/X20/X80 video processor families. Provides UDP control, server auto-discovery, drawing data (live display info), file transfer services, and image cache management.</Description>
-    <Copyright>Knightware 2021</Copyright>
-    <Version>4.1.0</Version>
+    <Copyright>Copyright $([System.DateTime]::Now.Year)</Copyright>
     <PackageProjectUrl>https://github.com/dsmithson/SpyderClientLibrary</PackageProjectUrl>
+    <PackageTags>spyder knightware</PackageTags>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/dsmithson/SpyderClientLibrary</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageReleaseNotes>Added client to interact with Spyder Still Server (X20) in Spyder.Client.Net.StillServerClient</PackageReleaseNotes>
-    <Company>Knightware</Company>
-    <PackageLicenseFile></PackageLicenseFile>
-    <AssemblyVersion>4.1.0.0</AssemblyVersion>
-    <FileVersion>4.1.0.0</FileVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <OutputPath>bin\Debug</OutputPath>
-    <NoWarn />
-  </PropertyGroup>
-  <PropertyGroup>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
   <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <OutputPath>bin\Debug</OutputPath>
-    <NoWarn />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <OutputPath>bin\Debug</OutputPath>
-    <NoWarn />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>bin\Release</OutputPath>
-  </PropertyGroup>
+
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="KnightwareCore" Version="3.1.0" />
+    <PackageReference Include="KnightwareCore" Version="3.2.1" />
   </ItemGroup>
 </Project>

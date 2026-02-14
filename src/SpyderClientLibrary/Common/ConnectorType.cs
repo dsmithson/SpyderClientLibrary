@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Spyder.Client.Common
 {
@@ -25,26 +26,27 @@ namespace Spyder.Client.Common
         public static List<ConnectorType> GetValidConnectorTypes(this HardwareType hardwareType, ConnectorTypeUsage usage)
         {
             var response = new List<ConnectorType>();
-            if(hardwareType == HardwareType.SpyderX80)
+            switch (hardwareType)
             {
-                response.Add(ConnectorType.HDMI);
-                response.Add(ConnectorType.DisplayPort);
-                response.Add(ConnectorType.SDI);
+                case HardwareType.SpyderS:
+                case HardwareType.SpyderX80:
+                    response.Add(ConnectorType.HDMI);
+                    response.Add(ConnectorType.DisplayPort);
+                    response.Add(ConnectorType.SDI);
+                    break;
+                default:
+                    response.Add(ConnectorType.Analog);
+                    response.Add(ConnectorType.DVI);
+                    response.Add(ConnectorType.SDI);
+                    response.Add(ConnectorType.Composite);
+                    response.Add(ConnectorType.SVideo);
+                    break;
+            }
 
-                //Auto is valid for inputs or router types
-                if(usage != ConnectorTypeUsage.Output)
-                {
-                    response.Add(ConnectorType.Auto);
-                }
-            }
-            else
-            {
-                response.Add(ConnectorType.Analog);
-                response.Add(ConnectorType.DVI);
-                response.Add(ConnectorType.SDI);
-                response.Add(ConnectorType.Composite);
-                response.Add(ConnectorType.SVideo);
-            }
+            //Auto is valid for inputs or router types
+            if (usage != ConnectorTypeUsage.Output)
+                response.Add(ConnectorType.Auto);
+
             return response;
         }
 

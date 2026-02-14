@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 
 namespace Spyder.Client.Net
 {
+    [TestClass]
     public class SpyderClientTests : SpyderClientTestBase
     {
         public SpyderClientTests()

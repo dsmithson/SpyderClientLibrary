@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Spyder.Client.Common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -67,8 +68,8 @@ namespace Spyder.Client
                 object expectedValue = GetNewValue(property.PropertyType, previousValue);
 
                 property.SetValue(testObject, expectedValue, null);
-                Assert.IsTrue(propertyNamesChanged.Count > 0, "{0} did not fire a PropertyChanged event for property: {1}", testType, property.Name);
-                Assert.IsTrue(propertyNamesChanged.Contains(property.Name), "Name of property changed was not correct on {0} property: {1}", testType, property.Name);
+                Assert.IsTrue(propertyNamesChanged.Count > 0, $"{{testType}} did not fire a PropertyChanged event for property: {{property.Name}}");
+                Assert.IsTrue(propertyNamesChanged.Contains(property.Name), $"Name of property changed was not correct on {{testType}} property: {{property.Name}}");
             }
         }
 
@@ -87,7 +88,7 @@ namespace Spyder.Client
                 property.SetValue(testObject, expectedValue, null);
 
                 object actualValue = property.GetValue(testObject, null);
-                Assert.AreEqual(expectedValue, actualValue, "Value retrieved didn't match set value for object type {0}, property: {1}", testType, property.Name);
+                Assert.AreEqual(expectedValue, actualValue, $"Value retrieved didn't match set value for object type {{testType}}, property: {{property.Name}}");
             }
         }
 
@@ -162,15 +163,15 @@ namespace Spyder.Client
                     (color.G == 255 ? 0 : color.G + 1),
                     (color.B == 255 ? 0 : color.B + 1));
             }
-            else if (valueType == typeof(System.Windows.Media.Color))
-            {
-                var color = (System.Windows.Media.Color)currentValue;
-                return System.Windows.Media.Color.FromArgb(
-                    (byte)(color.A == 255 ? 0 : color.A + 1),
-                    (byte)(color.R == 255 ? 0 : color.R + 1),
-                    (byte)(color.G == 255 ? 0 : color.G + 1),
-                    (byte)(color.B == 255 ? 0 : color.B + 1));
-            }
+            //else if (valueType == typeof(System.Windows.Media.Color))
+            //{
+            //    var color = (System.Windows.Media.Color)currentValue;
+            //    return System.Windows.Media.Color.FromArgb(
+            //        (byte)(color.A == 255 ? 0 : color.A + 1),
+            //        (byte)(color.R == 255 ? 0 : color.R + 1),
+            //        (byte)(color.G == 255 ? 0 : color.G + 1),
+            //        (byte)(color.B == 255 ? 0 : color.B + 1));
+            //}
             else if (valueType == typeof(Knightware.Primitives.Color))
             {
                 var color = (Knightware.Primitives.Color)currentValue;
@@ -189,15 +190,15 @@ namespace Spyder.Client
                     (rect.Width == int.MaxValue ? 1 : rect.Width + 1),
                     (rect.Height == int.MaxValue ? 1 : rect.Height + 1));
             }
-            else if (valueType == typeof(System.Windows.Rect))
-            {
-                var rect = (System.Windows.Rect)currentValue;
-                return new System.Windows.Rect(
-                    (rect.X == double.MaxValue || double.IsInfinity(rect.X) ? 0 : rect.X + 1),
-                    (rect.Y == double.MaxValue || double.IsInfinity(rect.Y) ? 0 : rect.Y + 1),
-                    (rect.Width == double.MaxValue || double.IsInfinity(rect.Width) ? 0 : rect.Width + 1),
-                    (rect.Height == double.MaxValue || double.IsInfinity(rect.Height) ? 0 : rect.Height + 1));
-            }
+            //else if (valueType == typeof(System.Windows.Rect))
+            //{
+            //    var rect = (System.Windows.Rect)currentValue;
+            //    return new System.Windows.Rect(
+            //        (rect.X == double.MaxValue || double.IsInfinity(rect.X) ? 0 : rect.X + 1),
+            //        (rect.Y == double.MaxValue || double.IsInfinity(rect.Y) ? 0 : rect.Y + 1),
+            //        (rect.Width == double.MaxValue || double.IsInfinity(rect.Width) ? 0 : rect.Width + 1),
+            //        (rect.Height == double.MaxValue || double.IsInfinity(rect.Height) ? 0 : rect.Height + 1));
+            //}
             else if (valueType == typeof(Knightware.Primitives.Rectangle))
             {
                 var rect = (Knightware.Primitives.Rectangle)currentValue;
@@ -207,13 +208,13 @@ namespace Spyder.Client
                     (rect.Width == int.MaxValue ? 1 : rect.Width + 1),
                     (rect.Height == int.MaxValue ? 1 : rect.Height + 1));
             }
-            else if (valueType == typeof(System.Windows.Size))
-            {
-                var size = (System.Windows.Size)currentValue;
-                return new System.Windows.Size(
-                    (size.Width == double.MaxValue ? 1 : size.Width + 1),
-                    (size.Height == double.MaxValue ? 1 : size.Height + 1));
-            }
+            //else if (valueType == typeof(System.Windows.Size))
+            //{
+            //    var size = (System.Windows.Size)currentValue;
+            //    return new System.Windows.Size(
+            //        (size.Width == double.MaxValue ? 1 : size.Width + 1),
+            //        (size.Height == double.MaxValue ? 1 : size.Height + 1));
+            //}
             else if (valueType == typeof(Knightware.Primitives.Size))
             {
                 var size = (Knightware.Primitives.Size)currentValue;
@@ -228,13 +229,13 @@ namespace Spyder.Client
                     ((point.X == int.MaxValue) ? 0 : point.X + 1),
                     ((point.Y == int.MaxValue) ? 0 : point.Y + 1));
             }
-            else if (valueType == typeof(System.Windows.Point))
-            {
-                var point = (System.Windows.Point)currentValue;
-                return new System.Windows.Point(
-                    (point.X == double.MaxValue || double.IsInfinity(point.X) ? 0 : point.X + 1),
-                    (point.Y == double.MaxValue || double.IsInfinity(point.Y) ? 0 : point.Y + 1));
-            }
+            //else if (valueType == typeof(System.Windows.Point))
+            //{
+            //    var point = (System.Windows.Point)currentValue;
+            //    return new System.Windows.Point(
+            //        (point.X == double.MaxValue || double.IsInfinity(point.X) ? 0 : point.X + 1),
+            //        (point.Y == double.MaxValue || double.IsInfinity(point.Y) ? 0 : point.Y + 1));
+            //}
             else if (valueType == typeof(Knightware.Primitives.Point))
             {
                 var point = (Knightware.Primitives.Point)currentValue;
@@ -306,15 +307,15 @@ namespace Spyder.Client
                 else
                     return typeof(string);
             }
-            else if (valueType == typeof(System.Windows.Point))
-            {
-                var currentPoint = (System.Windows.Point)currentValue;
-                return new System.Windows.Point()
-                {
-                    X = currentPoint.X + 1,
-                    Y = currentPoint.Y = 1
-                };
-            }
+            //else if (valueType == typeof(System.Windows.Point))
+            //{
+            //    var currentPoint = (System.Windows.Point)currentValue;
+            //    return new System.Windows.Point()
+            //    {
+            //        X = currentPoint.X + 1,
+            //        Y = currentPoint.Y = 1
+            //    };
+            //}
             else if (valueType == typeof(IPAddress))
             {
                 IPAddress currentAddress = currentValue as IPAddress;
@@ -334,6 +335,14 @@ namespace Spyder.Client
             else if (valueType == typeof(bool?))
             {
                 return currentValue == null ? true : (bool?)null;
+            }
+            else if(valueType == typeof(TimeCode))
+            {
+                TimeCode currentTimeCode = currentValue as TimeCode;
+                if (currentTimeCode == null)
+                    return new TimeCode();
+                else
+                    return new TimeCode(currentTimeCode.FieldRate, currentTimeCode.Frames + 1);
             }
             else if (valueType.IsInterface)
             {
@@ -399,7 +408,7 @@ namespace Spyder.Client
                 {
                     //Need to provide one or more constructor parameters to instantiate this object
                     var constructorArgs = new List<object>();
-                    constructor = typeToConstruct.GetConstructors(BindingFlags.Public)[0];
+                    constructor = typeToConstruct.GetConstructors().First();
                     foreach (var parameter in constructor.GetParameters())
                     {
                         object parameterValue = Activator.CreateInstance(parameter.ParameterType);

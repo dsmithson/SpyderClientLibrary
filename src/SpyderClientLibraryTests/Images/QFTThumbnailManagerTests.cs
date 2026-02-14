@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Vista.QFT;
 
 namespace Spyder.Client.Images
 {
@@ -14,10 +16,8 @@ namespace Spyder.Client.Images
 
         private static string remoteImagePath;
         private static string localImagePath;
-        private static Vista.QFT.QFTServer qftServer;
-        private static Spyder.Client.Net.QFTClient qftClient;
+        private static QFTServer qftServer;
 
-        private Dictionary<string, ManualResetEvent> imageProcessedEvents;
         private MockQFTThumbnailManager thumbnailManager;
 
         [ClassInitialize]
@@ -35,33 +35,19 @@ namespace Spyder.Client.Images
                 UnitTestHelper.CreateStillImage(imageFile);
             }
 
+            qftServer = new QFTServer(remoteImagePath);
+            qftServer.Startup();
+
             //Initialize our local folder object that will be used for our client directory
             if (!Directory.Exists(localImagePath))
                 Directory.CreateDirectory(localImagePath);
-
-            //Initialize our QFT Server
-            qftServer = new Vista.QFT.QFTServer();
-            qftServer.Startup();
-
-            //Initialize our QFT Client
-            qftClient = new Spyder.Client.Net.QFTClient("127.0.0.1");
-            Assert.IsTrue(qftClient.StartupAsync().Result, "Failed to initialize QFT Client");
         }
 
         [ClassCleanup]
         public static void ClassTearDown()
         {
-            if (qftClient != null)
-            {
-                qftClient.ShutdownAsync().Wait();
-                qftClient = null;
-            }
-
-            if (qftServer != null)
-            {
-                qftServer.Shutdown();
-                qftServer = null;
-            }
+            qftServer?.Shutdown();
+            qftServer = null;
 
             CleanDirectories(false, localImagePath, remoteImagePath);
             localImagePath = null;
@@ -71,11 +57,7 @@ namespace Spyder.Client.Images
         [TestInitialize]
         public void TestSetup()
         {
-            //Reset image process event awaiters
-            imageProcessedEvents = new Dictionary<string, ManualResetEvent>();
-
             thumbnailManager = new MockQFTThumbnailManager(localImagePath, (serverIP) => Task.FromResult(remoteImagePath));
-            thumbnailManager.ProcessImageStreamRequested += thumbnailManager_ProcessImageStreamRequested;
             Assert.IsTrue(thumbnailManager.StartupAsync().Result, "Failed to initialize thumbnail manager");
         }
 
@@ -84,25 +66,12 @@ namespace Spyder.Client.Images
         {
             if (thumbnailManager != null)
             {
-                thumbnailManager.ProcessImageStreamRequested -= thumbnailManager_ProcessImageStreamRequested;
                 thumbnailManager.ShutdownAsync().Wait();
                 thumbnailManager = null;
             }
 
-            imageProcessedEvents = null;
-
             //Remove any previously downloaded files from the local client directory
             CleanDirectories(true, localImagePath);
-        }
-
-        void thumbnailManager_ProcessImageStreamRequested(object sender, ProcessImageStreamEventArgs<QFTThumbnailIdentifier, string> e)
-        {
-            e.Result = fileProcessedResult;
-
-            //Set the manual reset event if registered to let tests know that the file has been 'processed'
-            string file = e.Identifier.FileName.ToLower();
-            if (imageProcessedEvents.ContainsKey(file))
-                imageProcessedEvents[file].Set();
         }
 
         [TestMethod]
@@ -121,37 +90,67 @@ namespace Spyder.Client.Images
 
         private async Task GetImagesTest(params string[] fileNames)
         {
-            List<QFTThumbnailIdentifier> identifiers = fileNames.Select(f => new QFTThumbnailIdentifier("127.0.0.1", f)).ToList();
-            ManualResetEvent[] resetEvents = fileNames.Select(f => GetResetEventForFile(f)).ToArray();
-            var thumbnails = identifiers.Select(f => thumbnailManager.GetThumbnail(f)).ToList();
-
-            //Pull the small image to start the rendering process
-            foreach (var thumbnail in thumbnails)
+            //Inline function for triggering our file event listeners
+            var imageProcessedEvents = new Dictionary<string, TaskCompletionSource<bool>>();
+            void thumbnailManager_ProcessImageStreamRequested(object sender, ProcessImageStreamEventArgs<QFTThumbnailIdentifier, string> e)
             {
-                string s = thumbnail.SmallImage;
+                e.Result = fileProcessedResult;
+
+                //Set the manual reset event if registered to let tests know that the file has been 'processed'
+                string file = e.Identifier.FileName.ToLower();
+                if (imageProcessedEvents.ContainsKey(file))
+                    imageProcessedEvents[file].TrySetResult(true);
             }
 
-            //Wait to be signalled that the image has been downloaded and processing has happened
-            //Note:  WaitHandle.WaitAll threw a notsupported exception...
-            foreach (ManualResetEvent resetEvent in resetEvents)
+            //Inline function to add waiter task
+            Task<bool> GetTaskAwaiterForFile(string fileName)
             {
-                Assert.IsTrue(resetEvent.WaitOne(1000000), "Failed to be signalled for one or more files");
+                string lower = fileName.ToLower();
+                if (!imageProcessedEvents.ContainsKey(lower))
+                    imageProcessedEvents.Add(lower, new TaskCompletionSource<bool>());
+
+                return imageProcessedEvents[lower].Task;
             }
 
-            //Ensure our file was created in the cache folder
-            foreach (string fileName in fileNames)
+            try
             {
-                string localFile = Path.Combine(localImagePath, "127.0.0.1", "Images", fileName);
-                string remoteFile = Path.Combine(remoteImagePath, fileName);
-                Assert.IsTrue(File.Exists(localFile), "Failed to create local file: " + fileName);
-                UnitTestHelper.CompareFilesAssert(remoteFile, localFile);
-            }
+                thumbnailManager.ProcessImageStreamRequested += thumbnailManager_ProcessImageStreamRequested;
 
-            //Wait a second for the results to be set
-            await Task.Delay(1000);
-            foreach (var thumbnail in thumbnails)
+                List<QFTThumbnailIdentifier> identifiers = [.. fileNames.Select(f => new QFTThumbnailIdentifier("127.0.0.1", f))];
+                if (identifiers.Count == 0)
+                    Assert.Inconclusive("Failed to get any files for testing");
+
+                var tasks = fileNames.Select(f => GetTaskAwaiterForFile(f)).ToArray();
+                var thumbnails = identifiers.Select(f => thumbnailManager.GetThumbnail(f)).ToList();
+
+                //Pull the small image to start the rendering process
+                foreach (var thumbnail in thumbnails)
+                {
+                    string s = thumbnail.SmallImage;
+                }
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await Task.WhenAll(tasks).WaitAsync(cts.Token);
+
+                //Ensure our file was created in the cache folder
+                foreach (string fileName in fileNames)
+                {
+                    string localFile = Path.Combine(localImagePath, "127.0.0.1", "Images", fileName);
+                    string remoteFile = Path.Combine(remoteImagePath, fileName);
+                    Assert.IsTrue(File.Exists(localFile), "Failed to create local file: " + fileName);
+                    UnitTestHelper.CompareFilesAssert(remoteFile, localFile);
+                }
+
+                //Wait a second for the results to be set
+                await Task.Delay(1000);
+                foreach (var thumbnail in thumbnails)
+                {
+                    Assert.AreEqual(fileProcessedResult, thumbnail.SmallImage, "Resulting image failed to be set on our thumbnail");
+                }
+            }
+            finally
             {
-                Assert.AreEqual(fileProcessedResult, thumbnail.SmallImage, "Resulting image failed to be set on our thumbnail");
+                thumbnailManager.ProcessImageStreamRequested -= thumbnailManager_ProcessImageStreamRequested;
             }
         }
 
@@ -165,15 +164,6 @@ namespace Spyder.Client.Images
                 if (ensureCreated)
                     Directory.CreateDirectory(directory);
             }
-        }
-
-        private ManualResetEvent GetResetEventForFile(string fileName)
-        {
-            string lower = fileName.ToLower();
-            if (!imageProcessedEvents.ContainsKey(lower))
-                imageProcessedEvents.Add(lower, new ManualResetEvent(false));
-
-            return imageProcessedEvents[lower];
         }
     }
 }

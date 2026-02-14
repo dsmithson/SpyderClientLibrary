@@ -3,20 +3,23 @@ using Knightware.Primitives;
 using Spyder.Client.Common;
 using Spyder.Client.IO;
 using System;
+using System.IO;
+using System.IO.Pipes;
 
 namespace Spyder.Client.Net.DrawingData.Deserializers
 {
     /// <summary>
-    /// Deserializes DrawingData messages in the version 54 serialization format - Spyder Studio / X80
+    /// Deserializes DrawingData messages in the version 64 serialization format - SpyderS 6.0.1
     /// </summary>
-    public class DrawingDataDeserializer_Version54 : DrawingDataDeserializer_Version53
+    public class DrawingDataDeserializer_Version64 : IDrawingDataDeserializer
     {
-        public DrawingDataDeserializer_Version54(string serverVersion)
-            : base(serverVersion)
+        private readonly string serverVersion;
+        public DrawingDataDeserializer_Version64(string serverVersion)
         {
+            this.serverVersion = serverVersion;
         }
 
-        public override DrawingData Deserialize(byte[] stream)
+        public virtual DrawingData Deserialize(byte[] stream)
         {
             if (stream == null || stream.Length == 0)
                 return null;
@@ -27,6 +30,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             int newPsCount = stream[index++];
             int newDkCount = stream[index++];
             int newPvwDkCount = stream[index++];
+            int newMixEffectCount = stream[index++];
             int newRtrCount = stream[index++];
             int newOutputCount = stream[index++];
             int previewPixelSpaceCount = stream[index++];
@@ -36,6 +40,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             int runningScriptCount = stream[index++];
             int diagnosticWarningCount = stream[index++];
             int configOutputCount = stream[index++];
+            int inputCount = stream[index++];
 
             //Global values
             response.TimeOfDay = new TimeSpan(
@@ -49,28 +54,31 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             response.ProgressString = stream.GetString(ref index);
             response.ConfigSource = stream.GetString(ref index);
             response.ConfigLayer = stream.GetInt(ref index);
-            response.ConfigBus = (MixerBus)stream[index++];
+            response.ConfigBus = ParseSpyderSMixerBus(stream[index++]);
 
             response.HardwareType = (HardwareType)stream[index++];
+            index++; //Ignore StereoMode
             response.DataObjectVersion = stream.GetInt(ref index);
             response.DataObjectLastChangeType = (DataType)stream.GetInt(ref index);
 
             //Global Flags
             byte flags = stream[index++];
             response.OpMonOverlay = (flags & 0x01) > 0;
-            response.IsLayerZeroPreviewBackground = (flags & 0x02) > 0;
-            response.IsMachineHalEnabled = (flags & 0x04) > 0;
-            response.IsRouterHalEnabled = (flags & 0x08) > 0;
-            response.IsDataIOIdle = (flags & 0x10) > 0;
-            response.IsPreviewOnlyScriptingEnabled = (flags & 0x20) > 0;
-            response.IsStillServerConnected = (flags & 0x40) > 0;
-            response.IsLiveUpdateEnabled = (flags & 0x80) > 0;
+            response.IsMachineHalEnabled = (flags & 0x02) > 0;
+            response.IsRouterHalEnabled = (flags & 0x04) > 0;
+            response.IsDataIOIdle = (flags & 0x08) > 0;
+            response.IsPreviewOnlyScriptingEnabled = (flags & 0x10) > 0;
+            response.IsLiveUpdateEnabled = (flags & 0x20) > 0;
+
             flags = stream[index++];
             response.LiveUpdatesTemporarilyDisabled = (flags & 0x01) > 0;
             response.IsHdcpEnabled = (flags & 0x02) > 0;
 
             //System Frame Rate
-            response.SystemFrameRate = (FieldRate)stream[index++];
+            response.SystemFrameRate = ParseSpyderSFieldRate(stream[index++]);
+
+            //System Layer Mode
+            response.SystemLayerMode = (SystemLayerMode)stream[index++];
 
             //Get the frames
             for (int i = 0; i < frameCount; i++)
@@ -80,10 +88,13 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 {
                     FrameID = frameID,
                     FrameAOR = stream.GetRectangle(ref index),
-                    Model = SpyderModelFromByte(stream[index++], response.HardwareType),
-                    RenewalMasterFrameID = stream[index++]
+                    Model = SpyderModelFromByte(stream[index++]),
+                    RenewalMasterFrameID = stream[index++],
                 };
-                frame.ProgramAOR = frame.FrameAOR; //X80 doesn't require PGM/PVW AORs
+                //Note: Ignoring model capabilities flag for now
+                index++;
+
+                frame.ProgramAOR = frame.FrameAOR; //Spyder-S doesn't require PGM/PVW AORs
                 frame.PreviewAOR = frame.FrameAOR;
                 response.Frames.Add(frameID, frame);
             }
@@ -120,19 +131,17 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
                 //Fill the new pixelspace
                 newPS.Rect = stream.GetRectangle(ref index);
-                //newPS.Scale = stream.GetFloat(ref index);
 
                 //Versions above 5.0.x (5.1.x / 5.2.x / etc) no longer have a RenewalMasterFrameID
                 newPS.RenewMasterFrameID = -1;
 
                 newPS.ID = stream.GetShort(ref index);
-                MixerBus bus = (MixerBus)stream[index++]; //X80 no longer has PS scale
+                MixerBus bus = ParseSpyderSMixerBus(stream[index++]);
                 newPS.Name = stream.GetString(ref index);
-                newPS.NextBackgroundStillIsOnLayer1 = !response.IsLayerZeroPreviewBackground;
-                newPS.LastBackgroundStill = stream.GetString(ref index);	//Last background still
-                newPS.NextBackgroundStill = stream.GetString(ref index);	//Next Background still
 
-                //Stereo mode on PixelSpace changed in 5.4.0 to include only a flag to indicate if it's stereo, not the mode
+                //Note:  We'll come back after we get the mix effects below to try and set background content thumbnails
+
+                //PixelSpace flags
                 flags = stream[index++];
                 newPS.StereoMode = (flags & 0x01) == 0x01 ? PixelSpaceStereoMode.Stereo : PixelSpaceStereoMode.Off;
 
@@ -144,20 +153,82 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 response.PixelSpaces.Add(newPS.ID, newPS);
             }
 
+            //Get our mix effects
+            for (int i = 0; i < newMixEffectCount; i++)
+            {
+                DrawingMixEffect mixEffect = new DrawingMixEffect();
+                mixEffect.ID = stream.GetInt(ref index);
+                mixEffect.Name = stream.GetString(ref index);
+                mixEffect.Type = (MixEffectType)stream[index++];
+                mixEffect.BottomContentName = stream.GetString(ref index);
+                mixEffect.BottomContentThumbnail = stream.GetString(ref index);
+                mixEffect.TopContentName = stream.GetString(ref index);
+                mixEffect.TopContentThumbnail = stream.GetString(ref index);
+                mixEffect.TopContentOpacity = stream.GetFloat(ref index);
+                mixEffect.BackgroundPixelSpaceId = stream.GetInt(ref index);
+
+                //Usages
+                int usageCount = stream[index++];
+                for (int j = 0; j < usageCount; j++)
+                {
+                    mixEffect.Usages.Add(new DrawingMixEffectUsage()
+                    {
+                        SourceID = stream.GetInt(ref index),
+                        UsageType = (DrawingMixEffectUsageType)stream[index++],
+                        Label = stream.GetString(ref index),
+                    });
+                }
+
+                //Flags
+                byte mixEffectFlags = stream[index++];
+                mixEffect.TopIsFrozen = (mixEffectFlags & 0x01) > 0;
+                mixEffect.BottomIsFrozen = (mixEffectFlags & 0x02) > 0;
+                mixEffect.TopSupportsFreeze = (mixEffectFlags & 0x04) > 0;
+                mixEffect.BottomSupportsFreeze = (mixEffectFlags & 0x08) > 0;
+
+                response.DrawingMixEffects.Add(mixEffect.ID, mixEffect);
+            }
+
+            //Now that we have MixEffects, update pixelspace background info
+            foreach (var ps in response.PixelSpaces.Values)
+            {
+                foreach (var me in response.DrawingMixEffects.Values)
+                {
+                    if (me.BackgroundPixelSpaceId == ps.ID)
+                    {
+                        ps.NextBackgroundStillIsOnLayer1 = true;
+                        ps.LastBackgroundStill = me.BottomContentThumbnail;
+                        ps.NextBackgroundStill = me.TopContentThumbnail;
+                        ps.Layer1Transparency = (byte)(me.TopContentOpacity * byte.MaxValue);
+                    }
+                }
+            }
+
             //Get all of our DrawingKeyFrames
             int allLayerCount = newDkCount + newPvwDkCount;
+
+            //Add a couple 'virtual' background layers to maintain overall compatibility in library.  Spyder-S removed these and starts layer IDs at zero
+            response.DrawingKeyFrames.Add(0, new DrawingKeyFrame() { LayerID = 0, IsBackground = true });
+            response.DrawingKeyFrames.Add(1, new DrawingKeyFrame() { LayerID = 1, IsBackground = true });
 
             for (int i = 0; i < allLayerCount; i++)
             {
                 DrawingKeyFrame l = new DrawingKeyFrame();
                 KeyFrame kf = l.KeyFrame;
 
-                //Fill Drawing Keyframe
+                l.FrameID = stream[index++];
+
+                l.MixEffectID = stream.GetInt(ref index);
+                if(response.DrawingMixEffects.ContainsKey(l.MixEffectID))
+                {
+                    l.MixEffect = response.DrawingMixEffects[l.MixEffectID];
+                }
+
                 l.Priority = stream.GetShort(ref index);
                 l.HActive = stream.GetShort(ref index);			//HActive of the input itself (used for calculating the scaled border size)
                 l.VActive = stream.GetShort(ref index);			//VActive of the input itself (used for Pan calculations)
-                l.LayerID = stream.GetShort(ref index);			//Layer ID
-                short cloneHOffset = stream.GetShort(ref index);
+                l.LayerID = stream.GetShort(ref index) + 2;			//Layer ID (adding offset for Spyder-S zero-based layer ID system)
+                _ = stream.GetShort(ref index); //LayerIndex - layer index on frame (we're ignoring this for now)
                 l.PixelSpaceID = stream.GetInt(ref index);				//Pixelspace ID
                 l.EffectID = stream.GetInt(ref index);
                 l.LastScript = stream.GetInt(ref index);
@@ -172,17 +243,15 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 l.SourceRouterInput = stream.GetInt(ref index);
                 l.InputConfigID = stream.GetInt(ref index);
 
-                l.LinearKeySource = stream.GetString(ref index);
-                l.LinearKeyRouterID = stream.GetInt(ref index);
-                l.LinearKeyRouterInput = stream.GetInt(ref index);
+                _ = stream.GetInt(ref index);  //CurrentInputID - we're ignoring this for now
 
                 l.AspectRatio = stream.GetFloat(ref index);	//aspect ratio
                 l.LayerRect = stream.GetRectangle(ref index);
                 l.AOIRect = stream.GetRectangle(ref index);
 
-                //Not storing element type
-                //l.ElementType = (ElementType)stream[index++];	//Element Type
-                index++;
+                //Not storing stereoMode, element type
+                index++; //StereoMode
+                index++; //ElementType
 
                 l.Transparency = stream[index++];				//Visible / Transparency
 
@@ -213,6 +282,9 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 l.IsLocked = (flags & 0x01) > 0;
                 //l.IsVisible = (flags & 0x02) > 0;
                 //l.IsDrawingApplicable = (flags & 0x04) > 0;
+                //l.IsDualLayerMode = (flags & 0x08) > 0;
+                //l.HasFrameBuffer = (flags & 0x10) > 0;
+                //l.InputConnectionDetected = (flags & 0x20) > 0;
 
                 kf.BorderThickness = stream.GetShort(ref index);	//border thickness
                 kf.Width = (ushort)stream.GetShort(ref index);			//HSize
@@ -231,7 +303,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.BorderLumaOffsetRight = stream.GetShort(ref index);
                 kf.BorderLumaOffsetTop = stream.GetShort(ref index);
 
-                kf.CloneOffset = stream.GetFloat(ref index);	//clone offset
                 kf.HPosition = stream.GetFloat(ref index);			//HPosition
                 kf.VPosition = stream.GetFloat(ref index);			//VPosition
                 kf.TopCrop = stream.GetFloat(ref index);		//top crop
@@ -244,9 +315,36 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.EaseOut = stream.GetFloat(ref index);       //Ease out
                 kf.PanH = stream.GetInt(ref index);			//Horizontal Pan
                 kf.PanV = stream.GetInt(ref index);			//Vertical Pan
+                kf.CropAnchor = (CropAnchorTypes)stream[index++];
                 kf.Transparency = stream[index++];      //Transparency
                 kf.Duration = stream.GetShort(ref index);
                 kf.CloneMode = (CloneMode)stream[index++];		//clone mode
+
+                //Clone offsets
+                int cloneOffsetCount = stream[index++];
+                float[] cloneOffsets = new float[cloneOffsetCount];
+                for(int j=0; j<cloneOffsets.Length; j++)
+                {
+                    cloneOffsets[j] = stream.GetFloat(ref index);
+                }
+                kf.CloneOffsets = cloneOffsets;
+
+                //Clone absolute pixel offsets
+                int absoluteCloneOffsetCount = stream[index++];
+                Rectangle[] cloneRects = new Rectangle[absoluteCloneOffsetCount];
+                for (int j = 0; j < cloneRects.Length; j++)
+                {
+                    int cloneHOffset = stream.GetInt(ref index);
+                    cloneRects[j] = new Rectangle()
+                    {
+                        X = l.LayerRect.X + cloneHOffset,
+                        Y = l.LayerRect.Y,
+                        Width = l.LayerRect.Width,
+                        Height = l.LayerRect.Height
+                    };
+                }
+                l.CloneRects = cloneRects;
+
                 kf.BorderColor = new Color(
                     stream[index++],
                     stream[index++],
@@ -256,12 +354,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                     stream[index++],
                     stream[index++],
                     stream[index++]);
-
-                kf.CropAnchor = (CropAnchorTypes)stream[index++];
-                l.StereoMode = (InputStereoMode)stream[index++];
-
-                //Frame Config
-                l.FrameID = stream[index++];
 
                 kf.BorderShapeSource = (ShapeSource)stream[index++];
                 kf.BorderShape = (ShapeType)stream[index++];
@@ -273,15 +365,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 kf.BorderTextureType = (TextureType)stream[index++];
                 kf.BorderTileMode = (TextureTileMode)stream[index++];
                 kf.BorderTextureFile = stream.GetString(ref index);
-
-                //Calculated values
-                l.CloneRect = new Rectangle()
-                {
-                    X = l.LayerRect.X + cloneHOffset,
-                    Y = l.LayerRect.Y,
-                    Width = l.LayerRect.Width,
-                    Height = l.LayerRect.Height
-                };
 
                 //Scale (coerced from parent pixelspace)
                 l.Scale = (response.PixelSpaces.ContainsKey(l.PixelSpaceID) ? response.PixelSpaces[l.PixelSpaceID].Scale : 1);
@@ -299,7 +382,7 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
 
             //Compatibility fix - if any of the PGM layers are not visible but the preview layers are, promote the preview layers to PGM layers
             //This is needed for Spyder X80 V5.0.3 and above, where PGM and PVW layers have become discrete operating objects
-            for (int i = 0; i < newDkCount; i++)
+            for (int i = 0; i < newDkCount+2; i++)
             {
                 var pgmLayer = response.DrawingKeyFrames[i];
                 if (pgmLayer != null && !pgmLayer.IsVisible && !pgmLayer.IsBackground)
@@ -312,16 +395,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                         response.DrawingKeyFrames.Add(i, pvwLayer);
                         response.PreviewDrawingKeyFrames.Add(i, pgmLayer);
                     }
-                }
-            }
-
-            //Now that we have Pixelspaces and layers, update pixelspace background transparency info from layers
-            if (response.DrawingKeyFrames.Count >= 2)
-            {
-                byte layer1Transparency = response.DrawingKeyFrames[1].Transparency;
-                foreach (DrawingPixelSpace ps in response.PixelSpaces.Values)
-                {
-                    ps.Layer1Transparency = layer1Transparency;
                 }
             }
 
@@ -443,8 +516,9 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
             {
                 DrawingOutput output = new DrawingOutput();
 
-                output.OutputType = OutputModuleTypeFromByte(stream[index++], response.HardwareType);
+                output.OutputType = OutputModuleType.SpyderS;
                 output.ID = stream.GetShort(ref index);
+                _ = stream.GetShort(ref index); //PortID - ignoring for now
                 output.FrameID = stream.GetShort(ref index);
                 output.RenewalMasterFrameID = stream.GetShort(ref index);
                 output.HActive = stream.GetShort(ref index);
@@ -452,24 +526,27 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 output.HTotal = stream.GetShort(ref index);
                 output.VTotal = stream.GetShort(ref index);
 
-                var outputFlags = (OutputFlags)stream[index++];
-                output.Interlaced = outputFlags.HasFlag(OutputFlags.Interlaced);
-                output.IsFrameLocked = outputFlags.HasFlag(OutputFlags.IsFrameLocked);
+                //Ignoring capabilities for now
+                _ = stream.GetShort(ref index);
+
+                byte outputFlags = stream[index++];
+                output.Interlaced = (outputFlags & 0x01) > 0;
+                output.IsFrameLocked = (outputFlags & 0x02) > 0;
+                //output.IsFrozen = (outputFlags & 0x04) > 0; //No IsFrozen flag actually on output yet
 
                 output.VerticalRefresh = stream.GetFloat(ref index);
                 output.Name = stream.GetString(ref index);
                 output.HdcpStatus = (HdcpLinkStatus)stream[index++];
 
-                output.OutputMode = OutputModeFromByte(stream[index++], response.HardwareType);
+                output.OutputMode = OutputModeFromByte(stream[index++]);
                 output.Rotation = (RotationMode)stream[index++];
                 output.MST = (MSTMode)stream[index++];
                 output.AuxSource = stream.GetString(ref index);
                 output.AuxInput = stream[index++];
 
-                output.OpMonProgramSource = stream.GetRectangle(ref index);
-                output.OpMonProgramDest = stream.GetRectangle(ref index);
-                output.OpMonPreviewSource = stream.GetRectangle(ref index);
-                output.OpMonPreviewDest = stream.GetRectangle(ref index);
+                output.UnscaledAuxSourceType = (UnscaledAuxSourceType)stream[index++];
+                output.UnscaledAuxSourceId = stream.GetInt(ref index);
+
                 output.ScaledSource = stream.GetRectangle(ref index);
                 output.ScaledDest = stream.GetRectangle(ref index);
 
@@ -495,7 +572,95 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
                 response.ConfigOutputs.Add(stream[index++]);
             }
 
+            //[Ignored for now] Get Inputs
+            for (int i = 0; i < inputCount; i++)
+            {
+                _ = stream.GetString(ref index);
+            }
+
             return response;
+        }
+
+        protected SpyderModels SpyderModelFromByte(ushort value)
+        {
+            SpyderSModels model = (SpyderSModels)value;
+            return model.Convert();
+        }
+
+        protected virtual ConnectorType ParseRouterConnectorType(byte val)
+        {
+            return val switch
+            {
+                1 => ConnectorType.HDMI,
+                2 => ConnectorType.DisplayPort,
+                4 => ConnectorType.SDI,
+                _ => ConnectorType.Auto, //Unknown
+            };
+        }
+
+        protected virtual OutputMode OutputModeFromByte(byte val)
+        {
+            return val switch
+            {
+                0 => OutputMode.Normal,
+                1 => OutputMode.Multiviewer,
+                2 => OutputMode.Scaled,
+                3 => OutputMode.Aux,
+                4 => OutputMode.UnscaledAux,
+                5 => OutputMode.OpMon,
+                6 => OutputMode.SourceMon,
+                7 => OutputMode.Tiled,
+                8 => OutputMode.Unused,
+                _ => OutputMode.Normal, //Unknown
+            };
+        }
+
+        /// <summary>
+        /// Someone thought it was a good idea to swap the preview/program enum values in Spyder-S software, so we'll need to flip the values here
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        protected MixerBus ParseSpyderSMixerBus(byte value)
+        {
+            return value == 0 ? MixerBus.Program : MixerBus.Preview;
+
+        }
+
+        protected FieldRate ParseSpyderSFieldRate(int value)
+        {
+            switch (value)
+            {
+                case 23:
+                    return FieldRate.FR_23_98;
+                case 24:
+                    return FieldRate.FR_24;
+                case 25:
+                    return FieldRate.FR_25;
+                case 29:
+                    return FieldRate.FR_29_97;
+                case 30:
+                    return FieldRate.FR_30;
+                case 47:
+                    return FieldRate.FR_47_95;
+                case 48:
+                    return FieldRate.FR_48;
+                case 50:
+                    return FieldRate.FR_50;
+                case 59:
+                    return FieldRate.FR_59_94;
+                case 60:
+                    return FieldRate.FR_60;
+                case 96:
+                    return FieldRate.FR_96;
+                case 100:
+                    return FieldRate.FR_100;
+                case 119:
+                    return FieldRate.FR_119_88;
+                case 120:
+                    return FieldRate.FR_120;
+                default:
+                    return FieldRate.Unknown;
+            }
         }
     }
 }

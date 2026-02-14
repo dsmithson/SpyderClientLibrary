@@ -104,8 +104,8 @@ namespace Spyder.Client.Common
             foreach (RegisterType type in Enum.GetValues(typeof(RegisterType)))
             {
                 var registers = ParseRegisterList(GetTestSystemConfigFile(), type);
-                Assert.IsNotNull(registers, "Failed to parse {0} register list", type);
-                Assert.AreNotEqual(0, registers.Count, "No registers were parsed from {0} list", type);
+                Assert.IsNotNull(registers, $"Failed to parse {type} register list");
+                Assert.AreNotEqual(0, registers.Count, $"No registers were parsed from {type} list");
             }
         }
     }

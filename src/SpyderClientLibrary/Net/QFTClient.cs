@@ -104,7 +104,7 @@ namespace Spyder.Client.Net
 
         private async Task ShutdownAsync(bool sendRemoteDisconnectRequest, bool acquireSemaphore)
         {
-            AsyncLock.Releaser? releaser = null;
+            IDisposable releaser = null;
             try
             {
                 if (pingWorker != null)
@@ -139,8 +139,7 @@ namespace Spyder.Client.Net
             }
             finally
             {
-                if (releaser.HasValue)
-                    releaser.Value.Dispose();
+                releaser?.Dispose();
             }
         }
 
@@ -296,7 +295,7 @@ namespace Spyder.Client.Net
             const int size = 1;
             byte[] buffer = new byte[size];
 
-            AsyncLock.Releaser? releaser = null;
+            IDisposable releaser = null;
             try
             {
                 if (acquireSemaphore)
@@ -326,8 +325,7 @@ namespace Spyder.Client.Net
             }
             finally
             {
-                if (releaser.HasValue)
-                    releaser.Value.Dispose();
+                releaser?.Dispose();
             }
         }
 
@@ -350,7 +348,7 @@ namespace Spyder.Client.Net
             const int size = 1;
             byte[] buffer = new byte[size];
 
-            AsyncLock.Releaser? releaser = null;
+            IDisposable releaser = null;
             try
             {
                 if (obtainSemaphore)
@@ -371,8 +369,7 @@ namespace Spyder.Client.Net
             }
             finally
             {
-                if (releaser.HasValue)
-                    releaser.Value.Dispose();
+                releaser?.Dispose();
             }
         }
 

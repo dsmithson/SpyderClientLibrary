@@ -32,7 +32,7 @@ namespace Spyder.Client.Text
             Assert.AreEqual(expected.Item2.Length, actual.Length, "Length of byte[] response was incorrect");
             for (int i = 0; i < actual.Length; i++)
             {
-                Assert.AreEqual(expected.Item2[i], actual[i], "Byte value was incorrect at offset {0}", i);
+                Assert.AreEqual(expected.Item2[i], actual[i], $"Byte value was incorrect at offset {i}");
             }
         }
 

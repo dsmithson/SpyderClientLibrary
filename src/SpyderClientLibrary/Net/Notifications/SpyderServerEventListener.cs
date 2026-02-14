@@ -266,7 +266,8 @@ namespace Spyder.Client.Net.Notifications
 
             //Spyder studio (v5 and above) changes the spyder header to mantis, so we need to check both
             if ((data[0] == (byte)'s' && data[1] == (byte)'p' && data[2] == (byte)'y' && data[3] == (byte)'d' && data[4] == (byte)'e' && data[5] == (byte)'r') ||
-               (data[0] == (byte)'m' && data[1] == (byte)'a' && data[2] == (byte)'n' && data[3] == (byte)'t' && data[4] == (byte)'i' && data[5] == (byte)'s'))
+               (data[0] == (byte)'m' && data[1] == (byte)'a' && data[2] == (byte)'n' && data[3] == (byte)'t' && data[4] == (byte)'i' && data[5] == (byte)'s') ||
+               (data[0] == (byte)'e' && data[1] == (byte)'c' && data[2] == (byte)'h' && data[3] == (byte)'o' && data[4] == (byte)'p' && data[5] == (byte)'s'))
             {
                 ServerEventType eventType = (ServerEventType)(data[10] | (data[11] << 8));
                 return eventType;

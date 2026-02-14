@@ -80,6 +80,20 @@ namespace Spyder.Client.Net.DrawingData
             }
         }
 
+        private Dictionary<int, DrawingMixEffect> drawingMixEffects = new Dictionary<int, DrawingMixEffect>();
+        public Dictionary<int, DrawingMixEffect> DrawingMixEffects
+        {
+            get { return drawingMixEffects; }
+            set
+            {
+                if (drawingMixEffects != value)
+                {
+                    drawingMixEffects = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private Dictionary<int, DrawingKeyFrame> drawingKeyFrames = new Dictionary<int, DrawingKeyFrame>();
         public Dictionary<int, DrawingKeyFrame> DrawingKeyFrames
         {
@@ -89,7 +103,7 @@ namespace Spyder.Client.Net.DrawingData
                 if (drawingKeyFrames != value)
                 {
                     drawingKeyFrames = value;
-                    OnPropertyChanged("DrawingKeyFrames");
+                    OnPropertyChanged();
                 }
             }
         }
@@ -401,6 +415,20 @@ namespace Spyder.Client.Net.DrawingData
                 if (systemFrameRate != value)
                 {
                     systemFrameRate = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private SystemLayerMode systemLayerMode;
+        public SystemLayerMode SystemLayerMode
+        {
+            get { return systemLayerMode; }
+            set
+            {
+                if (systemLayerMode != value)
+                {
+                    systemLayerMode = value;
                     OnPropertyChanged();
                 }
             }
