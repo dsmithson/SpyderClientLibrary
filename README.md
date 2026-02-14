@@ -1,8 +1,7 @@
 # SpyderClientLibrary
 
-[![CI](https://github.com/dsmithson/KnightwareCore/actions/workflows/ci.yml/badge.svg)](https://github.com/dsmithson/KnightwareCore/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/dsmithson/SpyderClientLibrary/graph/badge.svg?token=UEtw0Be1mI)](https://codecov.io/gh/dsmithson/SpyderClientLibrary)
-[![NuGet](https://img.shields.io/nuget/v/SpyderClientLibrary.svg)](https://www.nuget.org/packages/SpyderClientLibrary/)
+[![CI](https://github.com/dsmithson/SpyderClientLibrary/actions/workflows/dotnet-build.yml/badge.svg)](https://github.com/dsmithson/SpyderClientLibrary/actions/workflows/dotnet-build.yml)
+[![NuGet](https://img.shields.io/nuget/v/SpyderClientLibrary.svg)](https://www.nuget.org/packages/SpyderClientLibrary)
 
 Provides a modern, fully async compatible .Net Standard 2.0 library for creating applications and utilities targeting the 
 [Spyder video processor](http://www.vistasystems.net/video-processors-and-matrix-switchers/video-processors/pages/default.aspx) 
