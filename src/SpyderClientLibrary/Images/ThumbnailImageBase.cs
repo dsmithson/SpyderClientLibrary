@@ -186,28 +186,28 @@ namespace Spyder.Client.Images
                         IsLoadingExtraSmallImage = false;
                         extraSmallImageLoadFailed = (image == null);
                         extraSmallImage = (image == null ? null : new TimedCacheWeakReference<T>(image, TimeSpan.FromMinutes(1)));
-                        OnPropertyChanged("ExtraSmallImage");
+                        OnPropertyChanged(nameof(ExtraSmallImage));
                         break;
 
                     case ImageSize.Small:
                         IsLoadingSmallImage = false;
                         smallImageLoadFailed = (image == null);
                         smallImage = (image == null ? null : new TimedCacheWeakReference<T>(image, TimeSpan.FromMinutes(1)));
-                        OnPropertyChanged("SmallImage");
+                        OnPropertyChanged(nameof(SmallImage));
                         break;
 
                     case ImageSize.Medium:
                         IsLoadingMediumImage = false;
                         mediumImageLoadFailed = (image == null);
                         mediumImage = (image == null ? null : new TimedCacheWeakReference<T>(image, TimeSpan.FromMinutes(1)));
-                        OnPropertyChanged("MediumImage");
+                        OnPropertyChanged(nameof(MediumImage));
                         break;
 
                     case ImageSize.Large:
                         IsLoadingLargeImage = false;
                         largeImageLoadFailed = (image == null);
                         largeImage = (image == null ? null : new TimedCacheWeakReference<T>(image, TimeSpan.FromMinutes(1)));
-                        OnPropertyChanged("LargeImage");
+                        OnPropertyChanged(nameof(LargeImage));
                         break;
 
                     default:

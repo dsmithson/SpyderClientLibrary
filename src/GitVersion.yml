@@ -1,9 +1,0 @@
-mode: Mainline
-next-version: 3.1.0
-branches:
-  feature:
-    tag: alpha
-  master:
-    tag: ''
-ignore:
-  sha: []

@@ -13,7 +13,6 @@ namespace Spyder.Client.Net.DrawingData.Deserializers
     /// </summary>
     public class DrawingDataDeserializer_Version68 : DrawingDataDeserializer_Version64
     {
-        private readonly string serverVersion;
         public DrawingDataDeserializer_Version68(string serverVersion) : base(serverVersion)
         {
         }

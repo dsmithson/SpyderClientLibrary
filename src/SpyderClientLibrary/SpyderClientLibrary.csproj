@@ -6,7 +6,7 @@
     <Platforms>AnyCPU;x86;x64</Platforms>
     <Authors>Derek Smithson</Authors>
     <Description>Library for controlling the Spyder 200/300/X20/X80 video processor families. Provides UDP control, server auto-discovery, drawing data (live display info), file transfer services, and image cache management.</Description>
-    <Copyright>Knightware 2021</Copyright>
+    <Copyright>Copyright $([System.DateTime]::Now.Year)</Copyright>
     <Version>4.1.0</Version>
     <PackageProjectUrl>https://github.com/dsmithson/SpyderClientLibrary</PackageProjectUrl>
     <RepositoryUrl>https://github.com/dsmithson/SpyderClientLibrary</RepositoryUrl>
@@ -29,7 +29,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -50,6 +50,6 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="KnightwareCore" Version="3.1.0" />
+	  <PackageReference Include="KnightwareCore" Version="3.2.1" />
   </ItemGroup>
 </Project>
